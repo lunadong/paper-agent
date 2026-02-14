@@ -437,12 +437,6 @@ def main():
         help="Process all papers with RAG tag that don't have summaries yet",
     )
     parser.add_argument(
-        "--db-path",
-        type=str,
-        default="web_interface/data/papers.db",
-        help="Path to the papers database",
-    )
-    parser.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -470,7 +464,6 @@ def main():
     # Process all RAG papers
     if args.process_rag_papers:
         process_rag_papers(
-            db_path=args.db_path,
             model_name=args.model,
             api_key=args.api_key,
             limit=args.limit,
@@ -483,7 +476,6 @@ def main():
     if args.paper_id:
         result = generate_summary_for_paper(
             paper_id=args.paper_id,
-            db_path=args.db_path,
             model_name=args.model,
             api_key=args.api_key,
         )
@@ -544,13 +536,10 @@ def main():
             '  python summary_generation.py --pdf-url "https://arxiv.org/pdf/2501.15228" --output summary.json'
         )
         print("  python summary_generation.py --list-models")
-        print(
-            "  python summary_generation.py --process-rag-papers --db-path web_interface/data/papers.db"
-        )
+        print("  python summary_generation.py --process-rag-papers")
 
 
 def get_rag_papers_needing_summary(
-    db_path: str = "web_interface/data/papers.db",
     db=None,
     overwrite: bool = False,
 ) -> list[dict]:
@@ -573,7 +562,7 @@ def get_rag_papers_needing_summary(
     # Use provided db or create new one
     should_close = db is None
     if db is None:
-        db = PaperDB(db_path)
+        db = PaperDB()
 
     # Get papers with RAG topic
     rag_papers = db.get_papers_by_topic("RAG")
@@ -592,7 +581,6 @@ def get_rag_papers_needing_summary(
 
 def generate_summary_for_paper(
     paper_id: int,
-    db_path: str = "web_interface/data/papers.db",
     model_name: str = None,
     api_key: str = None,
     db=None,
@@ -638,7 +626,7 @@ def generate_summary_for_paper(
     # Use provided db or create new one
     should_close = db is None
     if db is None:
-        db = PaperDB(db_path)
+        db = PaperDB()
 
     # Get paper by ID
     paper = db.get_paper_by_id(paper_id)
@@ -711,7 +699,6 @@ def generate_summary_for_paper(
 
 
 def process_rag_papers(
-    db_path: str = "web_interface/data/papers.db",
     model_name: str = None,
     api_key: str = None,
     limit: int = None,
@@ -742,10 +729,8 @@ def process_rag_papers(
     from paper_db import PaperDB
 
     # Get papers needing summaries
-    db = PaperDB(db_path)
-    papers_to_process = get_rag_papers_needing_summary(
-        db_path, db=db, overwrite=overwrite
-    )
+    db = PaperDB()
+    papers_to_process = get_rag_papers_needing_summary(db=db, overwrite=overwrite)
     db.close()
 
     if limit:
@@ -782,7 +767,6 @@ def process_rag_papers(
         # Each worker gets its own DB connection
         result = generate_summary_for_paper(
             paper_id=paper_id,
-            db_path=db_path,
             model_name=model_name,
             api_key=api_key,
             db=None,  # Let it create its own connection
@@ -827,7 +811,7 @@ def process_rag_papers(
                     print(f"  ✗ Worker exception: {str(e)}")
     else:
         # Sequential processing (original behavior)
-        db = PaperDB(db_path)
+        db = PaperDB()
         for i, paper in enumerate(papers_to_process):
             paper_id = paper["id"]
             title = paper["title"]
@@ -837,7 +821,6 @@ def process_rag_papers(
 
             result = generate_summary_for_paper(
                 paper_id=paper_id,
-                db_path=db_path,
                 model_name=model_name,
                 api_key=api_key,
                 db=db,

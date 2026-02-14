@@ -12,8 +12,6 @@ Usage:
 
 Configuration:
     Copy config.yaml.example to config.yaml and customize settings.
-    You can also override settings via command line:
-        python paper_collector.py --db-path /path/to/papers.db
 """
 
 import argparse
@@ -100,10 +98,6 @@ def parse_email_date(date_str):
 
 def parse_args():
     """Parse command-line arguments."""
-    # Get default paths from config
-    cfg = config()
-    default_db_path = cfg.get_db_path()
-
     parser = argparse.ArgumentParser(
         description="Fetch emails from Gmail (Google Scholar Alerts by default)."
     )
@@ -151,13 +145,7 @@ def parse_args():
     parser.add_argument(
         "--save-db",
         action="store_true",
-        help="Save parsed papers to the database",
-    )
-    parser.add_argument(
-        "--db-path",
-        type=str,
-        default=default_db_path,
-        help=f"Path to database file (default: {default_db_path})",
+        help="Save parsed papers to PostgreSQL database",
     )
     parser.add_argument(
         "--skip-tags",
@@ -219,8 +207,8 @@ def main():
             # Initialize database connection for incremental saving
             db = None
             if args.save_db:
-                db = PaperDB(args.db_path)
-                print(f"Database: {args.db_path}")
+                db = PaperDB()
+                print("Connected to PostgreSQL database")
 
             all_papers = []
             seen_titles = set()  # Track seen titles across all emails for deduplication
