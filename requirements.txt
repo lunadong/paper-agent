@@ -2,7 +2,7 @@
 flask
 gunicorn
 
-# Gmail API
+# Google API
 google-auth
 google-auth-oauthlib
 google-api-python-client
@@ -10,11 +10,8 @@ google-api-python-client
 # Configuration
 pyyaml
 
-# Semantic search
+# Semantic search (for local development)
 sentence-transformers
-faiss-cpu
-
-# Data processing
 numpy
 
 # PDF processing (for auto_summary)
@@ -23,8 +20,8 @@ PyPDF2
 # HTTP requests
 requests
 
-# PostgreSQL database (Neon serverless)
+# PostgreSQL
 psycopg2-binary
 
-# Vector similarity search (pgvector)
+# pgvector for embeddings
 pgvector

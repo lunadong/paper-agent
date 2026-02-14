@@ -3,11 +3,11 @@
 Google Scholar Alert Reader
 
 Main script for fetching and parsing Google Scholar alert emails.
-Also rebuilds FAISS index and tags topics to keep everything in sync.
+Tags topics to keep everything organized.
 
 Usage:
-    python paper_collector.py -n 5 --after 2026/01/01      # Fetch, save, build index, tag topics
-    python paper_collector.py -n 5 --after 2026/01/01 --skip-index --skip-tags  # Fetch only
+    python paper_collector.py -n 5 --after 2026/01/01      # Fetch, save, tag topics
+    python paper_collector.py -n 5 --after 2026/01/01 --skip-tags  # Fetch only
     python paper_collector.py --help
 
 Configuration:
@@ -160,11 +160,6 @@ def parse_args():
         help=f"Path to SQLite database file (default: {default_db_path})",
     )
     parser.add_argument(
-        "--skip-index",
-        action="store_true",
-        help="Skip rebuilding FAISS index after saving papers",
-    )
-    parser.add_argument(
         "--skip-tags",
         action="store_true",
         help="Skip topic tagging after saving papers",
@@ -310,19 +305,6 @@ def main():
                 print(f"Total saved to database: {total_saved}")
                 if total_skipped > 0:
                     print(f"Total duplicates skipped: {total_skipped}")
-
-                # Build FAISS index (unless skipped)
-                if total_saved > 0 and not args.skip_index:
-                    print("\n" + "=" * 60)
-                    print("Rebuilding FAISS index...")
-                    print("=" * 60)
-                    from index_builder import build_index
-
-                    build_index()
-                elif args.skip_index:
-                    print("\nSkipping FAISS index rebuild (--skip-index)")
-                else:
-                    print("\nNo new papers - skipping index rebuild")
 
                 # Tag topics (unless skipped)
                 if total_saved > 0 and not args.skip_tags:

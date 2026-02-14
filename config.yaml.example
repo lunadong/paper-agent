@@ -36,18 +36,9 @@ gmail:
 # =============================================================================
 
 data:
-  # Directory for storing database and index files
+  # Directory for storing local files
   # Relative to project root, or use absolute path
   data_dir: "web_interface/data"
-
-  # Database filename
-  db_file: "papers.db"
-
-  # FAISS index filename
-  index_file: "papers.index"
-
-  # Paper IDs mapping filename
-  ids_file: "paper_ids.json"
 
 # =============================================================================
 # Web Server Settings

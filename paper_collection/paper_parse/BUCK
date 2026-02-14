@@ -30,30 +30,13 @@ python_binary(
     ],
 )
 
-
-python_binary(
-    name = "index_builder",
-    srcs = ["index_builder.py"],
-    labels = ["autodeps2_generated"],
-    main_module = "assistant.research.paper-agent.paper_collection.paper_parse.index_builder",
-    deps = [
-        "fbsource//third-party/pypi/numpy:numpy",
-        "fbsource//third-party/pypi/sentence-transformers:sentence-transformers",
-    ],
-)
-
-
 python_binary(
     name = "topic_tagger",
     srcs = ["topic_tagger.py"],
     labels = ["autodeps2_generated"],
     main_module = "assistant.research.paper-agent.paper_collection.paper_parse.topic_tagger",
-    deps = [
-        "fbsource//third-party/pypi/numpy:numpy",
-        "fbsource//third-party/pypi/sentence-transformers:sentence-transformers",
-    ],
+    deps = [],
 )
-
 
 python_library(
     name = "paper_parser",

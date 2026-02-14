@@ -1,80 +1,67 @@
 #!/usr/bin/python3
 """
-Migration script to add 'topic' column to the papers database.
+Topic tagger for papers database.
 
-Topics (tag - full_name; exact_match; semantic_search):
-    Pretraining - LLM pre-train; "mid-training"; "pretraining"
-    RL - Reinforcement learning; "reinforcement learning", "RL", "RLHF", "DPO", "GRPO"; (empty)
-    Reasoning - Reasoning; "Reasoning", "Planning"; (empty)
-    Factuality - Factuality, Hallucination; (empty); "Factuality", "Hallucination"
-    RAG - RAG (Retrieval-Augmented Generation); "RAG", "Retrieval-Augmented Generation"; (empty)
-    Agent - Agentic AI; "agent", "agentic"; "Tool use", "Agentic AI"
-    P13N - Personalization; "personalization"; (empty)
-    Memory - Memory; "Memory"; (empty)
-    KG - Knowledge Graph; "KG", "Knowledge Graph"; (empty)
-    QA - Question Answering; "QA", "Question Answering"; (empty)
-    Recommendation - Recommendation; (empty); "Recommendation"
-    MM - Multi-Modal; (empty); "multi-modal", "visual"
-    Speech - Speech; "speech"; (empty)
-    Benchmark - Benchmark; "benchmark"; (empty)
+Topics (tag - full_name; exact_match):
+    Pretraining - LLM pre-train; "mid-training", "pretraining"
+    RL - Reinforcement learning; "reinforcement learning", "RL", "RLHF", "DPO", "GRPO"
+    Reasoning - Reasoning; "Reasoning", "Planning"
+    Factuality - Factuality, Hallucination; "Factuality", "Hallucination"
+    RAG - RAG (Retrieval-Augmented Generation); "RAG", "Retrieval-Augmented Generation"
+    Agent - Agentic AI; "agent", "agentic", "Tool use"
+    P13N - Personalization; "personalization"
+    Memory - Memory; "Memory"
+    KG - Knowledge Graph; "KG", "Knowledge Graph"
+    QA - Question Answering; "QA", "Question Answering"
+    Recommendation - Recommendation; "Recommendation"
+    MM - Multi-Modal; "multi-modal", "visual", "multimodal"
+    Speech - Speech; "speech"
+    Benchmark - Benchmark; "benchmark"
 
 Usage:
-    python3 add_topic_column.py           # Add column and show stats
-    python3 add_topic_column.py --tag     # Auto-tag ALL papers using both exact match and semantic search
-    python3 add_topic_column.py --tag-new # Only tag papers without topics (for daily updates)
-    python3 add_topic_column.py --retag KG  # Re-tag only specific topic, keep others
+    python3 topic_tagger.py           # Show stats
+    python3 topic_tagger.py --tag     # Auto-tag ALL papers using exact match
+    python3 topic_tagger.py --tag-new # Only tag papers without topics (for daily updates)
+    python3 topic_tagger.py --retag KG  # Re-tag only specific topic, keep others
 """
 
 import argparse
-import json
 import os
 import re
 import sqlite3
 
-import faiss
-import numpy as np
-from sentence_transformers import SentenceTransformer
-
-# Database and index paths (relative to script)
+# Database path (relative to script)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(SCRIPT_DIR, "..", "..", "web_interface", "data")
 DB_PATH = os.path.join(DATA_DIR, "papers.db")
-INDEX_PATH = os.path.join(DATA_DIR, "papers.index")
-IDS_PATH = os.path.join(DATA_DIR, "paper_ids.json")
 
-# Model for semantic search
-MODEL_NAME = "all-MiniLM-L6-v2"
-
-# Score threshold for semantic search tagging
-SCORE_THRESHOLD = 0.2
-
-# Topics: tag -> (full_name, exact_match_queries, semantic_search_queries)
+# Topics: tag -> (full_name, exact_match_queries)
 # exact_match_queries: case-insensitive substring match on title or abstract
-# semantic_search_queries: FAISS semantic similarity search
 TOPICS = {
-    "Pretraining": ("LLM pre-train", ["mid-training"], ["pretraining"]),
+    "Pretraining": ("LLM pre-train", ["mid-training", "pretraining", "pre-training"]),
     "RL": (
         "Reinforcement learning",
-        ["reinforcement learning", "RL", "RLHF", "DPO", "GRPO"],
-        [],
+        ["reinforcement learning", "RLHF", "DPO", "GRPO"],
     ),
-    "Reasoning": ("Reasoning", ["Reasoning", "Planning"], []),
-    "Factuality": ("Factuality, Hallucination", [], ["Factuality", "Hallucination"]),
+    "Reasoning": ("Reasoning", ["Reasoning", "Planning"]),
+    "Factuality": ("Factuality, Hallucination", ["Factuality", "Hallucination"]),
     "RAG": (
         "RAG (Retrieval-Augmented Generation)",
-        ["RAG", "Retrieval-Augmented Generation"],
-        [],
+        ["Retrieval-Augmented", "retrieval augmented"],
     ),
-    "Agent": ("Agentic AI", ["agent", "agentic"], ["Tool use", "Agentic AI"]),
-    "P13N": ("Personalization", [], ["personalization"]),
-    "Memory": ("Memory", ["Memory"], []),
-    "KG": ("Knowledge Graph", ["KG", "Knowledge Graph"], []),
-    "QA": ("Question Answering", ["QA", "Question Answering"], []),
-    "Recommendation": ("Recommendation", [], ["Recommendation"]),
-    "MM": ("Multi-Modal", [], ["multi-modal", "visual"]),
-    "Speech": ("Speech", ["speech"], []),
-    "Benchmark": ("Benchmark", ["benchmark"], []),
+    "Agent": ("Agentic AI", ["agent", "agentic", "Tool use"]),
+    "P13N": ("Personalization", ["personalization", "personalized"]),
+    "Memory": ("Memory", ["Memory"]),
+    "KG": ("Knowledge Graph", ["Knowledge Graph"]),
+    "QA": ("Question Answering", ["Question Answering"]),
+    "Recommendation": ("Recommendation", ["Recommendation", "recommender"]),
+    "MM": ("Multi-Modal", ["multi-modal", "multimodal", "vision-language"]),
+    "Speech": ("Speech", ["speech", "spoken"]),
+    "Benchmark": ("Benchmark", ["benchmark"]),
 }
+
+# Short acronyms that need word-boundary matching to avoid false positives
+SHORT_ACRONYMS = {"RL", "RAG", "KG", "QA", "MM"}
 
 
 def add_topic_column():
@@ -137,7 +124,7 @@ def show_topic_stats():
     conn.close()
 
 
-def exact_match_search(cursor, queries):
+def exact_match_search(cursor, queries, paper_data=None):
     """Find papers that contain any of the queries in title or abstract (case insensitive).
 
     For short terms (<=3 chars), uses word boundary matching to avoid false positives
@@ -146,24 +133,24 @@ def exact_match_search(cursor, queries):
     """
     matching_ids = set()
 
-    # First, fetch all papers with their text
-    cursor.execute("SELECT id, title, abstract FROM papers")
-    all_papers = cursor.fetchall()
+    # Get paper data if not provided
+    if paper_data is None:
+        cursor.execute("SELECT id, title, abstract FROM papers")
+        paper_data = cursor.fetchall()
 
     for query in queries:
         query_lower = query.lower()
 
-        if len(query) <= 3:
+        if len(query) <= 3 or query.upper() in SHORT_ACRONYMS:
             # Use word boundary regex for short acronyms
-            # \b matches word boundaries (start/end of word)
             pattern = re.compile(r"\b" + re.escape(query_lower) + r"\b", re.IGNORECASE)
-            for paper_id, title, abstract in all_papers:
+            for paper_id, title, abstract in paper_data:
                 text = (title or "") + " " + (abstract or "")
                 if pattern.search(text):
                     matching_ids.add(paper_id)
         else:
             # Use substring match for longer terms
-            for paper_id, title, abstract in all_papers:
+            for paper_id, title, abstract in paper_data:
                 title_lower = (title or "").lower()
                 abstract_lower = (abstract or "").lower()
                 if query_lower in title_lower or query_lower in abstract_lower:
@@ -172,80 +159,35 @@ def exact_match_search(cursor, queries):
     return matching_ids
 
 
-def semantic_search(model, index, paper_ids, queries, threshold):
-    """Find papers using FAISS semantic similarity search."""
-    matching_ids = set()
-    for query in queries:
-        query_embedding = model.encode([query], convert_to_numpy=True)
-        faiss.normalize_L2(query_embedding)
-        scores, indices = index.search(query_embedding, len(paper_ids))
-        for i, score in zip(indices[0], scores[0]):
-            if score >= threshold and i < len(paper_ids):
-                matching_ids.add(paper_ids[i])
-    return matching_ids
-
-
 def auto_tag_papers():
-    """Auto-tag papers using exact match and semantic search."""
+    """Auto-tag papers using exact match search."""
     print(f"Database: {DB_PATH}")
-    print(f"Index: {INDEX_PATH}")
-    print(f"Score threshold for semantic search: {SCORE_THRESHOLD}")
-
-    # Check if index exists (needed for semantic search)
-    has_index = os.path.exists(INDEX_PATH) and os.path.exists(IDS_PATH)
-
-    index = None
-    paper_ids = None
-    model = None
-
-    if has_index:
-        print("\nLoading FAISS index...")
-        index = faiss.read_index(INDEX_PATH)
-        with open(IDS_PATH, "r") as f:
-            paper_ids = json.load(f)
-        print(f"Index loaded with {index.ntotal} vectors")
-
-        print(f"Loading model: {MODEL_NAME}...")
-        model = SentenceTransformer(MODEL_NAME)
-    else:
-        print("\nWarning: FAISS index not found. Semantic search will be skipped.")
 
     # Connect to database
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
+    # Get all papers with their text
+    cursor.execute("SELECT id, title, abstract FROM papers")
+    all_papers = cursor.fetchall()
+
     # Get all paper IDs for tracking
-    cursor.execute("SELECT id FROM papers")
-    all_paper_ids = [row[0] for row in cursor.fetchall()]
+    all_paper_ids = [p[0] for p in all_papers]
 
     # Dictionary to track topics for each paper: paper_id -> set of topics
     paper_topics = {pid: set() for pid in all_paper_ids}
 
-    # For each topic, run both search strategies
+    # For each topic, run search
     print("\nTagging papers...")
-    for tag, (full_name, exact_queries, semantic_queries) in TOPICS.items():
+    for tag, (full_name, exact_queries) in TOPICS.items():
         print(f"\n  {tag} ({full_name}):")
         tag_paper_ids = set()
 
         # Exact match search
         if exact_queries:
-            exact_matches = exact_match_search(cursor, exact_queries)
+            exact_matches = exact_match_search(cursor, exact_queries, all_papers)
             tag_paper_ids.update(exact_matches)
             print(f"    Exact match {exact_queries}: {len(exact_matches)} papers")
-
-        # Semantic search
-        if semantic_queries and has_index:
-            for query in semantic_queries:
-                query_embedding = model.encode([query], convert_to_numpy=True)
-                faiss.normalize_L2(query_embedding)
-                scores, indices = index.search(query_embedding, len(paper_ids))
-
-                matched = 0
-                for i, score in zip(indices[0], scores[0]):
-                    if score >= SCORE_THRESHOLD and i < len(paper_ids):
-                        tag_paper_ids.add(paper_ids[i])
-                        matched += 1
-                print(f"    Semantic '{query}': {matched} papers")
 
         # Add tag to matched papers
         for paper_id in tag_paper_ids:
@@ -284,30 +226,9 @@ def retag_single_topic(tag_to_retag):
         return
 
     print(f"Database: {DB_PATH}")
-    print(f"Index: {INDEX_PATH}")
-    print(f"Score threshold for semantic search: {SCORE_THRESHOLD}")
     print(f"Re-tagging topic: {tag_to_retag}")
 
-    full_name, exact_queries, semantic_queries = TOPICS[tag_to_retag]
-
-    # Check if index exists (needed for semantic search)
-    has_index = os.path.exists(INDEX_PATH) and os.path.exists(IDS_PATH)
-
-    index = None
-    paper_ids = None
-    model = None
-
-    if has_index and semantic_queries:
-        print("\nLoading FAISS index...")
-        index = faiss.read_index(INDEX_PATH)
-        with open(IDS_PATH, "r") as f:
-            paper_ids = json.load(f)
-        print(f"Index loaded with {index.ntotal} vectors")
-
-        print(f"Loading model: {MODEL_NAME}...")
-        model = SentenceTransformer(MODEL_NAME)
-    elif semantic_queries:
-        print("\nWarning: FAISS index not found. Semantic search will be skipped.")
+    full_name, exact_queries = TOPICS[tag_to_retag]
 
     # Connect to database
     conn = sqlite3.connect(DB_PATH)
@@ -321,20 +242,6 @@ def retag_single_topic(tag_to_retag):
         exact_matches = exact_match_search(cursor, exact_queries)
         matching_paper_ids.update(exact_matches)
         print(f"    Exact match {exact_queries}: {len(exact_matches)} papers")
-
-    # Semantic search
-    if semantic_queries and has_index:
-        for query in semantic_queries:
-            query_embedding = model.encode([query], convert_to_numpy=True)
-            faiss.normalize_L2(query_embedding)
-            scores, indices = index.search(query_embedding, len(paper_ids))
-
-            matched = 0
-            for i, score in zip(indices[0], scores[0]):
-                if score >= SCORE_THRESHOLD and i < len(paper_ids):
-                    matching_paper_ids.add(paper_ids[i])
-                    matched += 1
-            print(f"    Semantic '{query}': {matched} papers")
 
     print(f"    Total unique papers for {tag_to_retag}: {len(matching_paper_ids)}")
 
@@ -380,92 +287,38 @@ def retag_single_topic(tag_to_retag):
 def tag_new_papers():
     """Tag only papers that don't have topics yet (for daily updates)."""
     print(f"Database: {DB_PATH}")
-    print(f"Index: {INDEX_PATH}")
-    print(f"Score threshold for semantic search: {SCORE_THRESHOLD}")
     print("Mode: Tagging only NEW papers (without topics)")
-
-    # Check if index exists (needed for semantic search)
-    has_index = os.path.exists(INDEX_PATH) and os.path.exists(IDS_PATH)
-
-    index = None
-    paper_ids = None
-    model = None
-
-    if has_index:
-        print("\nLoading FAISS index...")
-        index = faiss.read_index(INDEX_PATH)
-        with open(IDS_PATH, "r") as f:
-            paper_ids = json.load(f)
-        print(f"Index loaded with {index.ntotal} vectors")
-
-        print(f"Loading model: {MODEL_NAME}...")
-        model = SentenceTransformer(MODEL_NAME)
-    else:
-        print("\nWarning: FAISS index not found. Semantic search will be skipped.")
 
     # Connect to database
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     # Get only papers WITHOUT topics
-    cursor.execute("SELECT id FROM papers WHERE topic IS NULL OR topic = ''")
-    new_paper_ids = [row[0] for row in cursor.fetchall()]
+    cursor.execute(
+        "SELECT id, title, abstract FROM papers WHERE topic IS NULL OR topic = ''"
+    )
+    new_papers = cursor.fetchall()
 
-    if not new_paper_ids:
+    if not new_papers:
         print("\nNo new papers to tag.")
         conn.close()
         return
 
+    new_paper_ids = [p[0] for p in new_papers]
     print(f"\nFound {len(new_paper_ids)} papers without topics")
 
     # Dictionary to track topics for each new paper: paper_id -> set of topics
     paper_topics = {pid: set() for pid in new_paper_ids}
-    new_paper_set = set(new_paper_ids)
 
-    # For each topic, run both search strategies
+    # For each topic, run search
     print("\nTagging new papers...")
-    for tag, (full_name, exact_queries, semantic_queries) in TOPICS.items():
+    for tag, (full_name, exact_queries) in TOPICS.items():
         tag_paper_ids = set()
 
         # Exact match search (only for new papers)
         if exact_queries:
-            # Get text for new papers only
-            placeholders = ",".join("?" * len(new_paper_ids))
-            cursor.execute(
-                f"SELECT id, title, abstract FROM papers WHERE id IN ({placeholders})",
-                new_paper_ids,
-            )
-            new_papers_data = cursor.fetchall()
-
-            for query in exact_queries:
-                query_lower = query.lower()
-                if len(query) <= 3:
-                    pattern = re.compile(
-                        r"\b" + re.escape(query_lower) + r"\b", re.IGNORECASE
-                    )
-                    for paper_id, title, abstract in new_papers_data:
-                        text = (title or "") + " " + (abstract or "")
-                        if pattern.search(text):
-                            tag_paper_ids.add(paper_id)
-                else:
-                    for paper_id, title, abstract in new_papers_data:
-                        title_lower = (title or "").lower()
-                        abstract_lower = (abstract or "").lower()
-                        if query_lower in title_lower or query_lower in abstract_lower:
-                            tag_paper_ids.add(paper_id)
-
-        # Semantic search (filter to new papers only)
-        if semantic_queries and has_index:
-            for query in semantic_queries:
-                query_embedding = model.encode([query], convert_to_numpy=True)
-                faiss.normalize_L2(query_embedding)
-                scores, indices = index.search(query_embedding, len(paper_ids))
-
-                for i, score in zip(indices[0], scores[0]):
-                    if score >= SCORE_THRESHOLD and i < len(paper_ids):
-                        pid = paper_ids[i]
-                        if pid in new_paper_set:
-                            tag_paper_ids.add(pid)
+            matches = exact_match_search(cursor, exact_queries, new_papers)
+            tag_paper_ids.update(matches)
 
         # Add tag to matched papers
         for paper_id in tag_paper_ids:
@@ -500,7 +353,7 @@ def parse_args():
     parser.add_argument(
         "--tag",
         action="store_true",
-        help="Auto-tag ALL papers using semantic search",
+        help="Auto-tag ALL papers using exact match search",
     )
     parser.add_argument(
         "--tag-new",

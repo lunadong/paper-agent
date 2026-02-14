@@ -6,7 +6,7 @@ An automated system for collecting academic papers from Google Scholar email ale
 
 - 📧 **Gmail Integration**: Automatically parse Google Scholar alert emails
 - 📚 **Paper Database**: PostgreSQL database (via Neon) with title, authors, venue, year, abstract, and links
-- 🔍 **Semantic Search**: FAISS-powered similarity search using sentence transformers
+- 🔍 **Semantic Search**: pgvector-powered similarity search using OpenAI embeddings
 - 🏷️ **Topic Tagging**: Automatic topic classification for papers
 - 🌐 **Web Interface**: Browse and search papers with a responsive Flask web app
 - ⏰ **Daily Updates**: Automated daily collection with email notifications
@@ -96,8 +96,6 @@ gmail:
 # Data storage
 data:
   data_dir: "web_interface/data"
-  index_file: "papers.index"
-  ids_file: "paper_ids.json"
 
 # Database (PostgreSQL via Neon)
 database:
@@ -121,7 +119,7 @@ python3 daily_update.py --days 1 --dry-run
 
 A browser window will open asking you to authorize the app. After authorization, a `token.json` file will be created storing your credentials.
 
-### 5. Collect Papers
+### 4. Collect Papers
 
 ```bash
 # Collect papers from the last 7 days
@@ -132,7 +130,7 @@ python3 daily_update.py --days 7 --no-email
 python3 paper_collector.py -n 50 --after 2024/01/01 --save-db --print
 ```
 
-### 6. Browse Papers
+### 5. Browse Papers
 
 ```bash
 cd web_interface
@@ -158,21 +156,21 @@ paper_agent/
 │   ├── credentials.json    # OAuth credentials (you create this)
 │   ├── token.json          # OAuth token (auto-generated)
 │   │
+│   ├── auto_summary/       # AI-powered paper summarization
+│   │   └── summary_generation.py
+│   │
 │   └── paper_parse/        # Paper parsing utilities
 │       ├── paper_parser.py # Parse Google Scholar HTML
-│       ├── paper_db.py     # SQLite database operations
-│       ├── index_builder.py# FAISS index builder
 │       ├── topic_tagger.py # Topic classification
 │       ├── arxiv_fetcher.py# ArXiv metadata fetcher
 │       └── acm_fetcher.py  # ACM metadata fetcher
 │
 └── web_interface/          # Web application
-    ├── web_server.py       # Flask application
+    ├── web_server.py       # Flask application (local dev)
     ├── requirements.txt    # Web dependencies
-    ├── data/
-    │   ├── papers.db       # SQLite database
-    │   ├── papers.index    # FAISS search index
-    │   └── paper_ids.json  # Paper ID mappings
+    ├── vercel.json         # Vercel deployment config
+    ├── api/
+    │   └── index.py        # Vercel serverless function
     ├── templates/
     │   └── papers.html     # HTML template
     └── static/
@@ -209,7 +207,6 @@ Options:
   --save-db             Save papers to database
   --db-path PATH        Custom database path
   --print               Print parsed papers to console
-  --skip-index          Skip rebuilding FAISS index
   --skip-tags           Skip topic tagging
   --debug               Print raw text for debugging
 ```
@@ -321,6 +318,8 @@ MIT
 ## Acknowledgments
 
 - [Google Scholar](https://scholar.google.com/) for the academic paper alerts
-- [Sentence Transformers](https://www.sbert.net/) for semantic embeddings
-- [FAISS](https://faiss.ai/) for similarity search
+- [Neon](https://neon.tech/) for PostgreSQL serverless database
+- [pgvector](https://github.com/pgvector/pgvector) for vector similarity search
+- [OpenAI](https://openai.com/) for embeddings API
 - [Flask](https://flask.palletsprojects.com/) for the web framework
+- [Vercel](https://vercel.com/) for deployment
