@@ -2,7 +2,7 @@
 Vercel Serverless Function for Paper Browser API
 
 This module provides a Flask app compatible with Vercel's serverless functions.
-Uses OpenAI embeddings for search queries (lightweight) instead of sentence-transformers.
+Uses OpenAI embeddings for search queries (lightweight).
 """
 
 import os
@@ -10,12 +10,11 @@ from datetime import datetime
 from pathlib import Path
 
 import psycopg2
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request
 from psycopg2.extras import RealDictCursor
 
 # Get the directory where this file is located
-API_DIR = Path(__file__).parent
-WEB_INTERFACE_DIR = API_DIR.parent
+WEB_INTERFACE_DIR = Path(__file__).parent
 
 app = Flask(
     __name__,
@@ -31,8 +30,8 @@ def load_config():
         import yaml
 
         config_paths = [
-            Path(__file__).parent.parent.parent / "config.yaml",
             Path(__file__).parent.parent / "config.yaml",
+            Path(__file__).parent / "config.yaml",
         ]
 
         for config_path in config_paths:
@@ -48,10 +47,7 @@ def load_config():
 _config = load_config()
 
 # Database connection (uses Vercel environment variable or config.yaml)
-DATABASE_URL = os.environ.get("DATABASE_URL") or _config.get("database", {}).get(
-    "url",
-    "postgresql://neondb_owner:npg_yBqTsWUe9d2b@ep-restless-frog-af38fztv-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require",
-)
+DATABASE_URL = os.environ.get("DATABASE_URL") or _config.get("database", {}).get("url")
 
 # OpenAI API key for embeddings (from environment variable or config.yaml)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY") or _config.get("openai", {}).get(
@@ -65,6 +61,8 @@ _conn = None
 def get_db_connection():
     """Get database connection with connection pooling."""
     global _conn
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL not configured")
     if _conn is None or _conn.closed:
         _conn = psycopg2.connect(DATABASE_URL)
     return _conn

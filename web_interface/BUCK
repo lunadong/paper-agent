@@ -10,6 +10,31 @@ python_binary(
     deps = [
         "fbsource//third-party/pypi/flask:flask",
         "fbsource//third-party/pypi/numpy:numpy",
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
         "fbsource//third-party/pypi/sentence-transformers:sentence-transformers",
+    ],
+)
+
+python_binary(
+    name = "index",
+    srcs = ["index.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.web_interface.index",
+    deps = [
+        "fbsource//third-party/pypi/flask:flask",
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
+    ],
+)
+
+python_binary(
+    name = "index",
+    srcs = ["index.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.web_interface.index",
+    deps = [
+        "fbsource//third-party/pypi/flask:flask",
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
     ],
 )

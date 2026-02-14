@@ -1,4 +1,0 @@
-# Vercel serverless function requirements
-flask
-psycopg2-binary
-pyyaml

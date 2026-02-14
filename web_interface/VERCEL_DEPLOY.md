@@ -13,7 +13,7 @@ This guide explains how to deploy the Paper Browser to Vercel.
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │   Vercel CDN    │────▶│ Serverless Flask │────▶│ Neon PostgreSQL │
-│  (static files) │     │   (api/index.py) │     │   (pgvector)    │
+│  (static files) │     │    (index.py)    │     │   (pgvector)    │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
                                 │
                                 ▼
@@ -92,15 +92,15 @@ This guide explains how to deploy the Paper Browser to Vercel.
 
 ```
 web_interface/
-├── api/
-│   ├── index.py          # Serverless Flask app
-│   └── requirements.txt  # Python dependencies
+├── index.py              # Serverless Flask app (Vercel entry point)
+├── web_server.py         # Local development server
+├── requirements.txt      # Python dependencies
+├── vercel.json           # Vercel configuration
 ├── static/
 │   └── js/
 │       └── papers.js     # Frontend JavaScript
 ├── templates/
 │   └── papers.html       # HTML template
-├── vercel.json           # Vercel configuration
 └── VERCEL_DEPLOY.md      # This file
 ```
 

@@ -166,11 +166,10 @@ paper_agent/
 │       └── acm_fetcher.py  # ACM metadata fetcher
 │
 └── web_interface/          # Web application
+    ├── index.py            # Vercel serverless function
     ├── web_server.py       # Flask application (local dev)
     ├── requirements.txt    # Web dependencies
     ├── vercel.json         # Vercel deployment config
-    ├── api/
-    │   └── index.py        # Vercel serverless function
     ├── templates/
     │   └── papers.html     # HTML template
     └── static/

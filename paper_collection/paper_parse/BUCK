@@ -1,5 +1,5 @@
-load("@fbcode_macros//build_defs:python_library.bzl", "python_library")
 load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
+load("@fbcode_macros//build_defs:python_library.bzl", "python_library")
 
 oncall("fill in oncall here @nocommit")
 
