@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 """
-Paper Browser Web Server
+Paper Browser Web Server (Local Development)
 
 A Flask web server for browsing and searching papers.
-Supports both keyword search (SQL ILIKE) and semantic search (pgvector).
+Uses PostgreSQL with pgvector for semantic search.
 
 Usage (local):
     python web_server.py
@@ -17,24 +17,25 @@ Then visit: http://localhost:5001 (or your configured port)
 """
 
 import argparse
+import json
 import os
 import sys
+import urllib.request
 from datetime import datetime
 
+import psycopg2
 from flask import Flask, jsonify, render_template, request
+from psycopg2.extras import RealDictCursor
 
-# Add parent directory for imports
+# Add parent directory for config import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, os.path.join(PARENT_DIR, "paper_collection"))
-
-from paper_db import PaperDB
 
 app = Flask(__name__)
 
 # Configuration (loaded lazily)
 _config = None
-_db = None
 
 
 def get_app_config():
@@ -46,32 +47,81 @@ def get_app_config():
 
             _config = config()
         except ImportError:
+            # Config module not available, use defaults
             _config = None
     return _config
 
 
-def get_db():
-    """Get database connection (lazy initialization)."""
-    global _db
-    if _db is None:
-        print("Connecting to PostgreSQL database...")
-        _db = PaperDB()
-        print("Database connected!")
-    return _db
+def get_database_url():
+    """Get database URL from config or environment."""
+    cfg = get_app_config()
+    if cfg and hasattr(cfg, "database") and hasattr(cfg.database, "url"):
+        return cfg.database.url
+    return os.environ.get("DATABASE_URL")
+
+
+def get_openai_api_key():
+    """Get OpenAI API key from config or environment."""
+    cfg = get_app_config()
+    if cfg and hasattr(cfg, "openai") and hasattr(cfg.openai, "api_key"):
+        return cfg.openai.api_key
+    return os.environ.get("OPENAI_API_KEY")
 
 
 def get_papers_per_page():
     """Get papers per page from config or default."""
     cfg = get_app_config()
-    if cfg:
+    if cfg and hasattr(cfg, "web") and hasattr(cfg.web, "papers_per_page"):
         return cfg.web.papers_per_page
     return 10
 
 
-def get_all_papers(order_by="recomm_date", order_dir="DESC"):
-    """Get all papers from the database."""
-    db = get_db()
-    return db.get_all_papers(order_by=order_by, order_dir=order_dir)
+# Database connection pool
+_conn = None
+
+
+def get_db_connection():
+    """Get database connection with connection pooling."""
+    global _conn
+    database_url = get_database_url()
+    if not database_url:
+        raise RuntimeError(
+            "DATABASE_URL not configured. Set it in config.yaml or environment."
+        )
+    if _conn is None or _conn.closed:
+        _conn = psycopg2.connect(database_url)
+    return _conn
+
+
+def get_cursor():
+    """Get a database cursor."""
+    conn = get_db_connection()
+    return conn.cursor(cursor_factory=RealDictCursor)
+
+
+def generate_openai_embedding(text: str) -> list:
+    """Generate embedding using OpenAI API (text-embedding-3-small)."""
+    api_key = get_openai_api_key()
+    if not api_key:
+        return None
+
+    url = "https://api.openai.com/v1/embeddings"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    data = json.dumps(
+        {"input": text, "model": "text-embedding-3-small", "dimensions": 512}
+    ).encode("utf-8")
+
+    req = urllib.request.Request(url, data=data, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            return result["data"][0]["embedding"]
+    except Exception as e:
+        print(f"OpenAI embedding error: {e}")
+        return None
 
 
 def get_score_bucket(score):
@@ -84,55 +134,110 @@ def get_score_bucket(score):
     - score < 0.15: 0.05 buckets
     """
     if score >= 0.5:
-        return 1.0
+        return 1.0  # All high scores in same bucket
     elif score >= 0.3:
-        return round(score * 10) / 10
+        return round(score * 10) / 10  # 0.1 buckets
     else:
-        return round(score * 20) / 20
+        return round(score * 20) / 20  # 0.05 buckets
+
+
+def get_all_papers(order_by="recomm_date", order_dir="DESC"):
+    """Get all papers from the database."""
+    valid_fields = {"created_at", "recomm_date", "title", "year", "id"}
+    if order_by not in valid_fields:
+        order_by = "recomm_date"
+    if order_dir.upper() not in ("ASC", "DESC"):
+        order_dir = "DESC"
+
+    cursor = get_cursor()
+    cursor.execute(
+        f"""
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic
+        FROM papers ORDER BY {order_by} {order_dir}
+        """
+    )
+    papers = [dict(row) for row in cursor.fetchall()]
+    return papers
 
 
 def search_papers_keyword(query):
     """Search papers by keyword (SQL ILIKE)."""
-    db = get_db()
-    return db.search_papers(query)
+    cursor = get_cursor()
+    search_pattern = f"%{query}%"
+    cursor.execute(
+        """
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic
+        FROM papers
+        WHERE title ILIKE %s OR abstract ILIKE %s OR authors ILIKE %s
+        ORDER BY recomm_date DESC
+        """,
+        (search_pattern, search_pattern, search_pattern),
+    )
+    papers = [dict(row) for row in cursor.fetchall()]
+    return papers
 
 
 def search_papers_semantic(query, top_k=None, score_threshold=0.15):
-    """Search papers using vector similarity (pgvector).
+    """Search papers using vector similarity (pgvector with OpenAI embeddings).
 
     Args:
         query: Search query string
-        top_k: Maximum number of results (default: all papers)
+        top_k: Maximum number of results (None = 1000)
         score_threshold: Minimum similarity score (0-1) to include a result
     """
-    db = get_db()
+    cursor = get_cursor()
 
     # Check if embeddings are available
-    stats = db.get_embedding_stats()
-    if stats["papers_with_embedding"] == 0:
+    cursor.execute("SELECT COUNT(*) as total FROM papers WHERE embedding IS NOT NULL")
+    result = cursor.fetchone()
+    embedding_count = result["total"] if result else 0
+
+    if embedding_count == 0:
         print("No embeddings available, falling back to keyword search")
+        return search_papers_keyword(query)
+
+    # Generate query embedding using OpenAI
+    query_embedding = generate_openai_embedding(query)
+
+    if query_embedding is None:
+        print("OpenAI embedding failed, falling back to keyword search")
         return search_papers_keyword(query)
 
     # Use pgvector search
     if top_k is None:
-        top_k = stats["total_papers"]
+        top_k = 1000
 
-    results = db.vector_search(query, limit=top_k, threshold=score_threshold)
+    cursor.execute(
+        """
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+               1 - (embedding <=> %s::vector) as similarity
+        FROM papers
+        WHERE embedding IS NOT NULL
+        ORDER BY embedding <=> %s::vector
+        LIMIT %s
+        """,
+        (query_embedding, query_embedding, top_k),
+    )
+
+    results = [dict(row) for row in cursor.fetchall()]
+
+    # Filter by threshold
+    if score_threshold:
+        results = [r for r in results if r.get("similarity", 0) >= score_threshold]
 
     # Sort by score bucket, then by date
     for paper in results:
         paper["_score"] = paper.get("similarity", 0)
 
-    # Step 1: Sort by date descending (secondary key)
     results.sort(key=lambda p: p.get("recomm_date") or "0000-00-00", reverse=True)
-
-    # Step 2: Sort by score bucket descending (primary key)
     results.sort(key=lambda p: get_score_bucket(p["_score"]), reverse=True)
 
-    # Remove internal score field
+    # Remove internal fields before returning
     for paper in results:
         if "_score" in paper:
             del paper["_score"]
+        if "similarity" in paper:
+            del paper["similarity"]
 
     return results
 
@@ -156,7 +261,7 @@ def api_papers():
     search_mode = request.args.get(
         "mode", "semantic", type=str
     )  # "keyword" or "semantic"
-    topics_filter = request.args.get("topics", "", type=str)
+    topics_filter = request.args.get("topics", "", type=str)  # Comma-separated topics
 
     if search:
         if search_mode == "semantic":
@@ -172,6 +277,7 @@ def api_papers():
         filtered_papers = []
         for paper in all_papers:
             paper_topics = paper.get("topic", "") or ""
+            # Check if paper has all selected topics
             has_all = all(topic in paper_topics for topic in selected_topics)
             if has_all:
                 filtered_papers.append(paper)
@@ -189,22 +295,23 @@ def api_papers():
             filtered_papers.append(paper)
         all_papers = filtered_papers
 
-    # Calculate monthly stats
+    # Calculate monthly stats for the filtered papers
     monthly_stats = {}
     for paper in all_papers:
         recomm_date = paper.get("recomm_date", "")
         if recomm_date and len(recomm_date) >= 7:
-            month_key = recomm_date[:7]
+            month_key = recomm_date[:7]  # "YYYY-MM"
             monthly_stats[month_key] = monthly_stats.get(month_key, 0) + 1
 
     # Remove current month (incomplete data)
     current_month = datetime.now().strftime("%Y-%m")
     monthly_stats.pop(current_month, None)
 
+    # Sort monthly stats by date
     sorted_months = sorted(monthly_stats.keys())
     monthly_data = [{"month": m, "count": monthly_stats[m]} for m in sorted_months]
 
-    # Calculate topic stats
+    # Calculate topic stats for the filtered papers (for bar chart when no search)
     topic_stats = {}
     for paper in all_papers:
         paper_topics = paper.get("topic", "") or ""
@@ -214,6 +321,7 @@ def api_papers():
                 if topic:
                     topic_stats[topic] = topic_stats.get(topic, 0) + 1
 
+    # Sort topic stats by count (descending)
     sorted_topics = sorted(topic_stats.items(), key=lambda x: x[1], reverse=True)
     topic_data = [{"topic": t, "count": c} for t, c in sorted_topics]
 
@@ -225,11 +333,6 @@ def api_papers():
     start = (page - 1) * papers_per_page
     end = start + papers_per_page
     papers = all_papers[start:end]
-
-    # Remove embedding from response (too large)
-    for paper in papers:
-        if "embedding" in paper:
-            del paper["embedding"]
 
     return jsonify(
         {
@@ -256,11 +359,30 @@ def api_papers():
 def api_similar_papers(paper_id):
     """API endpoint for finding similar papers."""
     limit = request.args.get("limit", 5, type=int)
-    db = get_db()
+    cursor = get_cursor()
 
-    similar = db.find_similar_papers(paper_id, limit=limit)
+    # Get source paper embedding
+    cursor.execute("SELECT embedding FROM papers WHERE id = %s", (paper_id,))
+    source = cursor.fetchone()
 
-    # Remove embedding from response
+    if not source or not source.get("embedding"):
+        return jsonify({"papers": [], "source_id": paper_id, "error": "No embedding"})
+
+    # Find similar papers
+    cursor.execute(
+        """
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+               1 - (embedding <=> %s::vector) as similarity
+        FROM papers
+        WHERE id != %s AND embedding IS NOT NULL
+        ORDER BY embedding <=> %s::vector
+        LIMIT %s
+        """,
+        (source["embedding"], paper_id, source["embedding"], limit),
+    )
+
+    similar = [dict(row) for row in cursor.fetchall()]
+
     for paper in similar:
         if "embedding" in paper:
             del paper["embedding"]
@@ -271,16 +393,31 @@ def api_similar_papers(paper_id):
 @app.route("/api/stats")
 def api_stats():
     """API endpoint for database and embedding statistics."""
-    db = get_db()
-    stats = db.get_embedding_stats()
+    cursor = get_cursor()
+    cursor.execute(
+        """
+        SELECT
+            COUNT(*) as total_papers,
+            COUNT(embedding) as papers_with_embedding,
+            COUNT(*) - COUNT(embedding) as papers_without_embedding
+        FROM papers
+        """
+    )
+    stats = dict(cursor.fetchone())
+    stats["coverage_percent"] = (
+        round(stats["papers_with_embedding"] / stats["total_papers"] * 100, 1)
+        if stats["total_papers"] > 0
+        else 0
+    )
     return jsonify(stats)
 
 
 def parse_args():
     """Parse command-line arguments."""
     cfg = get_app_config()
-    default_host = cfg.web.host if cfg else "0.0.0.0"
-    default_port = cfg.web.port if cfg else 5001
+    default_host = cfg.web.host if cfg and hasattr(cfg, "web") else "0.0.0.0"
+    default_port = cfg.web.port if cfg and hasattr(cfg, "web") else 5001
+    default_debug = cfg.web.debug if cfg and hasattr(cfg, "web") else True
 
     parser = argparse.ArgumentParser(description="Paper Browser web server")
     parser.add_argument(
