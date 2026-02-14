@@ -1,0 +1,184 @@
+For this paper, generate a JSON to help people understand it w/o reading the details. Assume readers know basics about RAG, but not necessarily all details
+1/ institution. Use abbreviation if possible
+2/ conference and year
+3/ whether or not this is a paper about RAG, and which category it falls into (see below)
+4/ a score of breakthrough, ranging from 1 to 5, where 1 is the lowest and 5 is the highest. One sentence justification.
+5/ short high-level summary, about how this paper advance the field of RAG and why it's novel; brief w. a few bullets summarizing main points.
+6/ tech details
+7/ evaluation results
+7.1/ benchmarks used in this paper. If it's newly constructed by this paper, mark so.
+7.2/ Evaluation highlights, in a few bullets. Each bullet shall give concrete metric numbers, rather than generic statements. If you need to extract the numbers from a table, do so.
+8/ Major architecture graph. If there is a major experiment graph, also include it.
+
+Do the above based on the background of RAG.
+"There are mainly three types of RAG pipelines. We only consider texts for now.
+1. Modularized RAG pipeline. It contains 4 modulars:
+1) RAG triggering: There are various ways to decide whether to trigger the RAG pipeline. Naive ways are trigger-for-all, or trigger-for-real-time-questions
+2) Query rewriting: Generate the web search query, or query for particular data sources like KG and docs
+3) Retrieval: potentially from multiple types of sources, retrieval and ranking
+4) Post-processing: oftentime chunk the retrieval results, re-ranking and filtering on the chunks
+5) Answer generation: need to be resilient to retrieval noises
+6) Special case: concatenate the embeddings instead of the texts
+
+2. Graph-based RAG pipeline: construct a (knowledge) graph from the corpus, and leverage the graph to enable reasoning
+3. Agentic RAG pipeline: Iteratively decide whether to retrieve, and how to augment retrieval results to decode. They can all be interleaved at the decoding phase.
+
+Finally, one more challenge is "complex questions", where we may need to aggregate multiple pieces of information to answer the question. We may also need to issue multiple searches to answer such questions. "
+
+Now let's talk about technical details
+1. if the paper describes the pipeline, one bullet should briefly say components of the pipeline
+2. if the paper applies ML/LLM, describe how the inference is made
+3. if the paper does post-train, one bullet should describe reward function, w. details.
+4. also for post-train, one bullet should describe backbone model and data generation
+
+Finally, in addition to the JSON, show the content (same text) in a more readable format
+
+Here is an example paper: Improving Retrieval-Augmented Generation through Multi-Agent Reinforcement Learning
+https://arxiv.org/pdf/2501.15228
+
+Example JSON:
+
+{
+  "paper": {
+    "title": "Improving Retrieval-Augmented Generation through Multi-Agent Reinforcement Learning",
+    "arxiv_id": "2501.15228",
+    "pdf_url": "https://arxiv.org/pdf/2501.15228",
+    "authors": [
+      "Yiqun Chen",
+      "Lingyong Yan",
+      "Weiwei Sun",
+      "Xinyu Ma",
+      "Yi Zhang",
+      "Shuaiqiang Wang",
+      "Dawei Yin",
+      "Yiming Yang",
+      "Jiaxin Mao"
+    ]
+  },
+  "1_institutions": [
+    { "name": "Renmin University of China", "abbr": "RUC" },
+    { "name": "Baidu Inc.", "abbr": "Baidu" },
+    { "name": "Carnegie Mellon University", "abbr": "CMU" }
+  ],
+  "2_venue_and_year": {
+    "venue": "NeurIPS",
+    "year": 2025
+  },
+  "3_rag_relevance_and_category": {
+    "is_about_rag": true,
+    "rag_pipeline_category": [
+      {
+        "category": "Modularized RAG pipeline",
+        "why": "Explicit multi-module pipeline: Query Rewriter → Retriever → Selector → Generator; optimized end-to-end via a shared reward."
+      },
+    ],
+    "handles_complex_questions": true,
+    "how_complex_questions_addressed": "Query Rewriter decomposes an initial question into multiple sub-questions to support multi-hop / multi-search style retrieval before final generation."
+  },
+  "4_breakthrough_score": {
+    "score_1_to_5": 3,
+    "justification_1_sentence": "Novel framing of a multi-module RAG pipeline as a cooperative multi-agent RL problem with a single shared answer-quality reward (F1), but it primarily advances training/optimization rather than introducing a new retrieval paradigm."
+  },
+  "5_short_high_level_summary": {
+    "what_it_is": "MMOA-RAG: a cooperative multi-agent RL framework to jointly optimize multiple RAG modules toward answer correctness.",
+    "why_novel_for_rag": [
+      "Moves from optimizing individual RAG components in isolation to joint optimization of multiple interacting modules using a shared global reward (answer F1).",
+      "Models module interactions explicitly as cooperative agents, improving alignment between intermediate module behavior (rewrite/select/generate) and final QA quality.",
+      "Shows the approach is reusable across different module configurations (3-agent and 2-agent variants)."
+    ],
+    "main_points_bullets": [
+      "Pipeline: Query Rewriter generates sub-questions; Retriever fetches K docs per sub-question; Selector filters docs; Generator answers from selected docs.",
+      "Training: Warm-start each trainable module with SFT, then jointly optimize with MAPPO using a shared reward based on final answer F1.",
+      "Outcome: Consistent gains over multiple RAG optimization baselines on multi-hop and single-hop QA benchmarks."
+    ]
+  },
+  "6_tech_details": {
+    "pipeline_components_bullet": [
+      "Query Rewriter (LLM agent): decomposes question q into sub-questions subq.",
+      "Retriever (fixed, environment): retrieves candidate doc set D (K=10 docs used in experiments).",
+      "Selector (LLM agent): outputs document IDs to form D_selected.",
+      "Generator (LLM agent): produces final answer from q + D_selected."
+    ],
+    "inference_how_it_runs": [
+      "Given question q, Query Rewriter generates 1+ sub-questions (one per line).",
+      "Retriever retrieves candidate docs for each sub-question; candidate docs are aggregated into D.",
+      "Selector chooses helpful doc IDs from D (constrained action space to doc IDs/tokens).",
+      "Generator outputs a brief final answer conditioned on q and selected docs."
+    ],
+    "post_training_details": {
+      "does_post_train": true,
+      "post_train_method": "Multi-Agent PPO (MAPPO) with parameter sharing among agents (QR, S, G) and a critic model; retriever is frozen as part of the environment.",
+      "reward_function_bullets": [
+        "Shared reward R_shared = F1 score of the Generator’s predicted answer vs gold answer (global cooperative reward).",
+        "Per-agent reward: R_i = R_shared + P_i, with small negative penalties to enforce formatting/length constraints.",
+        "Penalty examples: P_QR = -0.5 if #sub-questions > 4 else 0; P_S = -1 if duplicate/invalid doc-ID format else 0; P_G = -0.5 if answer too long else 0.",
+        "Final-step RL reward includes a KL-style term against the warm-start SFT policy: R = (R_shared + P_i) - β * log( π_θ(Answer_i|O_i) / π_SFT(Answer_i|O_i) ) at terminal step; 0 for intermediate steps."
+      ],
+      "data_generation_bullets": [
+        "Warm-start SFT for Query Rewriter uses publicly available query rewriting data from Rewrite-Retrieve-Read.",
+        "Selector SFT labels are constructed via a heuristic: tokenize/normalize question+gold answer into Set_qi, tokenize/normalize each candidate doc into Set_di,j, and label doc j if any token from Set_qi appears in Set_di,j.",
+        "Generator SFT uses gold answers directly as targets, conditioned on the selected documents."
+      ]
+    },
+    "base_models_and_retrievers": {
+      "llm_backbone": "Llama-3-8B-Instruct",
+      "default_retriever": "Contriever (dense retriever)",
+      "additional_retrievers_tested": ["BGE", "E5"]
+    }
+  },
+  "7_evaluation_results": {
+    "7_1_benchmarks_used": [
+      { "name": "HotpotQA", "newly_constructed": false, "notes": "multi-hop open-domain QA" },
+      { "name": "2WikiMultihopQA", "newly_constructed": false, "notes": "multi-hop QA" },
+      { "name": "AmbigQA", "newly_constructed": false, "notes": "single-hop / ambiguous QA setting" }
+    ],
+    "7_2_evaluation_highlights_with_numbers": [
+      {
+        "setting": "Main results with Contriever retriever",
+        "highlights": [
+          "HotpotQA: MMOA-RAG Acc/EM/F1 = 39.15 / 36.15 / 48.29 (best-baseline gains: +1.12 / +1.55 / +1.80).",
+          "2WikiMultihopQA: MMOA-RAG Acc/EM/F1 = 42.73 / 41.52 / 46.40 (best-baseline gains: +1.71 / +1.79 / +1.89).",
+          "AmbigQA: MMOA-RAG Acc/EM/F1 = 38.85 / 34.75 / 48.59 (best-baseline gains: +2.60 / +2.20 / +2.67)."
+        ]
+      },
+      {
+        "setting": "Generality across module configurations (SFT warm start vs MAPPO joint optimization)",
+        "highlights": [
+          "QR+S+G (full): HotpotQA F1 44.69 → 48.29 (+3.60); 2Wiki F1 42.97 → 46.40 (+3.43); AmbigQA F1 46.71 → 48.59 (+1.88).",
+          "S+G (no query rewriting agent): HotpotQA F1 43.14 → 47.07 (+3.93); 2Wiki F1 42.40 → 45.25 (+2.85); AmbigQA F1 45.82 → 47.19 (+1.37).",
+          "QR+G (no selector agent): HotpotQA F1 45.00 → 47.94 (+2.94); 2Wiki F1 42.91 → 46.19 (+3.28); AmbigQA F1 45.31 → 47.53 (+2.22)."
+        ]
+      },
+      {
+        "setting": "Different retrievers (Table 7)",
+        "highlights": [
+          "Retriever=BGE: HotpotQA F1 = 56.45 (MMOA-RAG) vs 55.77 (best baseline RetRobust), +0.68; 2Wiki F1 = 50.94 vs 50.01, +0.32; AmbigQA F1 = 59.10 vs 58.71, +0.39.",
+          "Retriever=E5: HotpotQA F1 = 57.23 vs 55.85, +1.38; 2Wiki F1 = 53.13 vs 52.75, +0.38; AmbigQA F1 = 60.80 vs 59.75, +1.05."
+        ]
+      },
+      {
+        "setting": "Out-of-domain transfer (train HotpotQA → test AmbigQA)",
+        "highlights": [
+          "MMOA-RAG Acc/EM/F1 = 35.45 / 32.43 / 45.62 vs RetRobust 34.19 / 31.75 / 44.08 (absolute +1.26 / +0.68 / +1.54)."
+        ]
+      }
+    ]
+  },
+  "8_major_architecture_and_experiment_graphs": {
+    "architecture_graph": {
+      "figure_id": "Figure 1",
+      "what_it_shows": "End-to-end MMOA-RAG workflow (QR→Retriever→Selector→Generator) and shared-reward + per-agent penalty structure.",
+      "source": "paper"
+    },
+    "major_experiment_graphs": [
+      {
+        "figure_id": "Figure 2",
+        "what_it_shows": "Ablation bars: performance impact of excluding each agent (w/o QR, w/o S, w/o G) across HotpotQA / 2WikiMultihopQA / AmbigQA."
+      },
+      {
+        "figure_id": "Figure 3",
+        "what_it_shows": "Training curve on AmbigQA: shared reward (F1) vs training samples for MMOA-RAG and ablated variants."
+      }
+    ]
+  }
+}

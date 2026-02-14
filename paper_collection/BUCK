@@ -1,0 +1,74 @@
+load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
+load("@fbcode_macros//build_defs:python_library.bzl", "python_library")
+
+oncall("fill in oncall here @nocommit")
+
+python_library(
+    name = "gmail_client",
+    srcs = ["gmail_client.py"],
+    labels = ["autodeps2_generated"],
+    deps = [
+        "fbsource//third-party/pypi/google-api-python-client:google-api-python-client",
+        "fbsource//third-party/pypi/google-auth:google-auth",
+        "fbsource//third-party/pypi/google-auth-oauthlib:google-auth-oauthlib",
+    ],
+)
+
+python_binary(
+    name = "config",
+    srcs = ["config.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.paper_collection.config",
+    deps = [
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
+    ],
+)
+
+
+python_binary(
+    name = "daily_update",
+    srcs = ["daily_update.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.paper_collection.daily_update",
+)
+
+
+python_binary(
+    name = "paper_collector",
+    srcs = ["paper_collector.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.paper_collection.paper_collector",
+)
+
+python_binary(
+    name = "migrate_to_postgres",
+    srcs = ["migrate_to_postgres.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.paper_collection.migrate_to_postgres",
+    deps = [
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
+    ],
+)
+
+python_binary(
+    name = "paper_db",
+    srcs = ["paper_db.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.paper_collection.paper_db",
+    deps = [
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
+    ],
+)
+
+python_binary(
+    name = "paper_db",
+    srcs = ["paper_db.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.paper_collection.paper_db",
+    deps = [
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
+    ],
+)

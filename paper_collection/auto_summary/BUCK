@@ -1,0 +1,37 @@
+load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
+load("@fbcode_macros//build_defs:python_unittest.bzl", "python_unittest")
+
+oncall("fill in oncall here @nocommit")
+
+python_unittest(
+    name = "test_gemini",
+    srcs = ["test_gemini.py"],
+    labels = ["autodeps2_generated"],
+    deps = [
+        "fbsource//third-party/pypi/ipython:ipython",
+        "fbsource//third-party/pypi/requests:requests",
+    ],
+)
+
+python_binary(
+    name = "gemini_client",
+    srcs = ["gemini_client.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.auto_summary.gemini_client",
+    deps = [
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
+        "fbsource//third-party/pypi/requests:requests",
+    ],
+)
+
+python_binary(
+    name = "summary_generation",
+    srcs = ["summary_generation.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.auto_summary.summary_generation",
+    deps = [
+        "fbsource//third-party/pypi/pypdf2:pypdf2",
+        "fbsource//third-party/pypi/pyyaml:pyyaml",
+        "fbsource//third-party/pypi/requests:requests",
+    ],
+)

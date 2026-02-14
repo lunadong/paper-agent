@@ -1,0 +1,44 @@
+Read the paper at: <PDF_URL>
+
+For the above paper in the given link, generate a structured JSON summary for an ML researcher, who may or may not be in the specific field. Leverage the background given below.
+
+========================
+Hard Requirements
+========================
+1) The JSON must be self-contained and grounded in the paper.
+2) Follow the exact JSON structure as shown in the template below.
+3) Extract evaluation numbers from the paper's tables/figures. Do not guess. Use TODO markers if not found.
+4) Keep text concise, bullet-like, and informative for scientists.
+
+========================
+JSON Template
+========================
+Your output must follow this exact structure:
+
+<json_template>
+
+========================
+Example Output
+========================
+Here is a complete example for reference:
+
+<json_example>
+
+========================
+RAG Background
+========================
+
+There are mainly three types of RAG pipelines. We only consider texts for now.
+1. Modularized RAG pipeline. It contains 4 modulars:
+   1) RAG triggering: There are various ways to decide whether to trigger the RAG pipeline. Naive ways are trigger-for-all, or trigger-for-real-time-questions
+   2) Query rewriting: Generate the web search query, or query for particular data sources like KG and docs
+   3) Retrieval: potentially from multiple types of sources, retrieval and ranking
+   4) Post-processing: oftentime chunk the retrieval results, re-ranking and filtering on the chunks
+   5) Answer generation: need to be resilient to retrieval noises
+   6) Special case: concatenate the embeddings instead of the texts
+
+2. Graph-based RAG pipeline: construct a (knowledge) graph from the corpus, and leverage the graph to enable reasoning
+
+3. Agentic RAG pipeline: Iteratively decide whether to retrieve, and how to augment retrieval results to decode. They can all be interleaved at the decoding phase.
+
+Finally, one more challenge is "complex questions", where we may need to aggregate multiple pieces of information to answer the question. We may also need to issue multiple searches to answer such questions.

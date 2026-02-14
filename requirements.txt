@@ -1,0 +1,30 @@
+# Web server
+flask
+gunicorn
+
+# Gmail API
+google-auth
+google-auth-oauthlib
+google-api-python-client
+
+# Configuration
+pyyaml
+
+# Semantic search
+sentence-transformers
+faiss-cpu
+
+# Data processing
+numpy
+
+# PDF processing (for auto_summary)
+PyPDF2
+
+# HTTP requests
+requests
+
+# PostgreSQL database (Neon serverless)
+psycopg2-binary
+
+# Vector similarity search (pgvector)
+pgvector

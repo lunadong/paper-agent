@@ -1,0 +1,25 @@
+load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
+
+oncall("fill in oncall here @nocommit")
+
+python_binary(
+    name = "index",
+    srcs = ["index.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.web_interface.api.index",
+    deps = [
+        "fbsource//third-party/pypi/flask:flask",
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
+    ],
+)
+
+python_binary(
+    name = "index",
+    srcs = ["index.py"],
+    labels = ["autodeps2_generated"],
+    main_module = "assistant.research.paper-agent.web_interface.api.index",
+    deps = [
+        "fbsource//third-party/pypi/flask:flask",
+        "fbsource//third-party/pypi/psycopg2:psycopg2",
+    ],
+)
