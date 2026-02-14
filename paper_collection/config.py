@@ -87,6 +87,21 @@ class DailyUpdateConfig:
 
 
 @dataclass
+class DatabaseConfig:
+    """Database configuration."""
+
+    url: str = ""
+
+
+@dataclass
+class OpenAIConfig:
+    """OpenAI API configuration."""
+
+    api_key: str = ""
+    embedding_model: str = "text-embedding-3-small"
+
+
+@dataclass
 class Config:
     """Main configuration class."""
 
@@ -98,6 +113,8 @@ class Config:
     search: SearchConfig = field(default_factory=SearchConfig)
     topics: TopicsConfig = field(default_factory=TopicsConfig)
     daily_update: DailyUpdateConfig = field(default_factory=DailyUpdateConfig)
+    database: DatabaseConfig = field(default_factory=DatabaseConfig)
+    openai: OpenAIConfig = field(default_factory=OpenAIConfig)
 
     # Internal: track where config was loaded from
     _config_file: Optional[str] = None
@@ -233,6 +250,23 @@ def create_config_from_dict(data: dict) -> Config:
             max_emails=daily_data.get("max_emails", config.daily_update.max_emails),
             send_notification=daily_data.get(
                 "send_notification", config.daily_update.send_notification
+            ),
+        )
+
+    # Database settings
+    if "database" in data:
+        db_data = data["database"]
+        config.database = DatabaseConfig(
+            url=db_data.get("url", config.database.url),
+        )
+
+    # OpenAI settings
+    if "openai" in data:
+        openai_data = data["openai"]
+        config.openai = OpenAIConfig(
+            api_key=openai_data.get("api_key", config.openai.api_key),
+            embedding_model=openai_data.get(
+                "embedding_model", config.openai.embedding_model
             ),
         )
 
