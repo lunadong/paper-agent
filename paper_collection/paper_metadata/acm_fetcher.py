@@ -55,7 +55,7 @@ def fetch_acm_html(url):
         response = session.get(url, timeout=30, allow_redirects=True)
         response.raise_for_status()
         return response.text
-    except requests.RequestException as e:
+    except requests.RequestException:
         # ACM may block automated requests - return None silently for paper enrichment
         return None
 

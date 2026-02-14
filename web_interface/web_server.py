@@ -413,7 +413,6 @@ def parse_args():
     cfg = get_app_config()
     default_host = cfg.web.host if cfg and hasattr(cfg, "web") else "0.0.0.0"
     default_port = cfg.web.port if cfg and hasattr(cfg, "web") else 5001
-    default_debug = cfg.web.debug if cfg and hasattr(cfg, "web") else True
 
     parser = argparse.ArgumentParser(description="Paper Browser web server")
     parser.add_argument(

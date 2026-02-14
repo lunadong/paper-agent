@@ -1,0 +1,7 @@
+# Ruff configuration for paper-agent
+# https://docs.astral.sh/ruff/configuration/
+
+[lint]
+# E402: Module level import not at top of file
+# Ignored because we need to modify sys.path before importing local modules
+ignore = ["E402"]

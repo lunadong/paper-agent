@@ -38,6 +38,10 @@ env/
 *.swo
 *~
 
+# Meta-specific build files (not for GitHub)
+**/BUCK
+BUCK
+
 # Data files (often large or user-specific)
 *.db
 *.index

@@ -18,7 +18,6 @@ Usage:
     db.close()
 """
 
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -711,7 +710,7 @@ def main():
 
         # Embedding stats
         stats = db.get_embedding_stats()
-        print(f"\nEmbedding coverage:")
+        print("\nEmbedding coverage:")
         print(f"  With embeddings: {stats['papers_with_embedding']}")
         print(f"  Without embeddings: {stats['papers_without_embedding']}")
         print(f"  Coverage: {stats['coverage_percent']}%")

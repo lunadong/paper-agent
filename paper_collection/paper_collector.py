@@ -21,11 +21,11 @@ import sys
 
 # Script directories
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PAPER_PARSE_DIR = os.path.join(SCRIPT_DIR, "paper_parse")
+PAPER_PARSE_DIR = os.path.join(SCRIPT_DIR, "paper_metadata")
 sys.path.insert(0, SCRIPT_DIR)
 sys.path.insert(0, PAPER_PARSE_DIR)
 
-from config import add_config_args, config, init_config
+from config import add_config_args
 from gmail_client import (
     get_gmail_service,
     get_message,
