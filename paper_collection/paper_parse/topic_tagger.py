@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-Topic tagger for papers database.
+Topic tagger for papers database (PostgreSQL).
 
 Topics (tag - full_name; exact_match):
     Pretraining - LLM pre-train; "mid-training", "pretraining"
@@ -28,12 +28,14 @@ Usage:
 import argparse
 import os
 import re
-import sqlite3
+import sys
 
-# Database path (relative to script)
+# Add parent directories for imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(SCRIPT_DIR, "..", "..", "web_interface", "data")
-DB_PATH = os.path.join(DATA_DIR, "papers.db")
+PAPER_COLLECTION_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PAPER_COLLECTION_DIR)
+
+from paper_db import PaperDB
 
 # Topics: tag -> (full_name, exact_match_queries)
 # exact_match_queries: case-insensitive substring match on title or abstract
@@ -64,67 +66,7 @@ TOPICS = {
 SHORT_ACRONYMS = {"RL", "RAG", "KG", "QA", "MM"}
 
 
-def add_topic_column():
-    """Add the topic column to the papers table if it doesn't exist."""
-    print(f"Database: {DB_PATH}")
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Check if column already exists
-    cursor.execute("PRAGMA table_info(papers)")
-    columns = [col[1] for col in cursor.fetchall()]
-
-    if "topic" in columns:
-        print("Column 'topic' already exists.")
-    else:
-        print("Adding 'topic' column...")
-        cursor.execute("ALTER TABLE papers ADD COLUMN topic TEXT")
-        conn.commit()
-        print("Column 'topic' added successfully.")
-
-    # Show current stats
-    cursor.execute("SELECT COUNT(*) FROM papers")
-    total = cursor.fetchone()[0]
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM papers WHERE topic IS NOT NULL AND topic != ''"
-    )
-    with_topic = cursor.fetchone()[0]
-
-    print(f"\nTotal papers: {total}")
-    print(f"Papers with topic: {with_topic}")
-    print(f"Papers without topic: {total - with_topic}")
-
-    print(f"\nValid topics: {', '.join(TOPICS.keys())}")
-
-    conn.close()
-
-
-def show_topic_stats():
-    """Show statistics about topics in the database."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT topic, COUNT(*) as count
-        FROM papers
-        GROUP BY topic
-        ORDER BY count DESC
-    """
-    )
-
-    print("\nTopic distribution:")
-    for row in cursor.fetchall():
-        topic = row[0] or "(no topic)"
-        count = row[1]
-        print(f"  {topic}: {count}")
-
-    conn.close()
-
-
-def exact_match_search(cursor, queries, paper_data=None):
+def exact_match_search(papers, queries):
     """Find papers that contain any of the queries in title or abstract (case insensitive).
 
     For short terms (<=3 chars), uses word boundary matching to avoid false positives
@@ -133,49 +75,70 @@ def exact_match_search(cursor, queries, paper_data=None):
     """
     matching_ids = set()
 
-    # Get paper data if not provided
-    if paper_data is None:
-        cursor.execute("SELECT id, title, abstract FROM papers")
-        paper_data = cursor.fetchall()
-
     for query in queries:
         query_lower = query.lower()
 
         if len(query) <= 3 or query.upper() in SHORT_ACRONYMS:
             # Use word boundary regex for short acronyms
             pattern = re.compile(r"\b" + re.escape(query_lower) + r"\b", re.IGNORECASE)
-            for paper_id, title, abstract in paper_data:
-                text = (title or "") + " " + (abstract or "")
+            for paper in papers:
+                text = (paper.get("title") or "") + " " + (paper.get("abstract") or "")
                 if pattern.search(text):
-                    matching_ids.add(paper_id)
+                    matching_ids.add(paper["id"])
         else:
             # Use substring match for longer terms
-            for paper_id, title, abstract in paper_data:
-                title_lower = (title or "").lower()
-                abstract_lower = (abstract or "").lower()
+            for paper in papers:
+                title_lower = (paper.get("title") or "").lower()
+                abstract_lower = (paper.get("abstract") or "").lower()
                 if query_lower in title_lower or query_lower in abstract_lower:
-                    matching_ids.add(paper_id)
+                    matching_ids.add(paper["id"])
 
     return matching_ids
 
 
+def show_topic_stats():
+    """Show statistics about topics in the database."""
+    print("Connecting to PostgreSQL database...")
+    db = PaperDB()
+
+    papers = db.get_all_papers()
+    total = len(papers)
+
+    # Count topics
+    topic_counts = {}
+    no_topic_count = 0
+
+    for paper in papers:
+        topic = paper.get("topic")
+        if topic:
+            topic_counts[topic] = topic_counts.get(topic, 0) + 1
+        else:
+            no_topic_count += 1
+
+    print(f"\nTotal papers: {total}")
+    print(f"Papers with topic: {total - no_topic_count}")
+    print(f"Papers without topic: {no_topic_count}")
+
+    print("\nTopic distribution:")
+    for topic, count in sorted(topic_counts.items(), key=lambda x: -x[1]):
+        print(f"  {topic}: {count}")
+
+    if no_topic_count > 0:
+        print(f"  (no topic): {no_topic_count}")
+
+    db.close()
+
+
 def auto_tag_papers():
     """Auto-tag papers using exact match search."""
-    print(f"Database: {DB_PATH}")
+    print("Connecting to PostgreSQL database...")
+    db = PaperDB()
 
-    # Connect to database
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Get all papers with their text
-    cursor.execute("SELECT id, title, abstract FROM papers")
-    all_papers = cursor.fetchall()
-
-    # Get all paper IDs for tracking
-    all_paper_ids = [p[0] for p in all_papers]
+    papers = db.get_all_papers()
+    print(f"Total papers: {len(papers)}")
 
     # Dictionary to track topics for each paper: paper_id -> set of topics
-    paper_topics = {pid: set() for pid in all_paper_ids}
+    paper_topics = {p["id"]: set() for p in papers}
 
     # For each topic, run search
     print("\nTagging papers...")
@@ -185,7 +148,7 @@ def auto_tag_papers():
 
         # Exact match search
         if exact_queries:
-            exact_matches = exact_match_search(cursor, exact_queries, all_papers)
+            exact_matches = exact_match_search(papers, exact_queries)
             tag_paper_ids.update(exact_matches)
             print(f"    Exact match {exact_queries}: {len(exact_matches)} papers")
 
@@ -200,18 +163,11 @@ def auto_tag_papers():
     print("\nUpdating database...")
     updated = 0
     for paper_id, topics in paper_topics.items():
-        if topics:
-            topic_str = ", ".join(sorted(topics))
-            cursor.execute(
-                "UPDATE papers SET topic = ? WHERE id = ?", (topic_str, paper_id)
-            )
+        topic_str = ", ".join(sorted(topics)) if topics else None
+        if db.update_paper(paper_id, topic=topic_str):
             updated += 1
-        else:
-            cursor.execute("UPDATE papers SET topic = NULL WHERE id = ?", (paper_id,))
 
-    conn.commit()
-    conn.close()
-
+    db.close()
     print(f"Updated {updated} papers with topics")
 
     # Show stats
@@ -225,21 +181,19 @@ def retag_single_topic(tag_to_retag):
         print(f"Valid topics: {', '.join(TOPICS.keys())}")
         return
 
-    print(f"Database: {DB_PATH}")
+    print("Connecting to PostgreSQL database...")
     print(f"Re-tagging topic: {tag_to_retag}")
 
     full_name, exact_queries = TOPICS[tag_to_retag]
-
-    # Connect to database
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    db = PaperDB()
+    papers = db.get_all_papers()
 
     print(f"\n  {tag_to_retag} ({full_name}):")
     matching_paper_ids = set()
 
     # Exact match search
     if exact_queries:
-        exact_matches = exact_match_search(cursor, exact_queries)
+        exact_matches = exact_match_search(papers, exact_queries)
         matching_paper_ids.update(exact_matches)
         print(f"    Exact match {exact_queries}: {len(exact_matches)} papers")
 
@@ -248,12 +202,11 @@ def retag_single_topic(tag_to_retag):
     # Update database - remove old tag, add new tag where appropriate
     print("\nUpdating database...")
 
-    # Get all papers with their current topics
-    cursor.execute("SELECT id, topic FROM papers")
-    all_papers = cursor.fetchall()
-
     updated = 0
-    for paper_id, current_topic in all_papers:
+    for paper in papers:
+        paper_id = paper["id"]
+        current_topic = paper.get("topic") or ""
+
         # Parse current topics
         if current_topic:
             topics = set(t.strip() for t in current_topic.split(","))
@@ -270,14 +223,10 @@ def retag_single_topic(tag_to_retag):
         # Update database
         new_topic = ", ".join(sorted(topics)) if topics else None
         if new_topic != current_topic:
-            cursor.execute(
-                "UPDATE papers SET topic = ? WHERE id = ?", (new_topic, paper_id)
-            )
+            db.update_paper(paper_id, topic=new_topic)
             updated += 1
 
-    conn.commit()
-    conn.close()
-
+    db.close()
     print(f"Updated {updated} papers")
 
     # Show stats
@@ -286,29 +235,24 @@ def retag_single_topic(tag_to_retag):
 
 def tag_new_papers():
     """Tag only papers that don't have topics yet (for daily updates)."""
-    print(f"Database: {DB_PATH}")
+    print("Connecting to PostgreSQL database...")
     print("Mode: Tagging only NEW papers (without topics)")
 
-    # Connect to database
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    db = PaperDB()
+    papers = db.get_all_papers()
 
-    # Get only papers WITHOUT topics
-    cursor.execute(
-        "SELECT id, title, abstract FROM papers WHERE topic IS NULL OR topic = ''"
-    )
-    new_papers = cursor.fetchall()
+    # Filter to papers WITHOUT topics
+    new_papers = [p for p in papers if not p.get("topic")]
 
     if not new_papers:
         print("\nNo new papers to tag.")
-        conn.close()
+        db.close()
         return
 
-    new_paper_ids = [p[0] for p in new_papers]
-    print(f"\nFound {len(new_paper_ids)} papers without topics")
+    print(f"\nFound {len(new_papers)} papers without topics")
 
     # Dictionary to track topics for each new paper: paper_id -> set of topics
-    paper_topics = {pid: set() for pid in new_paper_ids}
+    paper_topics = {p["id"]: set() for p in new_papers}
 
     # For each topic, run search
     print("\nTagging new papers...")
@@ -317,7 +261,7 @@ def tag_new_papers():
 
         # Exact match search (only for new papers)
         if exact_queries:
-            matches = exact_match_search(cursor, exact_queries, new_papers)
+            matches = exact_match_search(new_papers, exact_queries)
             tag_paper_ids.update(matches)
 
         # Add tag to matched papers
@@ -334,14 +278,10 @@ def tag_new_papers():
     for paper_id, topics in paper_topics.items():
         if topics:
             topic_str = ", ".join(sorted(topics))
-            cursor.execute(
-                "UPDATE papers SET topic = ? WHERE id = ?", (topic_str, paper_id)
-            )
-            updated += 1
+            if db.update_paper(paper_id, topic=topic_str):
+                updated += 1
 
-    conn.commit()
-    conn.close()
-
+    db.close()
     print(f"Tagged {updated} new papers with topics")
 
 
@@ -371,9 +311,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-
-    # Always ensure column exists
-    add_topic_column()
 
     if args.tag:
         auto_tag_papers()

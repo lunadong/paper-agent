@@ -277,7 +277,7 @@ def add_config_args(parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--db-path",
             type=str,
-            help="Path to SQLite database file",
+            help="Path to database file",
         )
     if "--data-dir" not in existing_args:
         parser.add_argument(

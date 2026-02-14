@@ -151,13 +151,13 @@ def parse_args():
     parser.add_argument(
         "--save-db",
         action="store_true",
-        help="Save parsed papers to the SQLite database",
+        help="Save parsed papers to the database",
     )
     parser.add_argument(
         "--db-path",
         type=str,
         default=default_db_path,
-        help=f"Path to SQLite database file (default: {default_db_path})",
+        help=f"Path to database file (default: {default_db_path})",
     )
     parser.add_argument(
         "--skip-tags",

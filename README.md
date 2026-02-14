@@ -269,11 +269,11 @@ cat /tmp/paper-update.log
 
 ## Database Schema
 
-The papers are stored in SQLite with the following schema:
+The papers are stored in PostgreSQL (via Neon) with the following schema:
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | INTEGER | Primary key |
+| id | SERIAL | Primary key |
 | title | TEXT | Paper title (unique) |
 | authors | TEXT | Author names |
 | venue | TEXT | Publication venue |
