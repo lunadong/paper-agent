@@ -23,7 +23,7 @@ This guide explains how to deploy the Paper Browser to Vercel.
                         └──────────────────┘
 ```
 
-**Note:** The production deployment uses OpenAI's `text-embedding-3-small` for search queries instead of sentence-transformers (which is too large for serverless functions). The database already contains embeddings generated with `all-MiniLM-L6-v2`.
+**Note:** Both local development and production use OpenAI's `text-embedding-3-small` (512 dimensions) for embeddings and search queries. The database stores pre-computed embeddings using pgvector.
 
 ## Deployment Steps
 
@@ -106,7 +106,7 @@ web_interface/
 
 ## Features
 
-- ✅ Browse 2,147 papers with pagination
+- ✅ Browse papers with pagination
 - ✅ Semantic search (AI-powered, uses OpenAI embeddings)
 - ✅ Keyword search (SQL ILIKE fallback)
 - ✅ Topic filtering
@@ -130,14 +130,14 @@ web_interface/
 
 ## Local Development
 
-For local development, use the original `web_server.py` with sentence-transformers:
+For local development, use `web_server.py`:
 
 ```bash
 cd web_interface
-/usr/bin/python3 web_server.py
+python3 web_server.py
 ```
 
-This uses the local sentence-transformers model instead of OpenAI API.
+This connects to the same Neon PostgreSQL database and uses OpenAI API for embeddings, just like production.
 
 ## Cost Considerations
 
