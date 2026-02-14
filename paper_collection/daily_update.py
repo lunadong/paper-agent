@@ -3,7 +3,7 @@
 Daily Paper Update Script
 
 Invokes paper_collector.py to fetch papers from Google Scholar alerts,
-save to database, rebuild FAISS index, and tag topics.
+save to PostgreSQL database, and tag topics.
 Optionally sends an email notification.
 
 Usage:

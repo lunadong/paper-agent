@@ -104,6 +104,19 @@ database:
   url: "postgresql://user:password@host/dbname?sslmode=require"
 
 # =============================================================================
+# OpenAI API Settings (for semantic search embeddings)
+# =============================================================================
+
+openai:
+  # API key for OpenAI (used for generating embeddings)
+  # Get your key from: https://platform.openai.com/api-keys
+  # Or set via environment variable: OPENAI_API_KEY
+  api_key: "your-openai-api-key-here"
+
+  # Embedding model (text-embedding-3-small produces 512 dimensions)
+  embedding_model: "text-embedding-3-small"
+
+# =============================================================================
 # Gemini API Settings (for auto_summary)
 # =============================================================================
 

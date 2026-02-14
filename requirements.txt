@@ -10,8 +10,7 @@ google-api-python-client
 # Configuration
 pyyaml
 
-# Semantic search (for local development)
-sentence-transformers
+# Numerical processing
 numpy
 
 # PDF processing (for auto_summary)

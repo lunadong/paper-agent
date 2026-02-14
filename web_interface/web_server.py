@@ -129,16 +129,12 @@ def get_score_bucket(score):
 
     Bucket scheme:
     - score >= 0.5: all in one bucket (1.0)
-    - 0.3 <= score < 0.5: 0.1 buckets (0.3, 0.4)
-    - 0.15 <= score < 0.3: 0.05 buckets (0.15, 0.20, 0.25)
-    - score < 0.15: 0.05 buckets
+    - score < 0.3: 0.1 buckets
     """
     if score >= 0.5:
         return 1.0  # All high scores in same bucket
-    elif score >= 0.3:
-        return round(score * 10) / 10  # 0.1 buckets
     else:
-        return round(score * 20) / 20  # 0.05 buckets
+        return round(score * 10) / 10  # 0.05 buckets
 
 
 def get_all_papers(order_by="recomm_date", order_dir="DESC"):
@@ -177,7 +173,7 @@ def search_papers_keyword(query):
     return papers
 
 
-def search_papers_semantic(query, top_k=None, score_threshold=0.15):
+def search_papers_semantic(query, top_k=None, score_threshold=0.2):
     """Search papers using vector similarity (pgvector with OpenAI embeddings).
 
     Args:

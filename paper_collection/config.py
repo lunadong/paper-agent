@@ -46,9 +46,6 @@ class DataConfig:
     """Data storage configuration."""
 
     data_dir: str = "web_interface/data"
-    db_file: str = "papers.db"
-    index_file: str = "papers.index"
-    ids_file: str = "paper_ids.json"
 
 
 @dataclass
@@ -152,18 +149,6 @@ class Config:
             return os.path.join(PROJECT_ROOT, path)
         return path
 
-    def get_db_path(self) -> str:
-        """Get absolute path to database file."""
-        return os.path.join(self.get_data_dir(), self.data.db_file)
-
-    def get_index_path(self) -> str:
-        """Get absolute path to FAISS index file."""
-        return os.path.join(self.get_data_dir(), self.data.index_file)
-
-    def get_ids_path(self) -> str:
-        """Get absolute path to paper IDs file."""
-        return os.path.join(self.get_data_dir(), self.data.ids_file)
-
 
 def find_config_file() -> Optional[str]:
     """Find the first existing config file."""
@@ -205,9 +190,6 @@ def create_config_from_dict(data: dict) -> Config:
         data_config = data["data"]
         config.data = DataConfig(
             data_dir=data_config.get("data_dir", config.data.data_dir),
-            db_file=data_config.get("db_file", config.data.db_file),
-            index_file=data_config.get("index_file", config.data.index_file),
-            ids_file=data_config.get("ids_file", config.data.ids_file),
         )
 
     # Web settings
@@ -390,5 +372,5 @@ if __name__ == "__main__":
     print(f"Website URL: {cfg.website_url}")
     print(f"Credentials path: {cfg.get_credentials_path()}")
     print(f"Token path: {cfg.get_token_path()}")
-    print(f"Database path: {cfg.get_db_path()}")
-    print(f"Index path: {cfg.get_index_path()}")
+    print(f"Data dir: {cfg.get_data_dir()}")
+    print(f"Database URL: {'(set)' if cfg.database.url else '(not set)'}")
