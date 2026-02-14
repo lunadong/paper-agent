@@ -388,20 +388,9 @@ function renderPapers(papers, searchMode = null) {
             paper.venue
         ].filter(Boolean).join(' - ') + (paper.year ? ` (${paper.year})` : '');
 
-        // Show similarity score if semantic search
-        let similarityBadge = '';
-        if (searchMode === 'semantic' && paper.similarity !== undefined && currentSearch) {
-            const score = paper.similarity;
-            const percent = Math.round(score * 100);
-            let scoreClass = 'low';
-            if (score >= 0.5) scoreClass = 'high';
-            else if (score >= 0.3) scoreClass = 'medium';
-            similarityBadge = `<span class="similarity-score ${scoreClass}">${percent}% match</span>`;
-        }
-
         return `
             <div class="paper">
-                <a class="paper-title" href="${paper.link || '#'}" target="_blank">${paper.title}</a>${similarityBadge}
+                <a class="paper-title" href="${paper.link || '#'}" target="_blank">${paper.title}</a>
                 <div class="paper-meta">${meta}</div>
                 <div class="paper-abstract collapsed" id="abstract-${index}">${abstract}</div>
                 <div class="paper-footer">
