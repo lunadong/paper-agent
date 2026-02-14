@@ -10,10 +10,19 @@ from datetime import datetime
 from pathlib import Path
 
 import psycopg2
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 from psycopg2.extras import RealDictCursor
 
-app = Flask(__name__, template_folder="../templates", static_folder="../static")
+# Get the directory where this file is located
+API_DIR = Path(__file__).parent
+WEB_INTERFACE_DIR = API_DIR.parent
+
+app = Flask(
+    __name__,
+    template_folder=str(WEB_INTERFACE_DIR / "templates"),
+    static_folder=str(WEB_INTERFACE_DIR / "static"),
+    static_url_path="/static",
+)
 
 
 def load_config():
