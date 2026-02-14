@@ -52,10 +52,10 @@ This guide explains how to deploy the Paper Browser to Vercel.
 5. Set environment variables:
    ```bash
    vercel env add DATABASE_URL
-   # Enter: postgresql://neondb_owner:npg_yBqTsWUe9d2b@ep-restless-frog-af38fztv-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require
+   # Enter your Neon PostgreSQL connection string
 
    vercel env add OPENAI_API_KEY
-   # Enter: your-openai-api-key
+   # Enter your OpenAI API key
    ```
 
 6. Redeploy to use the environment variables:
