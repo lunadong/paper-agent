@@ -332,3 +332,19 @@ def calculate_topic_stats(papers):
     # Sort by count (descending)
     sorted_topics = sorted(topic_stats.items(), key=lambda x: x[1], reverse=True)
     return [{"topic": t, "count": c} for t, c in sorted_topics]
+
+
+def get_paper_by_id(paper_id):
+    """Get a single paper by ID with all fields."""
+    cursor = get_cursor()
+    cursor.execute(
+        """
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+               summary_generated_at, summary_basics, summary_core,
+               summary_methods_evidence, summary_figures
+        FROM papers WHERE id = %s
+        """,
+        (paper_id,),
+    )
+    row = cursor.fetchone()
+    return dict(row) if row else None

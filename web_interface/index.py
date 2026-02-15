@@ -21,6 +21,9 @@ from db import (
 )
 from flask import Flask, jsonify, render_template, request
 
+# Import paper detail blueprint
+from paper_detail import paper_detail_bp
+
 # Get the directory where this file is located
 WEB_INTERFACE_DIR = Path(__file__).parent
 
@@ -30,6 +33,9 @@ app = Flask(
     static_folder=str(WEB_INTERFACE_DIR / "static"),
     static_url_path="/static",
 )
+
+# Register blueprints
+app.register_blueprint(paper_detail_bp)
 
 
 @app.route("/")
