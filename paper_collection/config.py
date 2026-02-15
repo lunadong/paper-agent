@@ -336,9 +336,9 @@ def get_config(args: Optional[argparse.Namespace] = None) -> Config:
         if hasattr(args, "token_file") and args.token_file:
             config.gmail.token_file = args.token_file
         if hasattr(args, "db_path") and args.db_path:
-            # Extract data_dir and db_file from full path
+            # Legacy: db_path is no longer used (PostgreSQL via config.yaml)
+            # Just set the data_dir from the path for backwards compatibility
             config.data.data_dir = os.path.dirname(args.db_path)
-            config.data.db_file = os.path.basename(args.db_path)
         if hasattr(args, "data_dir") and args.data_dir:
             config.data.data_dir = args.data_dir
 

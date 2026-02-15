@@ -92,16 +92,19 @@ This guide explains how to deploy the Paper Browser to Vercel.
 
 ```
 web_interface/
-├── index.py              # Serverless Flask app (Vercel entry point)
-├── web_server.py         # Local development server
+├── db.py                 # Shared database utilities (embeddings, search, etc.)
+├── index.py              # Vercel serverless Flask app (uses db.py)
+├── web_server.py         # Local development server (uses db.py)
+├── paper_detail.py       # Paper detail page blueprint
 ├── requirements.txt      # Python dependencies
 ├── vercel.json           # Vercel configuration
+├── VERCEL_DEPLOY.md      # This file
 ├── static/
 │   └── js/
 │       └── papers.js     # Frontend JavaScript
-├── templates/
-│   └── papers.html       # HTML template
-└── VERCEL_DEPLOY.md      # This file
+└── templates/
+    ├── papers.html       # Main papers list page
+    └── paper_detail.html # Paper detail page
 ```
 
 ## Features

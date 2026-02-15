@@ -349,6 +349,27 @@
             background-color: #f8f9fa;
             color: #6c757d;
         }
+        /* Paper header row with title and summary link */
+        .paper-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .summary-link {
+            font-size: 12px;
+            color: #4a90d9;
+            text-decoration: none;
+            white-space: nowrap;
+            padding: 4px 8px;
+            background: #f0f7ff;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .summary-link:hover {
+            background: #e0efff;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -363,13 +384,6 @@
             <button class="clear-search" onclick="clearSearch()" title="Clear search">×</button>
         </div>
         <button onclick="searchPapers()">Search</button>
-        <div class="search-mode-toggle">
-            <label class="toggle-label" title="Semantic search uses AI to find papers by meaning, not just keywords">
-                <input type="checkbox" id="semanticToggle" checked onchange="toggleSearchMode()">
-                <span class="toggle-slider"></span>
-                <span class="toggle-text">AI Search</span>
-            </label>
-        </div>
     </div>
 
     <div class="topic-filters" id="topicFilters">

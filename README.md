@@ -6,11 +6,12 @@ An automated system for collecting academic papers from Google Scholar email ale
 
 - 📧 **Gmail Integration**: Automatically parse Google Scholar alert emails
 - 📚 **Paper Database**: PostgreSQL database (via Neon) with title, authors, venue, year, abstract, and links
-- 🔍 **Semantic Search**: pgvector-powered similarity search using OpenAI embeddings
+- 🔍 **Semantic Search**: pgvector-powered similarity search using OpenAI embeddings (512 dimensions)
 - 🏷️ **Topic Tagging**: Automatic topic classification for papers
 - 🌐 **Web Interface**: Browse and search papers with a responsive Flask web app
 - ⏰ **Daily Updates**: Automated daily collection with email notifications
 - 🤖 **Auto-Summary**: AI-powered paper summarization using Gemini API
+- ☁️ **Vercel Deployment**: Ready for serverless deployment
 
 ## Quick Start
 
@@ -51,57 +52,32 @@ cp config.yaml.example config.yaml
 #### Step 2.3: Configure Database (PostgreSQL/Neon)
 
 1. Create a free database at [Neon](https://neon.tech/)
-2. Copy your connection string from the Neon dashboard
-3. Add it to `config.yaml`:
+2. Enable pgvector extension: `CREATE EXTENSION vector;`
+3. Copy your connection string from the Neon dashboard
+4. Add it to `config.yaml`:
 
 ```yaml
 database:
   url: "postgresql://user:password@host/dbname?sslmode=require"
 ```
 
-#### Step 2.4: Configure Gemini API (for Auto-Summary)
+#### Step 2.4: Configure OpenAI API (for Semantic Search)
+
+1. Get an API key from [OpenAI](https://platform.openai.com/)
+2. Add it to `config.yaml`:
+
+```yaml
+openai:
+  api_key: "your-openai-api-key"
+  embedding_model: "text-embedding-3-small"
+```
+
+#### Step 2.5: Configure Gemini API (for Auto-Summary)
 
 1. Get an API key from [wearables-ape.io](https://wearables-ape.io/)
 2. Add it to `config.yaml`:
 
 ```yaml
-gemini:
-  api_key: "your-api-key-here"
-  api_url: "https://api.wearables-ape.io/conversations/sync"
-  model: "gemini-2.0-flash"
-```
-
-Or set via environment variable:
-```bash
-export GEMINI_API_KEY="your-api-key-here"
-```
-
-#### Step 2.5: Complete Configuration
-
-Edit `config.yaml` with all your settings:
-
-```yaml
-# Your email for notifications
-notification_email: "your-email@gmail.com"
-
-# Your website URL (for notification emails)
-website_url: "http://localhost:5001"
-
-# Gmail settings
-gmail:
-  credentials_file: "credentials.json"
-  token_file: "token.json"
-  search_query: "from:scholaralerts-noreply@google.com"
-
-# Data storage
-data:
-  data_dir: "web_interface/data"
-
-# Database (PostgreSQL via Neon)
-database:
-  url: "postgresql://user:password@host/dbname?sslmode=require"
-
-# Gemini API (for auto-summary)
 gemini:
   api_key: "your-api-key-here"
   api_url: "https://api.wearables-ape.io/conversations/sync"
@@ -146,32 +122,43 @@ paper_agent/
 ├── config.yaml.example      # Configuration template
 ├── requirements.txt         # Python dependencies
 ├── README.md               # This file
+├── ruff.toml               # Ruff linter configuration
 │
 ├── paper_collection/       # Email parsing and data collection
 │   ├── config.py           # Configuration management
 │   ├── gmail_client.py     # Gmail API client
 │   ├── paper_collector.py  # Main paper collection script
+│   ├── paper_db.py         # PostgreSQL database operations
+│   ├── topic_tagger.py     # Topic classification
 │   ├── daily_update.py     # Automated daily update script
 │   ├── run_update.sh       # Shell script for cron jobs
 │   ├── credentials.json    # OAuth credentials (you create this)
 │   ├── token.json          # OAuth token (auto-generated)
 │   │
-│   ├── auto_summary/       # AI-powered paper summarization
-│   │   └── summary_generation.py
+│   ├── paper_summary/      # AI-powered paper summarization
+│   │   ├── summary_generation.py
+│   │   └── prompts/        # Prompt templates
+│   │       ├── prompt.txt
+│   │       ├── background_rag.txt
+│   │       ├── summary_template.json
+│   │       └── summary_example.json
 │   │
-│   └── paper_parse/        # Paper parsing utilities
+│   └── paper_metadata/     # Paper parsing utilities
 │       ├── paper_parser.py # Parse Google Scholar HTML
-│       ├── topic_tagger.py # Topic classification
 │       ├── arxiv_fetcher.py# ArXiv metadata fetcher
 │       └── acm_fetcher.py  # ACM metadata fetcher
 │
 └── web_interface/          # Web application
+    ├── db.py               # Shared database utilities
     ├── index.py            # Vercel serverless function
     ├── web_server.py       # Flask application (local dev)
+    ├── paper_detail.py     # Paper detail page blueprint
     ├── requirements.txt    # Web dependencies
     ├── vercel.json         # Vercel deployment config
+    ├── VERCEL_DEPLOY.md    # Vercel deployment guide
     ├── templates/
-    │   └── papers.html     # HTML template
+    │   ├── papers.html     # Main papers list page
+    │   └── paper_detail.html # Paper detail page
     └── static/
         └── js/
             └── papers.js   # Frontend JavaScript
@@ -226,45 +213,18 @@ python3 daily_update.py --days 7 --dry-run
 python3 paper_collector.py -q "from:alerts@researchgate.net" --save-db
 ```
 
-## Setting Up Google Scholar Alerts
+## Deployment
 
-1. Go to [Google Scholar](https://scholar.google.com/)
-2. Search for topics you're interested in
-3. Click **Create alert** (envelope icon)
-4. Enter your Gmail address
-5. Papers will be sent to your inbox and collected by this tool
+### Vercel Deployment
 
-## Automated Daily Updates
+See [web_interface/VERCEL_DEPLOY.md](web_interface/VERCEL_DEPLOY.md) for detailed deployment instructions.
 
-### Using Shell Script
-
-```bash
-# Run manually
-./paper_collection/run_update.sh
-
-# With options
-./paper_collection/run_update.sh --days 7
-./paper_collection/run_update.sh --dry-run
-```
-
-### Cron Job Setup
-
-Add to your crontab (`crontab -e`):
-
-```bash
-# Paper collection only (daily at 5pm)
-0 17 * * * /path/to/paper_agent/paper_collection/run_update.sh >> /tmp/paper-update.log 2>&1
-```
-
-**Verify cron job:**
-```bash
-crontab -l
-```
-
-**Check logs:**
-```bash
-cat /tmp/paper-update.log
-```
+Quick steps:
+1. Install Vercel CLI: `npm install -g vercel`
+2. Navigate to web_interface: `cd web_interface`
+3. Deploy: `vercel`
+4. Set environment variables: `DATABASE_URL`, `OPENAI_API_KEY`
+5. Deploy to production: `vercel --prod`
 
 ## Database Schema
 
@@ -280,7 +240,9 @@ The papers are stored in PostgreSQL (via Neon) with the following schema:
 | abstract | TEXT | Paper abstract/snippet |
 | link | TEXT | URL to paper |
 | recomm_date | TEXT | Date paper was recommended |
-| tags | TEXT | Topic tags |
+| topic | TEXT | Topic tags (comma-separated) |
+| embedding | vector(512) | OpenAI embedding for semantic search |
+| summary_* | JSONB | AI-generated summary fields |
 | created_at | TIMESTAMP | When record was created |
 
 ## Troubleshooting
@@ -305,6 +267,11 @@ Delete `paper_collection/token.json` and run the script again to re-authenticate
 The Gmail API has rate limits. If you hit them:
 - Wait a few minutes and try again
 - Reduce the number of emails fetched with `-n`
+
+### Semantic Search Not Working
+- Verify `OPENAI_API_KEY` is set in config.yaml or environment
+- Check that papers have embeddings: `SELECT COUNT(*) FROM papers WHERE embedding IS NOT NULL`
+- Falls back to keyword search if embeddings unavailable
 
 ## Contributing
 

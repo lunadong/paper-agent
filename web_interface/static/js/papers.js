@@ -9,7 +9,7 @@ let currentOrder = 'DESC';
 let currentDateFrom = '';
 let currentDateTo = '';
 let currentTopics = [];  // Array of selected topics
-let currentSearchMode = 'semantic';  // "semantic" or "keyword"
+let currentSearchMode = 'semantic';  // Always use semantic search
 let monthlyChart = null;  // Chart.js instance
 
 // Fetch papers from API
@@ -388,9 +388,16 @@ function renderPapers(papers, searchMode = null) {
             paper.venue
         ].filter(Boolean).join(' - ') + (paper.year ? ` (${paper.year})` : '');
 
+        const summaryLink = paper.has_summary
+            ? `<a class="summary-link" href="/paper/${paper.id}" target="_blank">📝 Paper summary</a>`
+            : '';
+
         return `
             <div class="paper">
-                <a class="paper-title" href="${paper.link || '#'}" target="_blank">${paper.title}</a>
+                <div class="paper-header-row">
+                    <a class="paper-title" href="${paper.link || '#'}" target="_blank">${paper.title}</a>
+                    ${summaryLink}
+                </div>
                 <div class="paper-meta">${meta}</div>
                 <div class="paper-abstract collapsed" id="abstract-${index}">${abstract}</div>
                 <div class="paper-footer">
@@ -561,12 +568,10 @@ window.onpopstate = function() {
     currentDateFrom = params.get('from') || '';
     currentDateTo = params.get('to') || '';
     currentTopics = params.get('topics') ? params.get('topics').split(',') : [];
-    currentSearchMode = params.get('mode') || 'semantic';
 
     document.getElementById('searchInput').value = search;
     document.getElementById('dateFrom').value = currentDateFrom;
     document.getElementById('dateTo').value = currentDateTo;
-    document.getElementById('semanticToggle').checked = (currentSearchMode === 'semantic');
     updateTopicButtons();
 
     fetchPapers(page, search);
@@ -583,12 +588,10 @@ document.addEventListener('DOMContentLoaded', function() {
     currentDateFrom = params.get('from') || '2023-01-01';
     currentDateTo = params.get('to') || today;
     currentTopics = params.get('topics') ? params.get('topics').split(',') : [];
-    currentSearchMode = params.get('mode') || 'semantic';
 
     document.getElementById('searchInput').value = search;
     document.getElementById('dateFrom').value = currentDateFrom;
     document.getElementById('dateTo').value = currentDateTo;
-    document.getElementById('semanticToggle').checked = (currentSearchMode === 'semantic');
     updateTopicButtons();
 
     fetchPapers(page, search);
