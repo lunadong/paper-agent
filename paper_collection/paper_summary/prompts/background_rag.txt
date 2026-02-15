@@ -1,0 +1,14 @@
+There are mainly three types of RAG pipelines. We only consider texts for now.
+1. Modularized RAG pipeline. It contains 4 modulars:
+   1) RAG triggering: There are various ways to decide whether to trigger the RAG pipeline. Naive ways are trigger-for-all, or trigger-for-real-time-questions
+   2) Query rewriting: Generate the web search query, or query for particular data sources like KG and docs
+   3) Retrieval: potentially from multiple types of sources, retrieval and ranking
+   4) Post-processing: oftentime chunk the retrieval results, re-ranking and filtering on the chunks
+   5) Answer generation: need to be resilient to retrieval noises
+   6) Special case: concatenate the embeddings instead of the texts
+
+2. Graph-based RAG pipeline: construct a (knowledge) graph from the corpus, and leverage the graph to enable reasoning
+
+3. Agentic RAG pipeline: Iteratively decide whether to retrieve, and how to augment retrieval results to decode. They can all be interleaved at the decoding phase.
+
+Finally, one more challenge is "complex questions", where we may need to aggregate multiple pieces of information to answer the question. We may also need to issue multiple searches to answer such questions.
