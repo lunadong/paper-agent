@@ -60,26 +60,59 @@ def get_openai_api_key():
 
 
 def get_db_connection():
-    """Get database connection with connection pooling."""
+    """Get database connection with automatic reconnection for dropped connections."""
     global _conn
     database_url = get_database_url()
     if not database_url:
         raise RuntimeError(
             "DATABASE_URL not configured. Set it in config.yaml or environment."
         )
-    if _conn is None or _conn.closed:
+
+    # Check if we need a new connection
+    need_new_connection = False
+    if _conn is None:
+        need_new_connection = True
+    elif _conn.closed:
+        need_new_connection = True
+    else:
+        # Test if connection is still alive (handles SSL drops)
+        try:
+            _conn.cursor().execute("SELECT 1")
+        except (psycopg2.OperationalError, psycopg2.InterfaceError):
+            need_new_connection = True
+            try:
+                _conn.close()
+            except Exception:
+                pass
+
+    if need_new_connection:
         _conn = psycopg2.connect(database_url)
         _conn.autocommit = True  # Avoid transaction issues
+
     return _conn
 
 
 def get_cursor():
-    """Get a database cursor."""
-    conn = get_db_connection()
-    # Reset connection if in error state
-    if conn.status != psycopg2.extensions.STATUS_READY:
-        conn.rollback()
-    return conn.cursor(cursor_factory=RealDictCursor)
+    """Get a database cursor with automatic reconnection."""
+    max_retries = 2
+    for attempt in range(max_retries):
+        try:
+            conn = get_db_connection()
+            # Reset connection if in error state
+            if conn.status != psycopg2.extensions.STATUS_READY:
+                conn.rollback()
+            return conn.cursor(cursor_factory=RealDictCursor)
+        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            if attempt < max_retries - 1:
+                # Force reconnection on next attempt
+                global _conn
+                try:
+                    _conn.close()
+                except Exception:
+                    pass
+                _conn = None
+            else:
+                raise e
 
 
 def generate_openai_embedding(text: str) -> list:
