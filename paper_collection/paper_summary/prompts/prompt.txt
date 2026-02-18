@@ -1,0 +1,34 @@
+Read the paper at: <PDF_URL>
+
+For the above paper in the given link, generate a structured JSON summary for an ML researcher, who may or may not be in the specific field.
+
+========================
+Hard Requirements
+========================
+1) The JSON must be self-contained and grounded in the paper.
+2) Follow the exact JSON structure as shown in the template below.
+3) Extract evaluation numbers from the paper's tables/figures. Do not guess. Use TODO markers if not found.
+4) Keep text concise, bullet-like, and informative for scientists.
+5) For "topic_relevance.topic", identify which research areas the paper belongs to from: RAG, Agent, Memory, P13N, Factuality, Benchmark, Reasoning, RL, Pretraining, KG, QA, Recommendation, MM, Speech. A paper can belong to multiple topics.
+6) For "topic_relevance.sub_topic", identify specific sub-areas within the PRIMARY TOPIC (indicated in the Area Background section). Focus on the primary topic's taxonomy.
+7) For "topic_relevance.primary_focus", list the specific aspects/stages the paper addresses within the PRIMARY TOPIC area.
+
+========================
+JSON Template
+========================
+Your output must follow this exact structure:
+
+<json_template>
+
+========================
+Example Output
+========================
+Here is a complete example for reference:
+
+<json_example>
+
+========================
+Area Background
+========================
+
+<topic_background>

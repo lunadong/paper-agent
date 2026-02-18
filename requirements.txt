@@ -1,0 +1,27 @@
+# Web server
+flask
+gunicorn
+
+# Google API
+google-auth
+google-auth-oauthlib
+google-api-python-client
+
+# Configuration
+pyyaml
+
+# Numerical processing
+numpy
+
+# PDF processing (for auto_summary)
+PyPDF2
+
+# HTTP requests
+requests
+urllib3<2  # Required for macOS LibreSSL compatibility
+
+# PostgreSQL
+psycopg2-binary
+
+# pgvector for embeddings
+pgvector

@@ -1,0 +1,12 @@
+Memory in LLMs addresses the challenge of maintaining and utilizing information across interactions, and help users recall past multi-modal memories
+
+There are two aspects of memory research in LLMs:
+1. Memory recall: retrieve from past interactions and logs to answer the users' recall questions.
+- Sparse memory QA: past memory is fairly sparse. Still, how to generate answers across different memories can be hard.
+- Dense memory QA: past memory is dense, thus highly similar and a lot of duplicates. Retrieval, noise reduction, etc. can be even more challenging.
+
+2. Memory organization: best way to organize past memory for recall QA and personalized conversation.
+- Linear memory: focus on when to discard and update memory. RL can be leveraged to make such decisions to maintain a clean and compact memory.
+- Layered memory: have multiple layers such as core (profile), semantic (factual), episodic (associated with time/location). Another relevant topic is to retrieve granularity: session-level, turn-level, and topic-level (a session is split into multiple topics based on topic coherence)
+- Tree/graph-baesd memory: mimic human's associatve memory, so it's easier to hop from one memory to another related by topic, location, event, person, etc.
+- Memory internalization: store personal memories into model parameters through LoRA, embedding feeding, etc.

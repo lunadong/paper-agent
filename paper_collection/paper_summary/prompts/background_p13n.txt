@@ -1,0 +1,21 @@
+Personalization (P13N) in LLMs focuses on adapting model behavior to individual users' preferences, needs, and contexts.
+
+There are two different tasks for personalization.
+1. Conversational personalization: adapt the model's behavior to the user's conversational style, preferences, and context
+- RAG-based personalization: retrieve relevant memories in the user's history (log, multi-modal memory), and use them to generate personalized responses.
+- User-profile based personalization: learn user profiles, which can be text-based, embedding-based, and use them to generate personalized responses.
+
+2. Recomendation personalization: recommend a list of items to the user, ranking the items based on their preferences
+2.1 LLM-based recommendation:
+- Prompt-based: Feed user history in prompts
+- Post-training: fine-tuning or RL for better recommendation
+- Generative recommendation: Feed user history in mid-training, to not only improve sequential recommendation, but also allow contrastive learning.
+
+2.2. Leveraging LLM signals to enhance existing recommendation techniques: These signals include item and user descriptions and embeddings, synthetic training data, etc.
+
+2.3. Recommendation diversity and serendipity: make sure recommendation results are diversity, and can be related but a bit surprising.
+
+3. Orthogonal to above is user modeling:
+- Text profiles as a summary of user's preferences
+- Embedding profiles
+- Profiles according to a graph or concept-net, capturing interesting concepts

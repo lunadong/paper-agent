@@ -1,0 +1,14 @@
+Factuality and hallucination in LLMs are critical challenges for reliable AI systems.
+
+In addition to RAG approaches, there are mainly two bodies of work to improve factuality and suppress hallucination.
+
+1. Knowledge internalization: the model learns to generate factual answers by internalizing knowledge from the training data.
+- Internalization through pre-training and mid-training, by feeding good pre-train data. Studies where to store the knowledge, and when is the best time to feed knowledge.
+- Internalization through post-training. A lot of recent studies show that fine-tuning can trigger more hallucinations, so post-training needs to be done carefully
+- Proposing new memory architecture for factual knowledge storage and retrieval. Note that this is different from RAG, and knowledge is internalized in the model. New architecture can be through LoRA adaptor, memory layer, residual memory, etc.
+
+2. Hallucination suppression: the model learns to reduced hallucinated facts in the generation.
+- Output the correct fact by leverating internal parameters at different layers of the model and have different attention, or by reciting.
+- Output the correct fact by fine-tuning, such that the model learns to choose the right token among its internal knoweledge based on its confidence etc.
+- Suppress the incorrect fact using confidence-based softening, select to abstein with low confidence, or explicitly state confidence. The confidence comes from internal parameters, or calibrated w. fine-tuning through consistency and comparison w. ground truths.
+- Suppress the incorrect fact with verification using internal knowledge, remove hallucinations that cannot be verified.

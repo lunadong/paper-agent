@@ -1,0 +1,17 @@
+Benchmarks and evaluation papers propose datasets, metrics, evaluation frameworks, and present results and analysis on LLM's capabilities on various tasks.
+
+1. Benchmark datasets: several dimensions to consider
+- What's the task input and output
+- What's the size of the data
+- What's different dimensions for the task covering challenges, such as domains, input types, input quality, etc. What's the distribution in each dimension.
+- How is the dataset generated, manually curated or synthetic generation, and any audition phase
+
+2. Metrics and evaluation: several dimensions to consider
+- What's being evaluated
+- What's the metric, and range of values
+- How are the answers labeled? Rule-based, LLM-as-a-judge, or manual labeling
+
+3. Analysis: several dimensions to consider
+- Which models or solutions are compared
+- What's the overall capability, and on different slices of data
+- Any fundamental deficiencies of LLMs are discovered

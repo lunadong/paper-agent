@@ -1,0 +1,33 @@
+Agentic AI refers to LLM-based systems that can autonomously plan, reason, and take actions to accomplish tasks.
+
+There are several levels of AI agents.
+1. Multi-call tool use with fixed plan: The model generates a plan for a task, then executes the plan by calling tools. The plan is fixed and cannot be modified.
+- Tool profiling: Generate detailed profiles to guide LLMs for right tool call and right parameterization.
+- Tool-use post-training: Post-train the LLM to understand tool profiles and generate tool calls.
+
+2. Multi-call tool use with flexible plan: The model generates a plan for a
+task, then executes the plan by calling tools. The plan can be modified based
+on the returned results.
+- Invoking internalized APIs: APIs are either well understood (web search,
+  calculator), or internalized into the parameters such as through embeddings.
+- Web agents: Operate web browser for browsing, linking, searching, button
+  clicking
+- Prompt-based w. optimization: Optimize which tools to use next based on
+  previous tool-calling output, such as with contrastive learning and checking
+  at critical points
+- RL-based: Optimize tool use through reinforcement learning. The reward
+  function can be final tool call success, turn-level success, tool call
+  correctness. etc.
+- Reflection-based: Compare tool-call w. expert actions to learn why expert
+  actions are better
+
+3. Multi-turn w. user interactions: Based on user responses, generate next steps. One challenge is to help users resolve the ambiguity and make decisions, balancing exploration and exploitation.
+
+4. Multi-agent: Use multiple agents to collaboratively fulfill tasks. There are various ways.
+- Different agents play different roles.
+- There is a lead agent and worker agents
+- Decentralized agents work and collaborate.
+
+5. Multi-task planning: There is not a single task, but oftentimes a big task w. multiple subtasks, such as planning a day (instead of one single activity)
+
+6. Agent evolution: The agent will gradually evolve to become more capable.

@@ -1,0 +1,56 @@
+Read the paper at: <PDF_URL>
+
+For the above paper, identify what research topics it belongs to and select a PRIMARY topic.
+
+========================
+Hard Requirements
+========================
+1) You MUST ONLY use topics from this EXACT list (no other topics allowed):
+   RAG, Agent, Memory, P13N, Factuality, Benchmark, Reasoning, RL, Pretraining, KG, QA, Recommendation, MM, Speech
+
+2) NEVER invent or use topics not in the above list. For example:
+   - "information extraction" is NOT allowed → use KG instead
+   - "natural language processing" is NOT allowed → use the most relevant topic from the list
+   - Any topic not explicitly listed above is FORBIDDEN
+
+3) Select exactly ONE primary_topic from the list above - the main research area that best describes this paper's core contribution. THIS MUST BE A SINGLE STRING, NOT AN ARRAY.
+
+4) Output ONLY valid JSON with the exact structure shown below
+
+5) Be conservative - only include topics if the paper genuinely contributes to that area
+
+========================
+Topic Definitions
+========================
+- RAG: Retrieval-Augmented Generation - combining retrieval with LLM generation, focusing on answering information-heavy questions.
+- Factuality: Exclude RAG papers. LLM knowledge enrichment, Hallucination detection/mitigation, factual consistency, factuality metrics, evaluation, and benchmarks.
+- Agent: Agentic AI - autonomous agents, tool use, planning, multi-step reasoning
+- Memory: Memory systems for LLMs - context management, long-term memory, memory retrieval, from past conversations, user history, rather than public knowledge
+- P13N: Personalization - user modeling, preference learning, personalized responses, recommendation systems, user-adaptation
+- KG: Knowledge Graphs - knowledge representation, graph-based reasoning
+- QA: Question Answering - reading comprehension, open-domain QA
+- Recommendation: Recommendation systems, collaborative filtering, sequential modeling, content-based recommendation
+- Reasoning: Logical/mathematical reasoning, chain-of-thought, problem solving
+- Pretraining: LLM pre-training, mid-training, foundation models
+- RL: Reinforcement learning - RLHF, DPO, GRPO, reward modeling
+- MM: Multi-Modal - vision-language, audio-text, multi-modal understanding
+- Speech: Speech processing - ASR, TTS, speech-to-text, voice AI
+- Benchmark: Evaluation benchmarks, metrics, datasets for LLM evaluation
+
+========================
+JSON Output Format
+========================
+{
+  "topic": ["Topic1", "Topic2"],
+  "primary_topic": "Topic1",   <-- MUST be a single string, NOT an array
+  "reasoning": "Brief explanation of why these topics were selected and why primary_topic is the main focus"
+}
+
+========================
+Example Output
+========================
+{
+  "topic": ["RAG", "Factuality"],
+  "primary_topic": "RAG",
+  "reasoning": "This paper proposes a new RAG framework that improves retrieval accuracy. While it also addresses factuality through better grounding, the core contribution is the novel retrieval mechanism."
+}
