@@ -7,6 +7,7 @@ the local development server (web_server.py) and Vercel deployment (index.py).
 
 import json
 import os
+import time
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -17,6 +18,11 @@ from psycopg2.extras import RealDictCursor
 # Connection pool
 _conn = None
 _config = None
+
+# Cache for papers (to avoid fetching all papers on every request)
+_papers_cache = None
+_papers_cache_time = 0
+CACHE_TTL_SECONDS = 60  # Cache papers for 60 seconds
 
 
 def load_config():
@@ -60,40 +66,22 @@ def get_openai_api_key():
 
 
 def get_db_connection():
-    """Get database connection with automatic reconnection for dropped connections."""
+    """Get database connection with connection pooling."""
     global _conn
     database_url = get_database_url()
     if not database_url:
         raise RuntimeError(
             "DATABASE_URL not configured. Set it in config.yaml or environment."
         )
-
-    # Check if we need a new connection
-    need_new_connection = False
-    if _conn is None:
-        need_new_connection = True
-    elif _conn.closed:
-        need_new_connection = True
-    else:
-        # Test if connection is still alive (handles SSL drops)
-        try:
-            _conn.cursor().execute("SELECT 1")
-        except (psycopg2.OperationalError, psycopg2.InterfaceError):
-            need_new_connection = True
-            try:
-                _conn.close()
-            except Exception:
-                pass
-
-    if need_new_connection:
+    if _conn is None or _conn.closed:
         _conn = psycopg2.connect(database_url)
         _conn.autocommit = True  # Avoid transaction issues
-
     return _conn
 
 
 def get_cursor():
-    """Get a database cursor with automatic reconnection."""
+    """Get a database cursor with automatic reconnection on SSL drops."""
+    global _conn
     max_retries = 2
     for attempt in range(max_retries):
         try:
@@ -101,18 +89,22 @@ def get_cursor():
             # Reset connection if in error state
             if conn.status != psycopg2.extensions.STATUS_READY:
                 conn.rollback()
-            return conn.cursor(cursor_factory=RealDictCursor)
-        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            # Only test connection on retry attempt (after a failure)
+            if attempt > 0:
+                cursor.execute("SELECT 1")
+            return cursor
+        except (psycopg2.OperationalError, psycopg2.InterfaceError):
             if attempt < max_retries - 1:
                 # Force reconnection on next attempt
-                global _conn
                 try:
-                    _conn.close()
+                    if _conn:
+                        _conn.close()
                 except Exception:
                     pass
                 _conn = None
             else:
-                raise e
+                raise
 
 
 def generate_openai_embedding(text: str) -> list:
@@ -154,23 +146,53 @@ def get_score_bucket(score):
 
 
 def get_all_papers(order_by="recomm_date", order_dir="DESC"):
-    """Get all papers from the database."""
+    """Get all papers from the database with caching."""
+    global _papers_cache, _papers_cache_time
+
+    # Check cache first
+    current_time = time.time()
+    if (
+        _papers_cache is not None
+        and (current_time - _papers_cache_time) < CACHE_TTL_SECONDS
+    ):
+        papers = _papers_cache
+    else:
+        # Fetch from database
+        cursor = get_cursor()
+        cursor.execute(
+            """
+            SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+                   CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
+                   primary_topic
+            FROM papers
+            """
+        )
+        papers = [dict(row) for row in cursor.fetchall()]
+        _papers_cache = papers
+        _papers_cache_time = current_time
+
+    # Apply sorting in memory (fast since data is cached)
     valid_fields = {"created_at", "recomm_date", "title", "year", "id"}
     if order_by not in valid_fields:
         order_by = "recomm_date"
     if order_dir.upper() not in ("ASC", "DESC"):
         order_dir = "DESC"
 
-    cursor = get_cursor()
-    cursor.execute(
-        f"""
-        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
-               CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
-               primary_topic
-        FROM papers ORDER BY {order_by} {order_dir}
-        """
+    reverse = order_dir.upper() == "DESC"
+    papers = sorted(
+        papers,
+        key=lambda p: (p.get(order_by) is None, p.get(order_by)),
+        reverse=reverse,
     )
-    return [dict(row) for row in cursor.fetchall()]
+
+    return papers
+
+
+def invalidate_papers_cache():
+    """Invalidate the papers cache (call after database updates)."""
+    global _papers_cache, _papers_cache_time
+    _papers_cache = None
+    _papers_cache_time = 0
 
 
 def search_papers_keyword(query):

@@ -20,7 +20,6 @@ Usage:
 """
 
 import argparse
-import atexit
 import io
 import json
 import os
@@ -60,7 +59,8 @@ MAX_PDF_CHARS = 100000  # Limit PDF text to avoid token limits
 MAX_RETRIES = 3
 RETRY_BASE_DELAY = 2  # seconds
 RETRY_MAX_DELAY = 30  # seconds
-RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}  # Rate limit and server errors
+# Rate limit and server errors
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
 # ==============================================================================
@@ -138,7 +138,8 @@ class CheckpointManager:
         Initialize checkpoint manager.
 
         Args:
-            checkpoint_file: Path to checkpoint file. If None, checkpointing is disabled.
+            checkpoint_file: Path to checkpoint file.
+                If None, checkpointing is disabled.
         """
         self.checkpoint_file = checkpoint_file
         self.enabled = checkpoint_file is not None
@@ -645,7 +646,8 @@ def download_pdf_text(
         except requests.exceptions.ConnectionError as e:
             wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
             print(
-                f"  Connection error, retrying in {wait_time}s... ({attempt + 1}/{max_retries})"
+                f"  Connection error, retrying in {wait_time}s... "
+                f"({attempt + 1}/{max_retries})"
             )
             time.sleep(wait_time)
             last_error = e
@@ -917,14 +919,15 @@ def load_prompt_template(
         - <topic_background> with contents of background files for matching topics
           (or removes the "Area Background" section if no topics match)
 
-    Supported topics with background files: RAG, Factuality, Agent, Memory, P13N, Benchmark
+    Supported topics with background files:
+        RAG, Factuality, Agent, Memory, P13N, Benchmark
 
     Args:
         prompt_file: Path to prompt file. Defaults to prompts/prompt.txt.
         topics: List of topic tags for the paper (e.g., ["RAG", "Agent"]).
                 If None or empty, Area Background section is removed.
-        primary_topic: The primary topic for this paper. If provided, its background
-                       is loaded first with emphasis as the PRIMARY focus area.
+        primary_topic: The primary topic for this paper. If provided,
+            its background is loaded first with emphasis.
 
     Returns:
         Prompt template string with placeholders replaced.
@@ -980,7 +983,8 @@ def load_prompt_template(
                 backgrounds.append(
                     f"=== PRIMARY TOPIC: {primary_clean} ===\n"
                     f"(This is the main focus area for this paper. "
-                    f"Focus sub_topic and primary_focus on this area.)\n\n{bg_content}"
+                    f"Focus sub_topic and primary_focus on this area.)"
+                    f"\n\n{bg_content}"
                 )
 
     # Then load other topic backgrounds as supplementary
@@ -1007,7 +1011,8 @@ def load_prompt_template(
     else:
         # Remove the entire "Area Background" section if no backgrounds
         prompt = prompt.replace(
-            "\n========================\nArea Background\n========================\n\n<topic_background>",
+            "\n========================\nArea Background"
+            "\n========================\n\n<topic_background>",
             "",
         )
 
@@ -1095,7 +1100,11 @@ def classify_paper_topics(
     prompt = prompt_template.replace("<PDF_URL>", pdf_url)
 
     # Insert the PDF content after the URL line
-    pdf_content_section = f"\n\n========================\nPaper Content (extracted from PDF)\n========================\n\n{pdf_text}\n"
+    pdf_content_section = (
+        "\n\n========================\n"
+        "Paper Content (extracted from PDF)\n"
+        f"========================\n\n{pdf_text}\n"
+    )
     prompt = prompt.replace(
         "For the above paper,",
         f"{pdf_content_section}\nFor the above paper,",
@@ -1131,7 +1140,11 @@ def classify_paper_topics(
                     )
                     continue
                 print("  Warning: Could not find JSON in response after retries")
-                return {"topic": [], "primary_topic": None, "reasoning": response_text}
+                return {
+                    "topic": [],
+                    "primary_topic": None,
+                    "reasoning": response_text,
+                }
 
         except json.JSONDecodeError as e:
             if llm_attempt < max_llm_retries - 1:
@@ -1141,9 +1154,17 @@ def classify_paper_topics(
                 )
                 continue
             print(f"  Warning: Could not parse JSON after retries: {e}")
-            return {"topic": [], "primary_topic": None, "reasoning": response_text}
+            return {
+                "topic": [],
+                "primary_topic": None,
+                "reasoning": response_text,
+            }
 
-    return {"topic": [], "primary_topic": None, "reasoning": response_text}
+    return {
+        "topic": [],
+        "primary_topic": None,
+        "reasoning": response_text,
+    }
 
 
 def generate_paper_summary(
@@ -1182,7 +1203,11 @@ def generate_paper_summary(
     prompt = prompt_template.replace("<PDF_URL>", pdf_url)
 
     # Insert the PDF content after the URL line
-    pdf_content_section = f"\n\n========================\nPaper Content (extracted from PDF)\n========================\n\n{pdf_text}\n"
+    pdf_content_section = (
+        "\n\n========================\n"
+        "Paper Content (extracted from PDF)\n"
+        f"========================\n\n{pdf_text}\n"
+    )
     prompt = prompt.replace(
         "For the above paper in the given link,",
         f"{pdf_content_section}\nFor the above paper content,",
@@ -1271,8 +1296,8 @@ def generate_summary_for_paper(
         print(f"Processing paper ID {paper_id}: {title}...")
 
         # Determine which stages to run
-        # When not saving to DB, always run both stages (for testing/debugging)
-        # When saving to DB, skip stages that already have data (unless overwrite)
+        # When not saving to DB, always run both stages (testing)
+        # When saving to DB, skip stages with data (unless overwrite)
         if save_db:
             run_stage1 = overwrite or not paper.get("primary_topic")
             run_stage2 = overwrite or not paper.get("summary_generated_at")
@@ -1459,7 +1484,7 @@ def main():
     parser.add_argument(
         "--save-db",
         action="store_true",
-        help="Save topic and summary to database (default: output to console/files only)",
+        help="Save topic and summary to database",
     )
     parser.add_argument(
         "--overwrite",
@@ -1622,7 +1647,8 @@ def main():
                     save_db=args.save_db,
                     overwrite=args.overwrite,
                 )
-                # Add paper info for internal tracking/printing (excluded from JSON output)
+                # Add paper info for internal tracking
+                # (excluded from JSON output)
                 result["_paper_id"] = paper_id
                 result["_title"] = paper.get("title", "")
 
