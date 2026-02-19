@@ -57,6 +57,7 @@ Thumbs.db
 # Test outputs
 tmp/*
 
-
 # Arc lint config (Meta-specific)
 .arclint
+.gitignore
+.hgignore

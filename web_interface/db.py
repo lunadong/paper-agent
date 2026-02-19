@@ -107,6 +107,35 @@ def get_cursor():
                 raise
 
 
+def execute_with_retry(query, params=None, max_retries=2):
+    """Execute a query with automatic retry on connection errors."""
+    global _conn
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            cursor = get_cursor()
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            return cursor
+        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            last_error = e
+            print(
+                f"Database connection error (attempt {attempt + 1}/{max_retries}): {e}"
+            )
+            # Force reconnection on next attempt
+            try:
+                if _conn:
+                    _conn.close()
+            except Exception:
+                pass
+            _conn = None
+            if attempt >= max_retries - 1:
+                raise
+    raise last_error
+
+
 def generate_openai_embedding(text: str) -> list:
     """Generate embedding using OpenAI API (text-embedding-3-small, 512 dims)."""
     api_key = get_openai_api_key()
@@ -157,9 +186,8 @@ def get_all_papers(order_by="recomm_date", order_dir="DESC"):
     ):
         papers = _papers_cache
     else:
-        # Fetch from database
-        cursor = get_cursor()
-        cursor.execute(
+        # Fetch from database with retry on connection errors
+        cursor = execute_with_retry(
             """
             SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
                    CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
@@ -197,9 +225,8 @@ def invalidate_papers_cache():
 
 def search_papers_keyword(query):
     """Search papers by keyword (SQL ILIKE)."""
-    cursor = get_cursor()
     search_pattern = f"%{query}%"
-    cursor.execute(
+    cursor = execute_with_retry(
         """
         SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
                (summary_core::jsonb)->'topic_relevance'->>'primary_topic' as primary_topic
@@ -220,10 +247,10 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
         top_k: Maximum number of results (None = 1000)
         score_threshold: Minimum similarity score (0-1) to include a result
     """
-    cursor = get_cursor()
-
     # Check if embeddings are available
-    cursor.execute("SELECT COUNT(*) as total FROM papers WHERE embedding IS NOT NULL")
+    cursor = execute_with_retry(
+        "SELECT COUNT(*) as total FROM papers WHERE embedding IS NOT NULL"
+    )
     result = cursor.fetchone()
     embedding_count = result["total"] if result else 0
 
@@ -242,7 +269,7 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
     if top_k is None:
         top_k = 1000
 
-    cursor.execute(
+    cursor = execute_with_retry(
         """
         SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
                1 - (embedding <=> %s::vector) as similarity,
@@ -293,17 +320,17 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
 
 def get_similar_papers(paper_id, limit=5):
     """Find papers similar to the given paper."""
-    cursor = get_cursor()
-
     # Get source paper embedding
-    cursor.execute("SELECT embedding FROM papers WHERE id = %s", (paper_id,))
+    cursor = execute_with_retry(
+        "SELECT embedding FROM papers WHERE id = %s", (paper_id,)
+    )
     source = cursor.fetchone()
 
     if not source or not source.get("embedding"):
         return []
 
     # Find similar papers
-    cursor.execute(
+    cursor = execute_with_retry(
         """
         SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
                1 - (embedding <=> %s::vector) as similarity
@@ -326,8 +353,7 @@ def get_similar_papers(paper_id, limit=5):
 
 def get_stats():
     """Get database and embedding statistics."""
-    cursor = get_cursor()
-    cursor.execute(
+    cursor = execute_with_retry(
         """
         SELECT
             COUNT(*) as total_papers,
@@ -410,8 +436,7 @@ def calculate_topic_stats(papers):
 
 def get_paper_by_id(paper_id):
     """Get a single paper by ID with all fields."""
-    cursor = get_cursor()
-    cursor.execute(
+    cursor = execute_with_retry(
         """
         SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
                summary_generated_at, summary_basics, summary_core,
