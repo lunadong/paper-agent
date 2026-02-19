@@ -5,13 +5,12 @@ For the above paper, identify what research topics it belongs to and select a PR
 ========================
 Hard Requirements
 ========================
-1) You MUST ONLY use topics from this EXACT list (no other topics allowed):
+1) ONLY use topics from this EXACT list:
    RAG, Agent, Memory, P13N, Factuality, Benchmark, Reasoning, RL, Pretraining, KG, QA, Recommendation, MM, Speech
 
 2) NEVER invent or use topics not in the above list. For example:
    - "information extraction" is NOT allowed → use KG instead
    - "natural language processing" is NOT allowed → use the most relevant topic from the list
-   - Any topic not explicitly listed above is FORBIDDEN
 
 3) Select exactly ONE primary_topic from the list above - the main research area that best describes this paper's core contribution. THIS MUST BE A SINGLE STRING, NOT AN ARRAY.
 
