@@ -12,17 +12,8 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Find Python - try common locations
-if command -v python3 &> /dev/null; then
-    PYTHON="python3"
-elif [ -f "/Library/Developer/CommandLineTools/usr/bin/python3" ]; then
-    PYTHON="/Library/Developer/CommandLineTools/usr/bin/python3"
-elif [ -f "/usr/bin/python3" ]; then
-    PYTHON="/usr/bin/python3"
-else
-    echo "Error: python3 not found"
-    exit 1
-fi
+# Use system Python 3.9 which has required packages installed
+PYTHON="/usr/bin/python3"
 
 echo "========================================"
 echo "Paper Update - $(date)"

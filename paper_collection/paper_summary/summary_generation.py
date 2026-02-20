@@ -53,7 +53,9 @@ except ImportError:
 
 
 # API configuration - read from config.yaml
-MAX_PDF_CHARS = 100000  # Limit PDF text to avoid token limits
+# Limit PDF text to ~63K chars so final prompt stays under ~80K
+# (accounts for ~17K template overhead)
+MAX_PDF_CHARS = 63000
 
 # Retry configuration
 MAX_RETRIES = 3

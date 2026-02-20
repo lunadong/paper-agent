@@ -5,6 +5,7 @@ config.yaml
 
 # Python
 __pycache__/
+.ruff_cache/
 *.py[cod]
 *$py.class
 *.so
@@ -30,6 +31,7 @@ venv/
 ENV/
 env/
 .venv/
+.env
 
 # IDE
 .idea/

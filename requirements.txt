@@ -15,7 +15,7 @@ numpy
 
 # PDF processing (for auto_summary)
 PyPDF2
-PyMuPDF  # For figure extraction from PDFs
+PyMuPDF  # For figure extraction from PDFs (fitz module)
 Pillow   # For image processing
 
 # HTTP requests
