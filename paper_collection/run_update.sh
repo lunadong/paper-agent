@@ -20,7 +20,7 @@ echo "Paper Update - $(date)"
 echo "========================================"
 
 cd "$SCRIPT_DIR"
-$PYTHON daily_update.py --no-email --days 2 "$@"
+$PYTHON daily_update.py --days 2 "$@"
 
 echo ""
 echo "========================================"

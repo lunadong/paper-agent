@@ -14,8 +14,10 @@ interface with AI-powered summarization.
 - **AI Summarization**: Two-stage summarization using Gemini API
   - Stage 1: Topic classification from PDF/abstract
   - Stage 2: Detailed structured summary with evaluation highlights
-- **Web Interface**: Browse, search, and view paper summaries
-- **Daily Updates**: Automated collection with parallel processing
+- **Figure Extraction**: Automatic extraction of architecture diagrams and key figures from PDFs
+- **Web Interface**: Browse, search, and view paper summaries with collapsible sections
+- **Daily Updates**: Automated collection with parallel processing and email notifications
+- **Scheduled Tasks**: macOS launchd integration for daily automated updates
 - **Vercel Deployment**: Ready for serverless deployment
 
 ## Quick Start
@@ -104,12 +106,15 @@ A browser window will open asking you to authorize the app.
 ### 4. Collect Papers
 
 ```bash
-# Collect papers from the last 7 days
+# Collect papers from the last 7 days (with email notification)
 cd paper_collection
+python3 daily_update.py --days 7
+
+# Without email notification
 python3 daily_update.py --days 7 --no-email
 
 # With parallel summary generation (4 workers)
-python3 daily_update.py --days 7 --no-email --workers 4
+python3 daily_update.py --days 7 --workers 4
 ```
 
 ### 5. Generate Summaries
@@ -145,7 +150,7 @@ paper-agent/
 |-- README.md                # This file
 |
 |-- paper_collection/        # Email parsing and data collection
-|   |-- config.py            # Configuration management
+|   |-- config.py            # Configuration management (includes GeminiConfig)
 |   |-- gmail_client.py      # Gmail API client
 |   |-- paper_collector_wo_LLM.py  # Paper collection (keyword tagging)
 |   |-- paper_db.py          # PostgreSQL database with connection pooling
@@ -153,8 +158,18 @@ paper-agent/
 |   |-- run_update.sh        # Shell script for cron jobs
 |   |
 |   |-- paper_summary/       # AI-powered paper summarization
-|   |   |-- summary_generation.py  # Two-stage summary generation
-|   |   +-- prompts/         # Prompt templates
+|   |   |-- __init__.py           # Package exports
+|   |   |-- summary_generation.py # Two-stage summary generation (~930 lines)
+|   |   |-- prompt_manager.py     # Prompt template loading and topics
+|   |   |-- extract_figures.py    # Figure extraction from PDFs
+|   |   |
+|   |   |-- util/                 # Utility modules
+|   |   |   |-- __init__.py       # Utility package exports
+|   |   |   |-- checkpoint.py     # Rate limiting & checkpoint management
+|   |   |   |-- pdf_processing.py # PDF download, cache, text extraction
+|   |   |   +-- llm_client.py     # Gemini API client with retry logic
+|   |   |
+|   |   +-- prompts/              # Prompt templates
 |   |       |-- prompt.txt           # Main summary prompt
 |   |       |-- prompt_topic.txt     # Topic classification prompt
 |   |       |-- background_*.txt     # Topic-specific backgrounds
@@ -263,7 +278,7 @@ The system supports the following research topics:
 | abstract | TEXT | Paper abstract |
 | link | TEXT | URL to paper |
 | recomm_date | TEXT | Date recommended |
-| topic | TEXT | All topic tags (comma-separated) |
+| topics | TEXT | All topic tags (comma-separated) |
 | primary_topic | TEXT | Main research area |
 | embedding | vector(512) | OpenAI embedding |
 | summary_basics | JSONB | Basic paper info |
@@ -271,6 +286,21 @@ The system supports the following research topics:
 | summary_methods_evidence | JSONB | Methods and evaluation |
 | summary_figures | JSONB | Figure descriptions |
 | summary_generated_at | TEXT | When summary was generated |
+| created_at | TIMESTAMP | Record creation time |
+
+### paper_images Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | SERIAL | Primary key |
+| paper_id | INTEGER | Foreign key to papers table |
+| figure_number | TEXT | Figure identifier (e.g., "Figure 1") |
+| caption | TEXT | Figure caption text |
+| image_data | BYTEA | Binary image data (PNG) |
+| image_type | TEXT | Image MIME type |
+| page_number | INTEGER | PDF page where figure appears |
+| is_architecture | BOOLEAN | Whether this is an architecture diagram |
+| extraction_method | TEXT | Method used to extract figure |
 | created_at | TIMESTAMP | Record creation time |
 
 ## Troubleshooting
@@ -301,6 +331,59 @@ Delete `paper_collection/token.json` and re-authenticate.
 - Check Gemini API key and endpoint in config.yaml
 - Use `--checkpoint` for resumable batch processing
 - Review checkpoint file for error categorization
+
+## Scheduled Updates (macOS)
+
+The system supports automated daily updates via macOS launchd:
+
+### Setup
+
+1. Copy the paper-agent files to a location outside fbsource (required for macOS security):
+   ```bash
+   cp -r paper_collection ~/paper-agent-cron/
+   ```
+
+2. Create a launchd plist at `~/Library/LaunchAgents/com.lunadong.paper-update.plist`:
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+   <plist version="1.0">
+   <dict>
+       <key>Label</key>
+       <string>com.lunadong.paper-update</string>
+       <key>ProgramArguments</key>
+       <array>
+           <string>/usr/bin/python3</string>
+           <string>/Users/lunadong/paper-agent-cron/daily_update.py</string>
+           <string>--days</string>
+           <string>2</string>
+       </array>
+       <key>StartCalendarInterval</key>
+       <dict>
+           <key>Hour</key>
+           <integer>17</integer>
+           <key>Minute</key>
+           <integer>0</integer>
+       </dict>
+       <key>StandardOutPath</key>
+       <string>/tmp/paper-update.log</string>
+       <key>StandardErrorPath</key>
+       <string>/tmp/paper-update-error.log</string>
+       <key>WorkingDirectory</key>
+       <string>/Users/lunadong/paper-agent-cron</string>
+   </dict>
+   </plist>
+   ```
+
+3. Load the agent:
+   ```bash
+   launchctl load ~/Library/LaunchAgents/com.lunadong.paper-update.plist
+   ```
+
+4. Monitor logs:
+   ```bash
+   tail -f /tmp/paper-update.log
+   ```
 
 ## Deployment
 

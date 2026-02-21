@@ -20,7 +20,7 @@
 
   "Core": {
     "topic_relevance": {
-      "topic": [],
+      "topics": [],
       "primary_topic": "",
       "sub_topic": [],
       "primary_focus": []

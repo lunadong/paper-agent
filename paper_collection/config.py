@@ -16,7 +16,7 @@ Usage:
 import argparse
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import yaml
 
@@ -99,6 +99,16 @@ class OpenAIConfig:
 
 
 @dataclass
+class GeminiConfig:
+    """Gemini API configuration for LLM calls."""
+
+    api_key: str = ""
+    api_url: str = ""
+    model: str = "gemini-2.0-flash"
+    lightweight_model: str = "gemini-2.0-flash-lite"
+
+
+@dataclass
 class Config:
     """Main configuration class."""
 
@@ -112,6 +122,7 @@ class Config:
     daily_update: DailyUpdateConfig = field(default_factory=DailyUpdateConfig)
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     openai: OpenAIConfig = field(default_factory=OpenAIConfig)
+    gemini: GeminiConfig = field(default_factory=GeminiConfig)
 
     # Internal: track where config was loaded from
     _config_file: Optional[str] = None
@@ -249,6 +260,18 @@ def create_config_from_dict(data: dict) -> Config:
             api_key=openai_data.get("api_key", config.openai.api_key),
             embedding_model=openai_data.get(
                 "embedding_model", config.openai.embedding_model
+            ),
+        )
+
+    # Gemini settings
+    if "gemini" in data:
+        gemini_data = data["gemini"]
+        config.gemini = GeminiConfig(
+            api_key=gemini_data.get("api_key", config.gemini.api_key),
+            api_url=gemini_data.get("api_url", config.gemini.api_url),
+            model=gemini_data.get("model", config.gemini.model),
+            lightweight_model=gemini_data.get(
+                "lightweight_model", config.gemini.lightweight_model
             ),
         )
 

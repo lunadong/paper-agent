@@ -129,5 +129,23 @@ gemini:
   # API endpoint
   api_url: "https://api.wearables-ape.io/conversations/sync"
 
-  # Default model to use
+  # Default model to use for summary generation
   model: "gemini-2.0-flash"
+
+  # Lightweight model for topic classification (faster, lower cost)
+  lightweight_model: "gemini-2.0-flash-lite"
+
+# =============================================================================
+# Figure Extraction Settings
+# =============================================================================
+
+figures:
+  # Directory for storing extracted figures
+  output_dir: "web_interface/static/figures"
+
+  # Minimum figure size (pixels) to extract
+  min_width: 100
+  min_height: 100
+
+  # Extract architecture diagrams (Figure 1 typically)
+  extract_architecture: true

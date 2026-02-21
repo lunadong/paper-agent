@@ -24,6 +24,13 @@ _papers_cache = None
 _papers_cache_time = 0
 CACHE_TTL_SECONDS = 60  # Cache papers for 60 seconds
 
+# Common SQL columns for paper queries (reduce duplication)
+PAPER_LIST_COLUMNS = """
+    id, title, authors, venue, year, abstract, link, recomm_date, topics,
+    CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
+    primary_topic
+""".strip()
+
 
 def load_config():
     """Load configuration from config.yaml if available."""
@@ -137,7 +144,12 @@ def execute_with_retry(query, params=None, max_retries=2):
 
 
 def generate_openai_embedding(text: str) -> list:
-    """Generate embedding using OpenAI API (text-embedding-3-small, 512 dims)."""
+    """
+    Generate embedding using OpenAI API (text-embedding-3-small, 512 dims).
+
+    Note: This function is intentionally duplicated from paper_db.py for
+    Vercel deployment independence. Keep in sync with paper_db.py version.
+    """
     api_key = get_openai_api_key()
     if not api_key:
         return None
@@ -148,12 +160,16 @@ def generate_openai_embedding(text: str) -> list:
         "Content-Type": "application/json",
     }
     data = json.dumps(
-        {"input": text, "model": "text-embedding-3-small", "dimensions": 512}
+        {
+            "input": text[:8000],  # Truncate to avoid token limits
+            "model": "text-embedding-3-small",
+            "dimensions": 512,
+        }
     ).encode("utf-8")
 
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             result = json.loads(response.read().decode("utf-8"))
             return result["data"][0]["embedding"]
     except Exception as e:
@@ -187,14 +203,7 @@ def get_all_papers(order_by="recomm_date", order_dir="DESC"):
         papers = _papers_cache
     else:
         # Fetch from database with retry on connection errors
-        cursor = execute_with_retry(
-            """
-            SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
-                   CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
-                   primary_topic
-            FROM papers
-            """
-        )
+        cursor = execute_with_retry(f"SELECT {PAPER_LIST_COLUMNS} FROM papers")
         papers = [dict(row) for row in cursor.fetchall()]
         _papers_cache = papers
         _papers_cache_time = current_time
@@ -227,10 +236,8 @@ def search_papers_keyword(query):
     """Search papers by keyword (SQL ILIKE)."""
     search_pattern = f"%{query}%"
     cursor = execute_with_retry(
-        """
-        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
-               CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
-               (summary_core::jsonb)->'topic_relevance'->>'primary_topic' as primary_topic
+        f"""
+        SELECT {PAPER_LIST_COLUMNS}
         FROM papers
         WHERE title ILIKE %s OR abstract ILIKE %s OR authors ILIKE %s
         ORDER BY recomm_date DESC

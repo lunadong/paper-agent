@@ -173,6 +173,27 @@
             letter-spacing: 0.5px;
         }
 
+        .subsection-title.collapsible {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 0;
+        }
+
+        .subsection-title.collapsible:after {
+            content: '▼';
+            font-size: 10px;
+            color: #999;
+            transition: transform 0.2s;
+        }
+
+        .subsection-title.collapsible.collapsed:after {
+            transform: rotate(-90deg);
+        }
+
         .thesis {
             font-size: 18px;
             font-weight: 500;
@@ -646,15 +667,17 @@
         {% set arch_fig_num = arch_fig.figure_id|extract_fig_num if arch_fig and arch_fig.figure_id else '' %}
         {% if arch_fig and arch_fig_num and paper.image_map.get(arch_fig_num) and arch_fig.figure_id|is_figure %}
         <div class="subsection">
-            <div class="subsection-title">Architecture</div>
-            <div class="figure-container">
-                <img src="/api/paper/image/{{ paper.image_map.get(arch_fig_num) }}"
-                     alt="Architecture Figure {{ arch_fig.figure_id }}"
-                     class="paper-figure"
-                     onclick="openImageModal(this.src, this.alt)">
-                {% if arch_fig.what_it_shows %}
-                <div class="figure-caption">{{ arch_fig.what_it_shows }}</div>
-                {% endif %}
+            <div class="subsection-title collapsible" onclick="toggleSection(this)">Architecture</div>
+            <div class="collapsible-content">
+                <div class="figure-container">
+                    <img src="/api/paper/image/{{ paper.image_map.get(arch_fig_num) }}"
+                         alt="Architecture Figure {{ arch_fig.figure_id }}"
+                         class="paper-figure"
+                         onclick="openImageModal(this.src, this.alt)">
+                    {% if arch_fig.what_it_shows %}
+                    <div class="figure-caption">{{ arch_fig.what_it_shows }}</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endif %}

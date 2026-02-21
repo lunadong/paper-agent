@@ -28,7 +28,7 @@
 
   "Core": {
     "topic_relevance": {
-      "topic": ["RAG", "Agent"],
+      "topics": ["RAG", "Agent"],
       "primary_topic": "RAG",
       "sub_topic": [
         "Modularized RAG pipeline",

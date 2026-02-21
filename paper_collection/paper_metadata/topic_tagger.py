@@ -176,9 +176,9 @@ def show_topic_stats():
     no_topic_count = 0
 
     for paper in papers:
-        topic = paper.get("topic")
-        if topic:
-            topic_counts[topic] = topic_counts.get(topic, 0) + 1
+        topics = paper.get("topics")
+        if topics:
+            topic_counts[topics] = topic_counts.get(topics, 0) + 1
         else:
             no_topic_count += 1
 
@@ -241,7 +241,7 @@ def auto_tag_papers():
     updated = 0
     for paper_id, topics in paper_topics.items():
         topic_str = ", ".join(sorted(topics)) if topics else None
-        if db.update_paper(paper_id, topic=topic_str):
+        if db.update_paper(paper_id, topics=topic_str):
             updated += 1
 
     db.close()
@@ -292,7 +292,7 @@ def retag_single_topic(tag_to_retag):
     updated = 0
     for paper in papers:
         paper_id = paper["id"]
-        current_topic = paper.get("topic") or ""
+        current_topic = paper.get("topics") or ""
 
         # Parse current topics
         if current_topic:
@@ -310,7 +310,7 @@ def retag_single_topic(tag_to_retag):
         # Update database
         new_topic = ", ".join(sorted(topics)) if topics else None
         if new_topic != current_topic:
-            db.update_paper(paper_id, topic=new_topic)
+            db.update_paper(paper_id, topics=new_topic)
             updated += 1
 
     db.close()
@@ -329,7 +329,7 @@ def tag_new_papers():
     papers = db.get_all_papers()
 
     # Filter to papers WITHOUT topics
-    new_papers = [p for p in papers if not p.get("topic")]
+    new_papers = [p for p in papers if not p.get("topics")]
 
     if not new_papers:
         print("\nNo new papers to tag.")

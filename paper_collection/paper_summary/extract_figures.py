@@ -19,7 +19,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-import requests
+# Handle both direct execution and package import
+try:
+    from .util.pdf_processing import download_pdf_bytes
+except ImportError:
+    from util.pdf_processing import download_pdf_bytes
 
 # Try to import PyMuPDF
 try:
@@ -62,11 +66,13 @@ class Caption:
 
 
 def download_pdf(pdf_url: str, timeout: int = 60) -> Optional[bytes]:
-    """Download PDF from URL and return bytes."""
+    """
+    Download PDF from URL and return bytes.
+
+    This is a wrapper around download_pdf_bytes for backward compatibility.
+    """
     try:
-        response = requests.get(pdf_url, timeout=timeout)
-        response.raise_for_status()
-        return response.content
+        return download_pdf_bytes(pdf_url, max_retries=3)
     except Exception as e:
         print(f"  Error downloading PDF: {e}")
         return None

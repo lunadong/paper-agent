@@ -242,9 +242,15 @@ def main():
     else:
         log(f"STEP 3: Generating summaries (workers={args.workers})...")
         db = PaperDB()
-        # Get papers without summaries
+        # Get papers without summaries that are within the date range
+        date_cutoff_str = date_cutoff.strftime("%Y-%m-%d")
         papers = db.get_all_papers(order_by="created_at", order_dir="DESC")
-        papers_to_process = [p for p in papers if not p.get("summary_generated_at")]
+        papers_to_process = [
+            p
+            for p in papers
+            if not p.get("summary_generated_at")
+            and p.get("recomm_date", "") >= date_cutoff_str
+        ]
 
         if papers_to_process:
             log(f"Found {len(papers_to_process)} papers without summaries")

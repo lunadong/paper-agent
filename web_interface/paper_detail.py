@@ -161,7 +161,7 @@ def get_paper_with_summary(paper_id: int) -> dict:
         "abstract": paper.get("abstract"),
         "link": paper.get("link"),
         "recomm_date": paper.get("recomm_date"),
-        "topic": paper.get("topic"),
+        "topics": paper.get("topics"),
         "has_summary": has_summary,
         "summary_generated_at": paper.get("summary_generated_at"),
         "summary": summary,

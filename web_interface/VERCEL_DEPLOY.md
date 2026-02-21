@@ -118,6 +118,8 @@ web_interface/
 - [x] Primary topic filtering (single focus area)
 - [x] Date range filtering
 - [x] Paper detail pages with AI-generated summaries
+- [x] Extracted figures display (architecture diagrams, key results)
+- [x] Collapsible sections for better navigation
 - [x] Similar papers API
 - [x] Monthly statistics charts
 - [x] Responsive design

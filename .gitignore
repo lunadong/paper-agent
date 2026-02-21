@@ -63,3 +63,6 @@ tmp/*
 .arclint
 .gitignore
 .hgignore
+
+# Internal planning docs
+REFACTOR_PLAN.md
