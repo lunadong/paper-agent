@@ -103,9 +103,7 @@ def measure_caption_width(page, caption_rect) -> float:
     page_width = page.rect.width
 
     # Search for text in the caption region (first few lines)
-    search_rect = fitz.Rect(
-        0, caption_rect.y0 - 2, page_width, caption_rect.y0 + 50
-    )
+    search_rect = fitz.Rect(0, caption_rect.y0 - 2, page_width, caption_rect.y0 + 50)
 
     blocks = page.get_text("dict", clip=search_rect)["blocks"]
 
@@ -326,7 +324,10 @@ def get_column_bounds(
 
 
 def find_vertical_bounds(
-    caption: Caption, all_captions: list[Caption], page_height: float, margin: float = 15
+    caption: Caption,
+    all_captions: list[Caption],
+    page_height: float,
+    margin: float = 15,
 ) -> tuple[float, float]:
     """
     Find vertical bounds for searching graphics.
@@ -351,9 +352,8 @@ def find_vertical_bounds(
         # For single-column figures, only consider captions in same column
         if not caption.is_full_width:
             same_column = (
-                (caption.x_center < half_page and other.x_center < half_page)
-                or (caption.x_center >= half_page and other.x_center >= half_page)
-            )
+                caption.x_center < half_page and other.x_center < half_page
+            ) or (caption.x_center >= half_page and other.x_center >= half_page)
             if not same_column:
                 continue
 
@@ -586,8 +586,14 @@ def extract_figures_from_pdf(
             if other.page_num == caption.page_num and other.rect.y1 < caption.rect.y0:
                 # Check if same column for single-column figures
                 if caption.is_full_width or (
-                    (caption.x_center < page_width / 2 and other.x_center < page_width / 2)
-                    or (caption.x_center >= page_width / 2 and other.x_center >= page_width / 2)
+                    (
+                        caption.x_center < page_width / 2
+                        and other.x_center < page_width / 2
+                    )
+                    or (
+                        caption.x_center >= page_width / 2
+                        and other.x_center >= page_width / 2
+                    )
                 ):
                     has_caption_above = True
                     break
@@ -635,10 +641,19 @@ def extract_figures_from_pdf(
                 for other in captions:
                     if other.fig_num == caption.fig_num:
                         continue
-                    if other.page_num == caption.page_num and other.rect.y1 < caption.rect.y0:
+                    if (
+                        other.page_num == caption.page_num
+                        and other.rect.y1 < caption.rect.y0
+                    ):
                         if caption.is_full_width or (
-                            (caption.x_center < page_width / 2 and other.x_center < page_width / 2)
-                            or (caption.x_center >= page_width / 2 and other.x_center >= page_width / 2)
+                            (
+                                caption.x_center < page_width / 2
+                                and other.x_center < page_width / 2
+                            )
+                            or (
+                                caption.x_center >= page_width / 2
+                                and other.x_center >= page_width / 2
+                            )
                         ):
                             upper_caption_y1 = max(upper_caption_y1, other.rect.y1)
 
@@ -646,11 +661,15 @@ def extract_figures_from_pdf(
 
                 # If graphics are much closer to our caption, they're ours
                 # Or if graphics start well below the upper caption
-                if distance_to_our_caption < 50 or distance_to_upper_caption > 100:
+                close_to_us = distance_to_our_caption < 50
+                far_from_upper = distance_to_upper_caption > 100
+                if close_to_us or far_from_upper:
                     fig_bounds = graphics_above
                     include_caption_below = True
                 else:
-                    print(f"    Skipping Figure {caption.fig_num} (graphics belong to caption above)")
+                    print(
+                        f"    Skipping Figure {caption.fig_num} (graphics belong to caption above)"
+                    )
                     continue
             else:
                 fig_bounds = graphics_above
@@ -723,14 +742,25 @@ def extract_figures_from_pdf(
         try:
             pix = page.get_pixmap(matrix=mat, clip=clip_rect)
             filename = f"{caption.fig_num}.png"
-            filepath = paper_dir / filename
 
+            # Get image bytes
             if PILLOW_AVAILABLE:
                 img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
                 img = img.convert("P", palette=Image.ADAPTIVE, colors=256)
-                img.save(filepath, "PNG", optimize=True)
+                import io
+
+                buffer = io.BytesIO()
+                img.save(buffer, "PNG", optimize=True)
+                image_bytes = buffer.getvalue()
             else:
-                pix.save(str(filepath))
+                image_bytes = pix.tobytes("png")
+
+            filepath = None
+            # Only save to disk if output_dir was provided
+            if paper_dir is not None:
+                filepath = paper_dir / filename
+                with open(filepath, "wb") as f:
+                    f.write(image_bytes)
 
             col_str = "full-width" if caption.is_full_width else "single-col"
             print(
@@ -738,18 +768,20 @@ def extract_figures_from_pdf(
                 f"{caption.page_num + 1} ({pix.width}x{pix.height}, {col_str})"
             )
 
-            extracted_figures.append(
-                {
-                    "filename": filename,
-                    "figure_num": caption.fig_num,
-                    "page": caption.page_num + 1,
-                    "width": pix.width,
-                    "height": pix.height,
-                    "caption": caption.text,
-                    "is_full_width": caption.is_full_width,
-                    "path": str(filepath),
-                }
-            )
+            figure_info = {
+                "filename": filename,
+                "figure_num": caption.fig_num,
+                "page": caption.page_num + 1,
+                "width": pix.width,
+                "height": pix.height,
+                "caption": caption.text,
+                "is_full_width": caption.is_full_width,
+                "image_data": image_bytes,
+            }
+            if filepath is not None:
+                figure_info["path"] = str(filepath)
+
+            extracted_figures.append(figure_info)
 
         except Exception as e:
             print(f"    Error extracting Figure {caption.fig_num}: {e}")
@@ -758,7 +790,273 @@ def extract_figures_from_pdf(
     doc.close()
 
     if extracted_figures:
-        print(f"  Extracted {len(extracted_figures)} figures to {paper_dir}")
+        if paper_dir is not None:
+            print(f"  Extracted {len(extracted_figures)} figures to {paper_dir}")
+        else:
+            print(f"  Extracted {len(extracted_figures)} figures (in-memory only)")
+    else:
+        print("  No figures extracted.")
+
+    return extracted_figures
+
+
+def extract_figures_from_pdf_bytes(
+    pdf_bytes: bytes,
+    paper_id: str,
+    output_dir: Optional[Path] = None,
+    max_figures: int = 20,
+    dpi: int = 200,
+) -> list[dict]:
+    """
+    Extract figures from PDF bytes and optionally save them as images.
+
+    This function accepts raw PDF bytes instead of downloading from
+    URL, allowing the same PDF download to be used for both text and
+    figure extraction.
+
+    Args:
+        pdf_bytes: Raw PDF bytes.
+        paper_id: Paper ID for organizing output folder.
+        output_dir: Directory to save figures. If None, figures are only
+            returned in memory (with image_data bytes) and not saved to disk.
+        max_figures: Maximum number of figures to extract.
+        dpi: Resolution for rendered images.
+
+    Returns:
+        List of dicts with figure info. Each dict contains:
+        - filename: The figure filename
+        - figure_num: The figure number
+        - page: Page number where figure was found
+        - width/height: Image dimensions
+        - caption: Figure caption text
+        - is_full_width: Whether figure spans full page width
+        - image_data: Raw PNG bytes (always included)
+        - path: File path (only if output_dir was provided)
+    """
+    if not PYMUPDF_AVAILABLE:
+        print("  PyMuPDF not installed. Install with: pip install PyMuPDF")
+        return []
+
+    paper_dir = None
+    if output_dir is not None:
+        paper_dir = output_dir / str(paper_id)
+        paper_dir.mkdir(parents=True, exist_ok=True)
+
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    extracted_figures = []
+
+    captions = find_all_captions(doc)
+
+    if not captions:
+        print("  No figure captions found.")
+        doc.close()
+        return []
+
+    for caption in captions:
+        if len(extracted_figures) >= max_figures:
+            break
+
+        page = doc[caption.page_num]
+        page_width = page.rect.width
+        page_height = page.rect.height
+        margin = 15
+
+        x0, x1 = get_column_bounds(caption, page_width, margin)
+        upper_bound, lower_bound = find_vertical_bounds(
+            caption, captions, page_height, margin
+        )
+
+        search_above = fitz.Rect(x0, upper_bound, x1, caption.rect.y0 - 5)
+        search_below = fitz.Rect(x0, caption.rect.y1 + 5, x1, lower_bound)
+
+        graphics_above = find_graphics_bounds(page, search_above)
+        graphics_below = find_graphics_bounds(page, search_below)
+
+        has_caption_above = False
+        for other in captions:
+            if other.fig_num == caption.fig_num:
+                continue
+            same_page = other.page_num == caption.page_num
+            above_us = other.rect.y1 < caption.rect.y0
+            if same_page and above_us:
+                left_col = caption.x_center < page_width / 2
+                other_left = other.x_center < page_width / 2
+                if caption.is_full_width or (
+                    (left_col and other_left)
+                    or (
+                        caption.x_center >= page_width / 2
+                        and other.x_center >= page_width / 2
+                    )
+                ):
+                    has_caption_above = True
+                    break
+
+        fig_bounds = None
+        include_caption_below = True
+
+        if graphics_above and graphics_below:
+            if has_caption_above:
+                fig_bounds = graphics_below
+                include_caption_below = False
+            else:
+                colors_above, images_above = count_visual_richness(
+                    page, fitz.Rect(*graphics_above)
+                )
+                colors_below, images_below = count_visual_richness(
+                    page, fitz.Rect(*graphics_below)
+                )
+
+                richness_above = colors_above + images_above * 5
+                richness_below = colors_below + images_below * 5
+
+                if richness_above >= richness_below:
+                    fig_bounds = graphics_above
+                    include_caption_below = True
+                else:
+                    fig_bounds = graphics_below
+                    include_caption_below = False
+
+        elif graphics_above:
+            if has_caption_above:
+                gx0, gy0, gx1, gy1 = graphics_above
+                distance_to_our_caption = caption.rect.y0 - gy1
+
+                upper_caption_y1 = margin
+                for other in captions:
+                    if other.fig_num == caption.fig_num:
+                        continue
+                    if (
+                        other.page_num == caption.page_num
+                        and other.rect.y1 < caption.rect.y0
+                    ):
+                        if caption.is_full_width or (
+                            (
+                                caption.x_center < page_width / 2
+                                and other.x_center < page_width / 2
+                            )
+                            or (
+                                caption.x_center >= page_width / 2
+                                and other.x_center >= page_width / 2
+                            )
+                        ):
+                            upper_caption_y1 = max(upper_caption_y1, other.rect.y1)
+
+                distance_to_upper_caption = gy0 - upper_caption_y1
+
+                close_to_us = distance_to_our_caption < 50
+                far_from_upper = distance_to_upper_caption > 100
+                if close_to_us or far_from_upper:
+                    fig_bounds = graphics_above
+                    include_caption_below = True
+                else:
+                    continue
+            else:
+                fig_bounds = graphics_above
+                include_caption_below = True
+
+        elif graphics_below:
+            fig_bounds = graphics_below
+            include_caption_below = False
+
+        else:
+            continue
+
+        gx0, gy0, gx1, gy1 = fig_bounds
+        test_rect = fitz.Rect(gx0, gy0, gx1, gy1)
+
+        if is_table_region(page, test_rect):
+            continue
+
+        if is_text_heavy(page, test_rect):
+            continue
+
+        padding = 10
+
+        if caption.is_full_width:
+            fig_x0 = margin
+            fig_x1 = page_width - margin
+        else:
+            fig_x0 = max(margin, gx0 - padding)
+            fig_x1 = min(page_width - margin, gx1 + padding)
+
+        if include_caption_below:
+            fig_y0 = max(margin, gy0 - padding)
+            caption_height = min(60, len(caption.text) // 3)
+            fig_y1 = min(page_height - margin, caption.rect.y0 + caption_height)
+        else:
+            fig_y0 = max(margin, caption.rect.y0 - 5)
+            fig_y1 = min(page_height - margin, gy1 + padding)
+
+        if not caption.is_full_width:
+            col_x0, col_x1 = get_column_bounds(caption, page_width, margin)
+            fig_x0 = max(fig_x0, col_x0)
+            fig_x1 = min(fig_x1, col_x1)
+
+        if fig_y1 - fig_y0 < 50 or fig_x1 - fig_x0 < 50:
+            continue
+
+        if fig_y1 - fig_y0 > page_height * 0.75:
+            continue
+
+        clip_rect = fitz.Rect(fig_x0, fig_y0, fig_x1, fig_y1)
+        zoom = dpi / 72
+        mat = fitz.Matrix(zoom, zoom)
+
+        try:
+            pix = page.get_pixmap(matrix=mat, clip=clip_rect)
+            filename = f"{caption.fig_num}.png"
+
+            # Get image bytes
+            if PILLOW_AVAILABLE:
+                img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+                img = img.convert("P", palette=Image.ADAPTIVE, colors=256)
+                import io
+
+                buffer = io.BytesIO()
+                img.save(buffer, "PNG", optimize=True)
+                image_bytes = buffer.getvalue()
+            else:
+                image_bytes = pix.tobytes("png")
+
+            filepath = None
+            # Only save to disk if output_dir was provided
+            if paper_dir is not None:
+                filepath = paper_dir / filename
+                with open(filepath, "wb") as f:
+                    f.write(image_bytes)
+
+            col_str = "full-width" if caption.is_full_width else "single-col"
+            print(
+                f"    Extracted Figure {caption.fig_num} from page "
+                f"{caption.page_num + 1} ({pix.width}x{pix.height}, {col_str})"
+            )
+
+            figure_info = {
+                "filename": filename,
+                "figure_num": caption.fig_num,
+                "page": caption.page_num + 1,
+                "width": pix.width,
+                "height": pix.height,
+                "caption": caption.text,
+                "is_full_width": caption.is_full_width,
+                "image_data": image_bytes,
+            }
+            if filepath is not None:
+                figure_info["path"] = str(filepath)
+
+            extracted_figures.append(figure_info)
+
+        except Exception as e:
+            print(f"    Error extracting Figure {caption.fig_num}: {e}")
+            continue
+
+    doc.close()
+
+    if extracted_figures:
+        if paper_dir is not None:
+            print(f"  Extracted {len(extracted_figures)} figures to {paper_dir}")
+        else:
+            print(f"  Extracted {len(extracted_figures)} figures (in-memory only)")
     else:
         print("  No figures extracted.")
 

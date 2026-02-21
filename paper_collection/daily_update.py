@@ -5,7 +5,7 @@ Daily Paper Update Script
 Fetches papers from Google Scholar alerts and processes them in 3 steps:
     1. Email parsing - Fetch emails from Gmail
     2. Paper parsing - Extract paper metadata from emails, save to PostgreSQL
-    3. Summary generation - Generate tags and summaries for new papers
+    3. Summary generation - Generate topics and summaries for new papers
 
 Usage:
     python3 daily_update.py              # Run full daily update (1 day back)
@@ -114,7 +114,7 @@ def parse_args():
         help="Skip sending notification email",
     )
     parser.add_argument(
-        "--skip-tags",
+        "--skip-topics",
         action="store_true",
         help="Skip topic tagging step",
     )
@@ -214,7 +214,6 @@ def main():
                     abstract=paper.get("snippet", ""),
                     link=paper.get("link", ""),
                     recomm_date=parse_email_date(paper.get("email_date", "")),
-                    tags="",
                 )
                 if paper_id:
                     total_saved += 1
@@ -236,8 +235,8 @@ def main():
     # =========================================================================
     if args.dry_run:
         log("STEP 3: Skipped (dry run)")
-    elif args.skip_tags:
-        log("STEP 3: Skipped (--skip-tags)")
+    elif args.skip_topics:
+        log("STEP 3: Skipped (--skip-topics)")
     elif total_saved == 0:
         log("STEP 3: Skipped (no new papers)")
     else:

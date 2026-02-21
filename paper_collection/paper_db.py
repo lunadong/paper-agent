@@ -10,7 +10,7 @@ Usage:
 
     db = PaperDB()  # Uses config.yaml settings
     db.add_paper(title="...", authors="...", venue="...", year="...",
-                 abstract="...", link="...", recomm_date="...", tags="...")
+                 abstract="...", link="...", recomm_date="...")
 
     # Vector similarity search
     results = db.vector_search("retrieval augmented generation", limit=10)
@@ -266,8 +266,7 @@ class PaperDB:
                 abstract TEXT,
                 link TEXT,
                 recomm_date TEXT,
-                tags TEXT,
-                topic TEXT,
+                topics TEXT,
                 primary_topic TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 summary_basics TEXT,
@@ -302,6 +301,34 @@ class PaperDB:
             self.conn.commit()
             print("Migration complete: primary_topic column added")
 
+        # Create paper_images table if it doesn't exist
+        cursor.execute(
+            """
+            SELECT table_name FROM information_schema.tables
+            WHERE table_name = 'paper_images'
+        """
+        )
+        if cursor.fetchone() is None:
+            print("Creating paper_images table...")
+            cursor.execute(
+                """
+                CREATE TABLE paper_images (
+                    id SERIAL PRIMARY KEY,
+                    paper_id INTEGER REFERENCES papers(id) ON DELETE CASCADE,
+                    file_path TEXT NOT NULL,
+                    figure_name TEXT,
+                    caption TEXT,
+                    image_data BYTEA,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """
+            )
+            cursor.execute(
+                "CREATE INDEX idx_paper_images_paper_id ON paper_images(paper_id)"
+            )
+            self.conn.commit()
+            print("Migration complete: paper_images table created")
+
     def _generate_embedding(self, text: str) -> list[float]:
         """Generate embedding vector for text using OpenAI API."""
         return generate_openai_embedding(text)
@@ -326,7 +353,6 @@ class PaperDB:
         abstract: Optional[str] = None,
         link: Optional[str] = None,
         recomm_date: Optional[str] = None,
-        tags: Optional[str] = None,
         generate_embedding: bool = False,
     ) -> Optional[int]:
         """
@@ -340,7 +366,6 @@ class PaperDB:
             abstract: Paper abstract
             link: URL to the paper
             recomm_date: Date the paper was recommended (from email)
-            tags: Comma-separated tags
             generate_embedding: If True, generate and store embedding
 
         Returns:
@@ -357,8 +382,8 @@ class PaperDB:
             if embedding:
                 cursor.execute(
                     """
-                    INSERT INTO papers (title, authors, venue, year, abstract, link, recomm_date, tags, embedding)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO papers (title, authors, venue, year, abstract, link, recomm_date, embedding)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (title, link) DO NOTHING
                     RETURNING id
                 """,
@@ -370,19 +395,18 @@ class PaperDB:
                         abstract,
                         link,
                         recomm_date,
-                        tags,
                         embedding,
                     ),
                 )
             else:
                 cursor.execute(
                     """
-                    INSERT INTO papers (title, authors, venue, year, abstract, link, recomm_date, tags)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO papers (title, authors, venue, year, abstract, link, recomm_date)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (title, link) DO NOTHING
                     RETURNING id
                 """,
-                    (title, authors, venue, year, abstract, link, recomm_date, tags),
+                    (title, authors, venue, year, abstract, link, recomm_date),
                 )
             result = cursor.fetchone()
             self.conn.commit()
@@ -465,7 +489,7 @@ class PaperDB:
         query: str,
         limit: int = 10,
         threshold: float = None,
-        topic: str = None,
+        topics_filter: str = None,
     ) -> list[dict]:
         """
         Search papers using vector similarity.
@@ -474,7 +498,7 @@ class PaperDB:
             query: Search query text
             limit: Maximum number of results to return
             threshold: Minimum similarity score (0-1, cosine similarity)
-            topic: Optional topic filter
+            topics_filter: Optional topics filter
 
         Returns:
             List of paper dictionaries with similarity scores
@@ -484,16 +508,16 @@ class PaperDB:
         cursor = self._get_cursor()
 
         # Build query with optional filters
-        if topic:
+        if topics_filter:
             cursor.execute(
                 """
                 SELECT *, 1 - (embedding <=> %s::vector) as similarity
                 FROM papers
-                WHERE embedding IS NOT NULL AND topic ILIKE %s
+                WHERE embedding IS NOT NULL AND topics ILIKE %s
                 ORDER BY embedding <=> %s::vector
                 LIMIT %s
             """,
-                (query_embedding, f"%{topic}%", query_embedding, limit),
+                (query_embedding, f"%{topics_filter}%", query_embedding, limit),
             )
         else:
             cursor.execute(
@@ -728,37 +752,20 @@ class PaperDB:
         row = cursor.fetchone()
         return dict(row) if row else None
 
-    def get_papers_by_topic(self, topic: str) -> list[dict]:
+    def get_papers_by_topics(self, topics_filter: str) -> list[dict]:
         """
-        Get papers that have a specific topic.
+        Get papers by topics.
 
         Args:
-            topic: Topic to search for (e.g., "RAG", "Agent")
+            topics_filter: Topics to filter by
 
         Returns:
             List of paper dictionaries
         """
         cursor = self._get_cursor()
         cursor.execute(
-            "SELECT * FROM papers WHERE topic ILIKE %s ORDER BY created_at DESC",
-            (f"%{topic}%",),
-        )
-        return [dict(row) for row in cursor.fetchall()]
-
-    def get_papers_by_tag(self, tag: str) -> list[dict]:
-        """
-        Get papers that have a specific tag.
-
-        Args:
-            tag: Tag to search for
-
-        Returns:
-            List of paper dictionaries
-        """
-        cursor = self._get_cursor()
-        cursor.execute(
-            "SELECT * FROM papers WHERE tags ILIKE %s ORDER BY created_at DESC",
-            (f"%{tag}%",),
+            "SELECT * FROM papers WHERE topics ILIKE %s ORDER BY created_at DESC",
+            (f"%{topics_filter}%",),
         )
         return [dict(row) for row in cursor.fetchall()]
 
@@ -789,7 +796,7 @@ class PaperDB:
 
         Args:
             paper_id: The paper's database ID
-            **kwargs: Fields to update (title, authors, venue, abstract, link, recomm_date, tags, topic)
+            **kwargs: Fields to update (title, authors, venue, abstract, link, recomm_date, topics, primary_topic)
 
         Returns:
             True if the paper was updated, False if not found
@@ -802,8 +809,7 @@ class PaperDB:
             "abstract": "UPDATE papers SET abstract = %s WHERE id = %s",
             "link": "UPDATE papers SET link = %s WHERE id = %s",
             "recomm_date": "UPDATE papers SET recomm_date = %s WHERE id = %s",
-            "tags": "UPDATE papers SET tags = %s WHERE id = %s",
-            "topic": "UPDATE papers SET topic = %s WHERE id = %s",
+            "topics": "UPDATE papers SET topics = %s WHERE id = %s",
             "primary_topic": "UPDATE papers SET primary_topic = %s WHERE id = %s",
         }
 
@@ -862,49 +868,49 @@ class PaperDB:
         self.conn.commit()
         return cursor.rowcount > 0
 
-    def remove_tag(self, paper_id: int, tag_to_remove: str) -> bool:
+    def remove_topic(self, paper_id: int, topic_to_remove: str) -> bool:
         """
-        Remove a specific tag from a paper's tags.
+        Remove a specific topic from a paper's topics.
 
         Args:
             paper_id: The paper's database ID
-            tag_to_remove: The tag to remove (case-insensitive)
+            topic_to_remove: The topic to remove (case-insensitive)
 
         Returns:
-            True if the tag was removed, False if paper not found or tag not present
+            True if the topic was removed, False if paper not found or topic not present
         """
         paper = self.get_paper_by_id(paper_id)
-        if not paper or not paper.get("tags"):
+        if not paper or not paper.get("topics"):
             return False
 
-        current_tags = [t.strip() for t in paper["tags"].split(",")]
-        tag_lower = tag_to_remove.lower()
-        new_tags = [t for t in current_tags if t.lower() != tag_lower]
+        current_topics = [t.strip() for t in paper["topics"].split(",")]
+        topic_lower = topic_to_remove.lower()
+        new_topics = [t for t in current_topics if t.lower() != topic_lower]
 
-        if len(new_tags) == len(current_tags):
+        if len(new_topics) == len(current_topics):
             return False
 
-        new_tags_str = ", ".join(new_tags) if new_tags else None
-        return self.update_paper(paper_id, tags=new_tags_str)
+        new_topics_str = ", ".join(new_topics) if new_topics else None
+        return self.update_paper(paper_id, topics=new_topics_str)
 
-    def get_papers_without_summary(self, tag: str = None) -> list[dict]:
+    def get_papers_without_summary(self, topic: str = None) -> list[dict]:
         """
         Get papers that don't have a generated summary yet.
 
         Args:
-            tag: Optional tag to filter by
+            topic: Optional topic to filter by
 
         Returns:
             List of paper dictionaries without summaries
         """
         cursor = self._get_cursor()
 
-        if tag:
+        if topic:
             cursor.execute(
                 """SELECT * FROM papers
-                   WHERE summary_generated_at IS NULL AND tags ILIKE %s
+                   WHERE summary_generated_at IS NULL AND topics ILIKE %s
                    ORDER BY created_at DESC""",
-                (f"%{tag}%",),
+                (f"%{topic}%",),
             )
         else:
             cursor.execute(
@@ -943,6 +949,127 @@ class PaperDB:
     def close(self):
         """Close the database connection."""
         self.conn.close()
+
+    # ==================== Paper Images Methods ====================
+
+    def add_paper_image(
+        self,
+        paper_id: int,
+        file_path: str,
+        figure_name: Optional[str] = None,
+        caption: Optional[str] = None,
+        image_data: Optional[bytes] = None,
+    ) -> Optional[int]:
+        """
+        Add an image for a paper.
+
+        Args:
+            paper_id: The paper's database ID
+            file_path: Path to the image file (relative or absolute)
+            figure_name: Name of the figure (e.g., "Figure 1", "Table 2")
+            caption: Figure caption text
+            image_data: Optional binary image data (PNG bytes)
+
+        Returns:
+            The row ID of the inserted image, or None on failure
+        """
+        cursor = self._get_cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO paper_images (paper_id, file_path, figure_name, caption, image_data)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+            """,
+                (paper_id, file_path, figure_name, caption, image_data),
+            )
+            result = cursor.fetchone()
+            self.conn.commit()
+            return result["id"] if result else None
+        except Exception as e:
+            print(f"Error adding paper image: {e}")
+            self.conn.rollback()
+            return None
+
+    def get_paper_images(self, paper_id: int) -> list[dict]:
+        """
+        Get all images for a paper.
+
+        Args:
+            paper_id: The paper's database ID
+
+        Returns:
+            List of image dictionaries
+        """
+        cursor = self._get_cursor()
+        cursor.execute(
+            """
+            SELECT id, paper_id, file_path, figure_name, caption, created_at
+            FROM paper_images
+            WHERE paper_id = %s
+            ORDER BY id
+        """,
+            (paper_id,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_paper_image_with_data(self, image_id: int) -> Optional[dict]:
+        """
+        Get a paper image including binary data.
+
+        Args:
+            image_id: The image's database ID
+
+        Returns:
+            Image dictionary with image_data, or None if not found
+        """
+        cursor = self._get_cursor()
+        cursor.execute(
+            "SELECT * FROM paper_images WHERE id = %s",
+            (image_id,),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def delete_paper_image(self, image_id: int) -> bool:
+        """
+        Delete a paper image by its ID.
+
+        Args:
+            image_id: The image's database ID
+
+        Returns:
+            True if deleted, False otherwise
+        """
+        cursor = self._get_cursor()
+        try:
+            cursor.execute("DELETE FROM paper_images WHERE id = %s", (image_id,))
+            self.conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error deleting paper image: {e}")
+            self.conn.rollback()
+            return False
+
+    def delete_paper_images(self, paper_id: int) -> int:
+        """
+        Delete all images for a paper.
+
+        Args:
+            paper_id: The paper's database ID
+
+        Returns:
+            Number of images deleted
+        """
+        cursor = self._get_cursor()
+        try:
+            cursor.execute("DELETE FROM paper_images WHERE paper_id = %s", (paper_id,))
+            self.conn.commit()
+            return cursor.rowcount
+        except Exception as e:
+            print(f"Error deleting paper images: {e}")
+            self.conn.rollback()
+            return 0
 
     def __enter__(self):
         """Context manager entry."""

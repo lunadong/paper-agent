@@ -189,7 +189,7 @@ def get_all_papers(order_by="recomm_date", order_dir="DESC"):
         # Fetch from database with retry on connection errors
         cursor = execute_with_retry(
             """
-            SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+            SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
                    CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
                    primary_topic
             FROM papers
@@ -228,7 +228,8 @@ def search_papers_keyword(query):
     search_pattern = f"%{query}%"
     cursor = execute_with_retry(
         """
-        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
+               CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
                (summary_core::jsonb)->'topic_relevance'->>'primary_topic' as primary_topic
         FROM papers
         WHERE title ILIKE %s OR abstract ILIKE %s OR authors ILIKE %s
@@ -271,8 +272,9 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
 
     cursor = execute_with_retry(
         """
-        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
                1 - (embedding <=> %s::vector) as similarity,
+               CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
                summary_core->>'topic_relevance' as topic_relevance_json
         FROM papers
         WHERE embedding IS NOT NULL
@@ -332,8 +334,9 @@ def get_similar_papers(paper_id, limit=5):
     # Find similar papers
     cursor = execute_with_retry(
         """
-        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
-               1 - (embedding <=> %s::vector) as similarity
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
+               1 - (embedding <=> %s::vector) as similarity,
+               CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary
         FROM papers
         WHERE id != %s AND embedding IS NOT NULL
         ORDER BY embedding <=> %s::vector
@@ -379,7 +382,7 @@ def filter_papers_by_topics(papers, topics_filter):
     selected_topics = [t.strip() for t in topics_filter.split(",")]
     filtered = []
     for paper in papers:
-        paper_topics = paper.get("topic", "") or ""
+        paper_topics = paper.get("topics", "") or ""
         if all(topic in paper_topics for topic in selected_topics):
             filtered.append(paper)
     return filtered
@@ -438,12 +441,40 @@ def get_paper_by_id(paper_id):
     """Get a single paper by ID with all fields."""
     cursor = execute_with_retry(
         """
-        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topic,
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
                summary_generated_at, summary_basics, summary_core,
                summary_methods_evidence, summary_figures
         FROM papers WHERE id = %s
         """,
         (paper_id,),
+    )
+    row = cursor.fetchone()
+    return dict(row) if row else None
+
+
+def get_paper_images(paper_id):
+    """Get all images for a paper (without binary data)."""
+    cursor = execute_with_retry(
+        """
+        SELECT id, paper_id, file_path, figure_name, caption, created_at
+        FROM paper_images
+        WHERE paper_id = %s
+        ORDER BY id
+        """,
+        (paper_id,),
+    )
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def get_paper_image_data(image_id):
+    """Get a single image's binary data by image ID."""
+    cursor = execute_with_retry(
+        """
+        SELECT id, paper_id, image_data, figure_name
+        FROM paper_images
+        WHERE id = %s
+        """,
+        (image_id,),
     )
     row = cursor.fetchone()
     return dict(row) if row else None

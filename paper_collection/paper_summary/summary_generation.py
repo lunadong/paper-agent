@@ -578,6 +578,110 @@ def set_pdf_cache(cache: PDFCache):
     _pdf_cache = cache
 
 
+def download_pdf_bytes(
+    pdf_url: str,
+    max_retries: int = 3,
+) -> bytes:
+    """
+    Download a PDF from URL and return raw bytes.
+
+    Args:
+        pdf_url: URL to the PDF file.
+        max_retries: Maximum retry attempts for download failures.
+
+    Returns:
+        PDF bytes.
+
+    Raises:
+        Exception: If download fails after all retries.
+    """
+    print(f"Downloading PDF from: {pdf_url}")
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/pdf,*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(pdf_url, headers=headers, timeout=60)
+            if response.status_code == 200:
+                return response.content
+            elif response.status_code in {429, 503}:
+                wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
+                print(f"  HTTP {response.status_code}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                last_error = Exception(f"HTTP {response.status_code}")
+            else:
+                raise Exception(f"Failed to download PDF: HTTP {response.status_code}")
+        except requests.exceptions.Timeout:
+            wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
+            print(
+                f"  Timeout, retrying in {wait_time}s... ({attempt + 1}/{max_retries})"
+            )
+            time.sleep(wait_time)
+            last_error = Exception("Download timeout")
+        except requests.exceptions.ConnectionError as e:
+            wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
+            print(
+                f"  Connection error, retrying in {wait_time}s... "
+                f"({attempt + 1}/{max_retries})"
+            )
+            time.sleep(wait_time)
+            last_error = e
+
+    if last_error:
+        raise last_error
+    raise Exception("Failed to download PDF after retries")
+
+
+def extract_text_from_pdf_bytes(
+    pdf_bytes: bytes,
+    max_chars: int = MAX_PDF_CHARS,
+) -> str:
+    """
+    Extract text from PDF bytes.
+
+    Args:
+        pdf_bytes: Raw PDF bytes.
+        max_chars: Maximum characters to extract.
+
+    Returns:
+        Extracted text from the PDF.
+    """
+    if not PDF_SUPPORT:
+        raise ImportError(
+            "PyPDF2 is required for PDF extraction.\n"
+            "Install it with: pip install PyPDF2"
+        )
+
+    pdf_file = io.BytesIO(pdf_bytes)
+    pdf_reader = PyPDF2.PdfReader(pdf_file)
+
+    text_parts = []
+    total_chars = 0
+
+    for page_num, page in enumerate(pdf_reader.pages):
+        page_text = page.extract_text()
+        if page_text:
+            text_parts.append(f"--- Page {page_num + 1} ---\n{page_text}")
+            total_chars += len(page_text)
+
+            if total_chars >= max_chars:
+                print(f"  Reached {max_chars} char limit at page {page_num + 1}")
+                break
+
+    full_text = "\n\n".join(text_parts)
+    print(f"  Extracted {len(full_text)} characters from {len(text_parts)} pages")
+    return full_text[:max_chars]
+
+
 def download_pdf_text(
     pdf_url: str,
     max_chars: int = MAX_PDF_CHARS,
@@ -610,78 +714,229 @@ def download_pdf_text(
             print(f"  Using cached PDF text ({len(cached_text)} chars)")
             return cached_text[:max_chars]
 
-    print(f"Downloading PDF from: {pdf_url}")
+    # Download PDF bytes
+    pdf_bytes = download_pdf_bytes(pdf_url, max_retries)
 
-    # Headers to mimic a browser request (avoid 403 blocks)
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/pdf,*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-
-    # Download with retry logic
-    last_error = None
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(pdf_url, headers=headers, timeout=60)
-            if response.status_code == 200:
-                break
-            elif response.status_code in {429, 503}:
-                # Rate limited or service unavailable - wait and retry
-                wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
-                print(f"  HTTP {response.status_code}, retrying in {wait_time}s...")
-                time.sleep(wait_time)
-                last_error = Exception(f"HTTP {response.status_code}")
-            else:
-                raise Exception(f"Failed to download PDF: HTTP {response.status_code}")
-        except requests.exceptions.Timeout:
-            wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
-            print(
-                f"  Timeout, retrying in {wait_time}s... ({attempt + 1}/{max_retries})"
-            )
-            time.sleep(wait_time)
-            last_error = Exception("Download timeout")
-        except requests.exceptions.ConnectionError as e:
-            wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
-            print(
-                f"  Connection error, retrying in {wait_time}s... "
-                f"({attempt + 1}/{max_retries})"
-            )
-            time.sleep(wait_time)
-            last_error = e
-    else:
-        raise last_error or Exception("Failed to download PDF after retries")
-
-    # Parse the PDF
-    pdf_file = io.BytesIO(response.content)
-    pdf_reader = PyPDF2.PdfReader(pdf_file)
-
-    # Extract text from all pages
-    text_parts = []
-    total_chars = 0
-
-    for page_num, page in enumerate(pdf_reader.pages):
-        page_text = page.extract_text()
-        if page_text:
-            text_parts.append(f"--- Page {page_num + 1} ---\n{page_text}")
-            total_chars += len(page_text)
-
-            if total_chars >= max_chars:
-                print(f"  Reached {max_chars} char limit at page {page_num + 1}")
-                break
-
-    full_text = "\n\n".join(text_parts)
-    print(f"  Extracted {len(full_text)} characters from {len(text_parts)} pages")
+    # Extract text
+    full_text = extract_text_from_pdf_bytes(pdf_bytes, max_chars)
 
     # Cache the full text
     if use_cache and cache:
         cache.set(pdf_url, full_text)
 
     return full_text[:max_chars]
+
+
+def download_pdf_with_figures(
+    pdf_url: str,
+    paper_id: Optional[str] = None,
+    max_chars: int = MAX_PDF_CHARS,
+    max_retries: int = 3,
+    use_cache: bool = True,
+    extract_figures: bool = True,
+    figures_output_dir: Optional[Path] = None,
+) -> dict:
+    """
+    Download a PDF and extract both text and figures (Stage 0).
+
+    This is the combined extraction function that downloads the PDF once
+    and extracts both text content and figures.
+
+    Args:
+        pdf_url: URL to the PDF file.
+        paper_id: Paper ID for organizing figure output.
+        max_chars: Maximum characters to extract for text.
+        max_retries: Maximum retry attempts for download failures.
+        use_cache: Whether to use PDF cache for text.
+        extract_figures: Whether to extract figures from the PDF.
+        figures_output_dir: Directory to save extracted figures.
+
+    Returns:
+        Dictionary with:
+        - text: Extracted text from the PDF
+        - figures: List of extracted figure dicts (if extract_figures=True)
+        - pdf_bytes: Raw PDF bytes (for further processing)
+    """
+    result = {
+        "text": "",
+        "figures": [],
+        "pdf_bytes": None,
+    }
+
+    # Check text cache first
+    cache = get_pdf_cache()
+    cached_text = None
+    if use_cache and cache:
+        cached_text = cache.get(pdf_url)
+        if cached_text:
+            print(f"  Using cached PDF text ({len(cached_text)} chars)")
+            result["text"] = cached_text[:max_chars]
+
+    # Download PDF bytes (needed for figures or if text not cached)
+    pdf_bytes = None
+    if not cached_text or extract_figures:
+        pdf_bytes = download_pdf_bytes(pdf_url, max_retries)
+        result["pdf_bytes"] = pdf_bytes
+
+    # Extract text if not cached
+    if not cached_text and pdf_bytes:
+        result["text"] = extract_text_from_pdf_bytes(pdf_bytes, max_chars)
+        if use_cache and cache:
+            cache.set(pdf_url, result["text"])
+
+    # Extract figures if requested
+    if extract_figures and pdf_bytes:
+        try:
+            from . import extract_figures as fig_module
+
+            if fig_module.PYMUPDF_AVAILABLE:
+                if paper_id is None:
+                    paper_id = fig_module.extract_paper_id_from_url(pdf_url)
+
+                print(f"  Extracting figures for paper {paper_id}...")
+                figures = fig_module.extract_figures_from_pdf_bytes(
+                    pdf_bytes=pdf_bytes,
+                    paper_id=paper_id,
+                    output_dir=figures_output_dir,
+                )
+                result["figures"] = figures
+                print(f"  Extracted {len(figures)} figures")
+            else:
+                print("  PyMuPDF not available, skipping figure extraction")
+        except ImportError as e:
+            print(f"  Could not import extract_figures module: {e}")
+        except Exception as e:
+            print(f"  Error extracting figures: {e}")
+
+    return result
+
+
+def store_figures_in_db(
+    paper_db_id: int,
+    figures: list[dict],
+    store_image_data: bool = True,
+) -> list[int]:
+    """
+    Store extracted figures in the paper_images database table.
+
+    Args:
+        paper_db_id: The paper's database ID (from papers table).
+        figures: List of figure dicts from extract_figures_from_pdf_bytes().
+            Each dict should have: filename, figure_num, page, caption, path
+        store_image_data: Whether to store image binary data in DB.
+
+    Returns:
+        List of created image IDs in the database.
+    """
+    try:
+        import sys
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from paper_db import PaperDB
+    except ImportError as e:
+        print(f"  Could not import paper_db: {e}")
+        return []
+
+    image_ids = []
+    db = PaperDB()
+
+    try:
+        for fig in figures:
+            file_path = fig.get("path", "")
+            figure_name = fig.get("filename", f"figure_{fig.get('figure_num', 0)}.png")
+            caption = fig.get("caption", "")
+
+            image_data = None
+            if store_image_data:
+                # First try to use image_data from figure dict (in-memory extraction)
+                if fig.get("image_data"):
+                    image_data = fig["image_data"]
+                # Fall back to reading from file path if available
+                elif file_path:
+                    try:
+                        with open(file_path, "rb") as f:
+                            image_data = f.read()
+                    except Exception as e:
+                        msg = f"  Warning: Could not read image {file_path}: {e}"
+                        print(msg)
+
+            image_id = db.add_paper_image(
+                paper_id=paper_db_id,
+                file_path=file_path,
+                figure_name=figure_name,
+                caption=caption,
+                image_data=image_data,
+            )
+
+            if image_id:
+                image_ids.append(image_id)
+                print(f"    Stored {figure_name} (id={image_id})")
+
+    finally:
+        db.close()
+
+    return image_ids
+
+
+def extract_and_store_figures(
+    pdf_url: str,
+    paper_db_id: int,
+    figures_output_dir: Optional[Path] = None,
+    store_image_data: bool = True,
+) -> dict:
+    """
+    Extract figures from a PDF and store them in the database.
+
+    This is a convenience function that combines figure extraction
+    and database storage.
+
+    Args:
+        pdf_url: URL to the PDF file.
+        paper_db_id: The paper's database ID.
+        figures_output_dir: Directory to save extracted figure files.
+        store_image_data: Whether to store image binary data in DB.
+
+    Returns:
+        Dictionary with:
+        - figures: List of extracted figure dicts
+        - image_ids: List of database image IDs
+    """
+    result = {"figures": [], "image_ids": []}
+
+    try:
+        from . import extract_figures as fig_module
+
+        if not fig_module.PYMUPDF_AVAILABLE:
+            print("  PyMuPDF not available, skipping figure extraction")
+            return result
+
+        paper_id = fig_module.extract_paper_id_from_url(pdf_url)
+        print(f"  Extracting figures for paper {paper_id}...")
+
+        pdf_bytes = download_pdf_bytes(pdf_url)
+
+        figures = fig_module.extract_figures_from_pdf_bytes(
+            pdf_bytes=pdf_bytes,
+            paper_id=paper_id,
+            output_dir=figures_output_dir,
+        )
+        result["figures"] = figures
+
+        if figures:
+            print(f"  Extracted {len(figures)} figures, storing in database...")
+            image_ids = store_figures_in_db(
+                paper_db_id=paper_db_id,
+                figures=figures,
+                store_image_data=store_image_data,
+            )
+            result["image_ids"] = image_ids
+
+    except ImportError as e:
+        print(f"  Could not import extract_figures module: {e}")
+    except Exception as e:
+        print(f"  Error extracting/storing figures: {e}")
+
+    return result
 
 
 def load_config() -> dict:
@@ -1249,12 +1504,19 @@ def generate_summary_for_paper(
     overwrite: bool = False,
 ) -> dict:
     """
-    Generate summary for a paper using two-stage approach.
+    Generate summary for a paper using multi-stage approach.
+
+    Stages:
+        Stage 0: PDF download (only if any later stage needs it)
+        Stage 1: Figure extraction (only if figures don't exist in DB)
+        Stage 2: Text extraction (only if Stage 3 or 4 need it)
+        Stage 3: Topic classification (only if primary_topic doesn't exist)
+        Stage 4: Summary generation (only if summary_generated_at doesn't exist)
 
     Conditional execution:
-    - If no primary_topic exists, run Stage 1 (topic classification)
-    - If no summary_generated_at exists, run Stage 2 (summary generation)
-    - If overwrite=True, run both stages regardless
+        - If overwrite=True, run all stages regardless of existing data
+        - Skip PDF download (Stage 0) if no stages need it
+        - Skip text extraction (Stage 2) if only figures are needed
     """
     import sys
 
@@ -1264,17 +1526,11 @@ def generate_summary_for_paper(
     if model_name is None:
         model_name = get_default_model()
 
-    result = {
-        "success": False,
-        "summary": None,
-    }
-
-    # Local variables for stage tracking (not included in result)
+    result = {"success": False, "summary": None}
     topics = []
     primary_topic = None
     stages_run = []
 
-    # Use provided db or create new one
     should_close = db is None
     if db is None:
         db = PaperDB()
@@ -1290,71 +1546,140 @@ def generate_summary_for_paper(
             result["error"] = f"Missing title or link for paper {paper_id}"
             return result
 
-        # Convert link to PDF URL
         pdf_url = link.replace("/abs/", "/pdf/") if "arxiv.org/abs/" in link else link
         if "arxiv.org" in pdf_url and not pdf_url.endswith(".pdf"):
             pdf_url += ".pdf"
 
         print(f"Processing paper ID {paper_id}: {title}...")
 
+        # =================================================================
         # Determine which stages to run
-        # When not saving to DB, always run both stages (testing)
-        # When saving to DB, skip stages with data (unless overwrite)
+        # =================================================================
+        existing_images = db.get_paper_images(paper_id) if save_db else []
+
         if save_db:
-            run_stage1 = overwrite or not paper.get("primary_topic")
-            run_stage2 = overwrite or not paper.get("summary_generated_at")
+            run_figures = overwrite or not existing_images
+            run_topics = overwrite or not paper.get("primary_topic")
+            run_summary = overwrite or not paper.get("summary_generated_at")
         else:
-            run_stage1 = True
-            run_stage2 = True
+            # Testing mode: always run topics and summary, skip figures
+            run_figures = False
+            run_topics = True
+            run_summary = True
 
-        print(f"Run Stage 1: {run_stage1}, Run Stage 2: {run_stage2}")
+        # Derived indicators
+        need_pdf = run_figures or run_topics or run_summary
+        need_text = run_topics or run_summary
 
-        if not run_stage1 and not run_stage2:
-            print("Nothing to do - already has primary_topic and summary")
+        print(
+            f"  run_figures={run_figures}, run_topics={run_topics}, "
+            f"run_summary={run_summary}"
+        )
+        print(f"  need_pdf={need_pdf}, need_text={need_text}")
+
+        if not need_pdf:
+            print("Nothing to do - all data already exists")
             result["success"] = True
             return result
 
-        # Stage 0: Try to extract PDF, fallback to abstract if it fails
-        print("\n========== Stage 0 ==========")
+        # =================================================================
+        # Stage 0: PDF Download
+        # =================================================================
+        print("\n========== Stage 0: PDF Download ==========")
+        stages_run.append("stage0_pdf_download")
+        pdf_bytes = None
         pdf_text = None
-        pdf_fetch_error = None
         use_abstract_fallback = False
 
         try:
-            pdf_text = download_pdf_text(pdf_url)
+            pdf_bytes = download_pdf_bytes(pdf_url)
+            print(f"  Downloaded {len(pdf_bytes)} bytes")
         except Exception as e:
-            pdf_fetch_error = str(e)
-            print(f"  PDF fetch failed: {pdf_fetch_error}")
-
-            # Check if we have an abstract to fall back to
+            print(f"  PDF download failed: {e}")
             abstract = paper.get("abstract")
-            if abstract:
+            if abstract and need_text:
                 print("  Falling back to abstract for topic classification...")
                 pdf_text = f"Title: {title}\n\nAbstract:\n{abstract}"
                 use_abstract_fallback = True
+            elif not need_text and run_figures:
+                # Only needed figures, but PDF failed
+                print("  Cannot extract figures without PDF")
+                run_figures = False
             else:
-                # No abstract available - this is a true failure
-                err_msg = f"PDF fetch failed, no abstract: {pdf_fetch_error}"
-                result["error"] = err_msg
+                result["error"] = f"PDF download failed, no abstract: {e}"
                 return result
 
-        # Stage 1: Topic classification
-        if run_stage1:
-            print("\n========== Stage 1 ==========")
-            stages_run.append("stage1")
+        # =================================================================
+        # Stage 1: Figure Extraction
+        # =================================================================
+        if run_figures and pdf_bytes:
+            print("\n========== Stage 1: Figure Extraction ==========")
+            stages_run.append("stage1_figures")
+            try:
+                try:
+                    from . import extract_figures as fig_module
+                except ImportError:
+                    import extract_figures as fig_module
 
-            # Use lightweight model for abstract-only classification
+                if fig_module.PYMUPDF_AVAILABLE:
+                    figures = fig_module.extract_figures_from_pdf_bytes(
+                        pdf_bytes=pdf_bytes,
+                        paper_id=str(paper_id),
+                    )
+                    if figures:
+                        print(f"  Extracted {len(figures)} figures, storing...")
+                        image_ids = store_figures_in_db(
+                            paper_db_id=paper_id,
+                            figures=figures,
+                            store_image_data=True,
+                        )
+                        print(f"  Stored {len(image_ids)} figures in DB")
+                    else:
+                        print("  No figures found in PDF")
+                else:
+                    print("  PyMuPDF not available, skipping")
+            except Exception as e:
+                print(f"  Figure extraction error: {e}")
+        elif run_figures:
+            print("\n========== Stage 1: Figure Extraction (SKIPPED) ==========")
+            print("  No PDF bytes available")
+
+        # =================================================================
+        # Stage 2: Text Extraction
+        # =================================================================
+        if need_text and pdf_bytes and not use_abstract_fallback:
+            print("\n========== Stage 2: Text Extraction ==========")
+            stages_run.append("stage2_text")
+            pdf_text = extract_text_from_pdf_bytes(pdf_bytes)
+            print(f"  Extracted {len(pdf_text)} characters")
+        elif need_text and use_abstract_fallback:
+            print("\n========== Stage 2: Text Extraction (ABSTRACT) ==========")
+            stages_run.append("stage2_text_abstract")
+            text_len = len(pdf_text) if pdf_text else 0
+            print(f"  Using abstract fallback ({text_len} chars)")
+        elif not need_text:
+            print("\n========== Stage 2: Text Extraction (SKIPPED) ==========")
+            print("  Not needed (only figures requested)")
+
+        # =================================================================
+        # Stage 3: Topic Classification
+        # =================================================================
+        if run_topics:
+            print("\n========== Stage 3: Topic Classification ==========")
+            stages_run.append("stage3_topics")
+
             if use_abstract_fallback:
-                stage1_model = get_lightweight_model()
-                print(f"  Using lightweight model for abstract: {stage1_model}")
+                stage_model = get_lightweight_model()
+                print(f"  Using lightweight model: {stage_model}")
             else:
-                stage1_model = model_name
+                stage_model = model_name
 
             topic_result = classify_paper_topics(
-                pdf_url, stage1_model, api_key, pdf_text=pdf_text
+                pdf_url, stage_model, api_key, pdf_text=pdf_text
             )
             topics = topic_result.get("topic", [])
             primary_topic = topic_result.get("primary_topic")
+            print(f"  Topics: {topics}, Primary: {primary_topic}")
 
             if save_db:
                 db.update_paper(
@@ -1363,23 +1688,27 @@ def generate_summary_for_paper(
                     primary_topic=primary_topic,
                 )
         else:
-            topics = paper.get("topic", "").split(", ") if paper.get("topic") else []
+            topics_str = paper.get("topic", "")
+            topics = topics_str.split(", ") if topics_str else []
             primary_topic = paper.get("primary_topic")
+            print("\n========== Stage 3: Topic Classification (SKIPPED) ==========")
+            print(f"  Using existing: {primary_topic}")
 
-        # Stage 2: Summary generation (skip if using abstract fallback)
-        if run_stage2 and not use_abstract_fallback:
-            print("\n========== Stage 2 ==========")
-            stages_run.append("stage2")
+        # =================================================================
+        # Stage 4: Summary Generation
+        # =================================================================
+        if run_summary and not use_abstract_fallback:
+            print("\n========== Stage 4: Summary Generation ==========")
+            stages_run.append("stage4_summary")
+
             prompt = load_prompt_template(topics=topics, primary_topic=primary_topic)
 
-            # Write prompt to file if requested
             if prompt_file:
                 with open(prompt_file, "a") as f:
                     f.write(f"\n{'=' * 60}\nPaper ID: {paper_id}\n{'=' * 60}\n")
                     f.write(prompt)
                     f.write("\n")
 
-            # Retry up to 3 times for LLM parsing errors
             max_llm_retries = 3
             last_raw_response = None
             for llm_attempt in range(max_llm_retries):
@@ -1412,11 +1741,13 @@ def generate_summary_for_paper(
 
             if save_db:
                 db.update_paper_summary(paper_id, summary)
-        elif use_abstract_fallback and run_stage2:
-            print("\n========== Stage 2 (SKIPPED) ==========")
-            print("  Skipping summary generation - using abstract fallback")
+        elif use_abstract_fallback and run_summary:
+            print("\n========== Stage 4: Summary Generation (SKIPPED) ==========")
+            print("  Cannot generate summary from abstract alone")
             result["abstract_only"] = True
-            result["pdf_error"] = pdf_fetch_error
+        else:
+            print("\n========== Stage 4: Summary Generation (SKIPPED) ==========")
+            print("  Summary already exists")
 
         result["success"] = True
         if use_abstract_fallback:
