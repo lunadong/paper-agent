@@ -6,11 +6,19 @@
 #   ./run_update.sh --days 7     # Collect past 7 days
 #   ./run_update.sh --dry-run    # Preview without saving
 #
-# Cron setup (runs daily at 5pm):
-#   crontab -e
-#   0 17 * * * /path/to/paper_agent/paper_collection/run_update.sh >> /tmp/paper-update.log 2>&1
+# Scheduling (macOS):
+#   Use launchd instead of cron for proper permissions.
+#   See com.paper-agent.daily-update.plist in this directory.
+#
+#   To install:
+#     cp com.paper-agent.daily-update.plist ~/Library/LaunchAgents/
+#     launchctl load ~/Library/LaunchAgents/com.paper-agent.daily-update.plist
+#
+#   To uninstall:
+#     launchctl unload ~/Library/LaunchAgents/com.paper-agent.daily-update.plist
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Use system Python 3.9 which has required packages installed
 PYTHON="/usr/bin/python3"

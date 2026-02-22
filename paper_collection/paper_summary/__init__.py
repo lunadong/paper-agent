@@ -35,7 +35,6 @@ from .util import (
     get_pdf_cache,
     get_rate_limiter,
     is_shutdown_requested,
-    load_config,
     MAX_PDF_CHARS,
     PDF_SUPPORT,
     PDFCache,

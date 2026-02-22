@@ -65,4 +65,5 @@ tmp/*
 .hgignore
 
 # Internal planning docs
+plan/
 REFACTOR_PLAN.md

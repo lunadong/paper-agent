@@ -233,12 +233,21 @@ def main():
     # =========================================================================
     # STEP 3: Summary Generation - Generate tags and summaries for new papers
     # =========================================================================
+    # Track summary generation results for email notification
+    summary_success_count = 0
+    summary_failed_count = 0
+    summary_errors = []  # Track error messages for email
+    summary_skipped_reason = None
+
     if args.dry_run:
         log("STEP 3: Skipped (dry run)")
+        summary_skipped_reason = "dry run"
     elif args.skip_topics:
         log("STEP 3: Skipped (--skip-topics)")
+        summary_skipped_reason = "--skip-topics flag"
     elif total_saved == 0:
         log("STEP 3: Skipped (no new papers)")
+        summary_skipped_reason = "no new papers"
     else:
         log(f"STEP 3: Generating summaries (workers={args.workers})...")
         db = PaperDB()
@@ -254,8 +263,6 @@ def main():
 
         if papers_to_process:
             log(f"Found {len(papers_to_process)} papers without summaries")
-            success_count = 0
-            failed_count = 0
 
             def process_paper(paper):
                 """Process a single paper for parallel execution."""
@@ -276,57 +283,96 @@ def main():
                     for future in as_completed(futures):
                         result = future.result()
                         if result["success"]:
-                            success_count += 1
+                            summary_success_count += 1
                             pid = result["_paper_id"]
                             title = result["_title"][:50]
                             log(f"  [OK] [{pid}] {title}...")
                         else:
-                            failed_count += 1
+                            summary_failed_count += 1
                             pid = result["_paper_id"]
                             title = result["_title"][:50]
                             err = result.get("error", "Unknown")
                             log(f"  [FAIL] [{pid}] {title}... Error: {err}")
+                            summary_errors.append(f"[{pid}] {err}")
             else:
                 # Sequential processing
                 for paper in papers_to_process:
                     result = process_paper(paper)
                     if result["success"]:
-                        success_count += 1
+                        summary_success_count += 1
                         pid = result["_paper_id"]
                         title = result["_title"][:50]
                         log(f"  [OK] [{pid}] {title}...")
                     else:
-                        failed_count += 1
+                        summary_failed_count += 1
                         pid = result["_paper_id"]
                         title = result["_title"][:50]
                         err = result.get("error", "Unknown")
                         log(f"  [FAIL] [{pid}] {title}... Error: {err}")
+                        summary_errors.append(f"[{pid}] {err}")
 
-            log(f"Generated summaries: {success_count} success, {failed_count} failed")
+            log(
+                f"Generated summaries: {summary_success_count} success, {summary_failed_count} failed"
+            )
         else:
             log("No papers need summaries")
+            summary_skipped_reason = "no papers need summaries"
         db.close()
 
     print()
 
     # =========================================================================
-    # Send notification email (optional)
+    # Send notification email (always send, include failures if any)
     # =========================================================================
     if not args.dry_run and not args.no_email and config.notification_email:
         log("Sending notification email...")
         from gmail_client import send_email
 
-        subject = f"[Paper Update] {total_saved} new papers added"
+        # Determine email subject based on success/failure status
+        if summary_failed_count > 0 and summary_success_count == 0:
+            subject = f"[Paper Update] ⚠️ {total_saved} papers added, {summary_failed_count} summary failures"
+        elif summary_failed_count > 0:
+            subject = f"[Paper Update] {total_saved} papers added ({summary_failed_count} summary failures)"
+        else:
+            subject = f"[Paper Update] {total_saved} new papers added"
+
+        # Build email body
         body = f"""Daily Paper Update Summary
 ========================
 
 Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 Days: {args.days}
 
-Results:
+Paper Collection:
 - New papers added: {total_saved}
 - Duplicates skipped: {total_skipped}
+"""
 
+        # Add summary generation status
+        if summary_skipped_reason:
+            body += f"""
+Summary Generation: Skipped ({summary_skipped_reason})
+"""
+        else:
+            body += f"""
+Summary Generation:
+- Successful: {summary_success_count}
+- Failed: {summary_failed_count}
+"""
+
+        # Add error details if there were failures
+        if summary_errors:
+            # Deduplicate errors (often same error repeated)
+            unique_errors = list(dict.fromkeys(summary_errors))
+            body += """
+Errors (showing up to 5):
+"""
+            for err in unique_errors[:5]:
+                body += f"  - {err}\n"
+            if len(unique_errors) > 5:
+                body += f"  ... and {len(unique_errors) - 5} more\n"
+
+        body += f"""
 View papers at: {config.website_url}
 
 ---
