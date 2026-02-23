@@ -6,8 +6,6 @@ Tests the figure extraction at paper_collection/paper_summary/extract_figures.py
 
 from unittest.mock import MagicMock
 
-import pytest
-
 
 class TestCaptionPatterns:
     """Tests for caption detection patterns."""

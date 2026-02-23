@@ -18,7 +18,6 @@
 #     launchctl unload ~/Library/LaunchAgents/com.paper-agent.daily-update.plist
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Use system Python 3.9 which has required packages installed
 PYTHON="/usr/bin/python3"
