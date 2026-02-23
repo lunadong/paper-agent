@@ -485,3 +485,134 @@ def get_paper_image_data(image_id):
     )
     row = cursor.fetchone()
     return dict(row) if row else None
+
+
+# ============================================================================
+# Page View Counter Functions
+# ============================================================================
+
+_page_views_table_initialized = False
+
+
+def _ensure_page_views_table():
+    """Ensure the page_views table exists and has initial values."""
+    global _page_views_table_initialized
+    if _page_views_table_initialized:
+        return
+
+    execute_with_retry(
+        """
+        CREATE TABLE IF NOT EXISTS page_views (
+            page_name VARCHAR(50) PRIMARY KEY,
+            view_count BIGINT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    execute_with_retry(
+        """
+        INSERT INTO page_views (page_name, view_count) VALUES ('main', 100)
+        ON CONFLICT (page_name) DO NOTHING
+        """
+    )
+
+    execute_with_retry(
+        """
+        INSERT INTO page_views (page_name, view_count) VALUES ('paper_detail', 50)
+        ON CONFLICT (page_name) DO NOTHING
+        """
+    )
+
+    _page_views_table_initialized = True
+
+
+def increment_page_view(page_name: str) -> int:
+    """
+    Atomically increment page view count and return the new count.
+
+    Args:
+        page_name: The name of the page ('main' or 'paper_detail')
+
+    Returns:
+        The new view count after incrementing
+    """
+    _ensure_page_views_table()
+
+    cursor = execute_with_retry(
+        """
+        UPDATE page_views
+        SET view_count = view_count + 1,
+            last_viewed_at = CURRENT_TIMESTAMP
+        WHERE page_name = %s
+        RETURNING view_count
+        """,
+        (page_name,),
+    )
+    result = cursor.fetchone()
+    if result:
+        return result["view_count"]
+
+    execute_with_retry(
+        """
+        INSERT INTO page_views (page_name, view_count)
+        VALUES (%s, 1)
+        ON CONFLICT (page_name) DO UPDATE
+        SET view_count = page_views.view_count + 1,
+            last_viewed_at = CURRENT_TIMESTAMP
+        """,
+        (page_name,),
+    )
+    cursor = execute_with_retry(
+        "SELECT view_count FROM page_views WHERE page_name = %s",
+        (page_name,),
+    )
+    result = cursor.fetchone()
+    return result["view_count"] if result else 1
+
+
+def get_page_views() -> dict:
+    """
+    Get all page view counts with their creation dates.
+
+    Returns:
+        Dictionary with page view data:
+        {
+            'main_page_views': int,
+            'main_page_since': str (YYYY-MM-DD),
+            'paper_detail_views': int,
+            'paper_detail_since': str (YYYY-MM-DD)
+        }
+    """
+    _ensure_page_views_table()
+
+    cursor = execute_with_retry(
+        "SELECT page_name, view_count, created_at FROM page_views"
+    )
+    rows = cursor.fetchall()
+
+    result = {}
+    for row in rows:
+        page_name = row["page_name"]
+        view_count = row["view_count"]
+        created_at = row["created_at"]
+
+        if created_at:
+            date_str = created_at.strftime("%Y-%m-%d")
+        else:
+            date_str = "unknown"
+
+        if page_name == "main":
+            result["main_page_views"] = view_count
+            result["main_page_since"] = date_str
+        elif page_name == "paper_detail":
+            result["paper_detail_views"] = view_count
+            result["paper_detail_since"] = date_str
+
+    result.setdefault("main_page_views", 0)
+    result.setdefault("main_page_since", "unknown")
+    result.setdefault("paper_detail_views", 0)
+    result.setdefault("paper_detail_since", "unknown")
+
+    return result

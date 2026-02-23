@@ -9,7 +9,13 @@ import json
 import re
 
 # Import shared database utilities
-from db import get_paper_by_id, get_paper_image_data, get_paper_images, load_config
+from db import (
+    get_paper_by_id,
+    get_paper_image_data,
+    get_paper_images,
+    increment_page_view,
+    load_config,
+)
 from flask import abort, Blueprint, jsonify, render_template, Response
 
 # Create Blueprint
@@ -173,6 +179,7 @@ def get_paper_with_summary(paper_id: int) -> dict:
 @paper_detail_bp.route("/paper/<int:paper_id>")
 def paper_detail(paper_id: int):
     """Render paper detail page."""
+    increment_page_view("paper_detail")
     paper = get_paper_with_summary(paper_id)
 
     if not paper:

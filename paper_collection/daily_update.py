@@ -322,9 +322,15 @@ def main():
     print()
 
     # =========================================================================
-    # Send notification email (always send, include failures if any)
+    # Send notification email (always send status, even when no new papers)
     # =========================================================================
-    if not args.dry_run and not args.no_email and config.notification_email:
+    if args.dry_run:
+        log("Skipping notification email (dry run)")
+    elif args.no_email:
+        log("Skipping notification email (--no-email flag)")
+    elif not config.notification_email:
+        log("Skipping notification email (no email configured)")
+    else:
         log("Sending notification email...")
         from gmail_client import send_email
 
@@ -333,6 +339,8 @@ def main():
             subject = f"[Paper Update] ⚠️ {total_saved} papers added, {summary_failed_count} summary failures"
         elif summary_failed_count > 0:
             subject = f"[Paper Update] {total_saved} papers added ({summary_failed_count} summary failures)"
+        elif total_saved == 0:
+            subject = f"[Paper Update] No new papers today ({total_skipped} duplicates skipped)"
         else:
             subject = f"[Paper Update] {total_saved} new papers added"
 

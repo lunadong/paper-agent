@@ -34,8 +34,10 @@ from db import (
     filter_papers_by_date,
     filter_papers_by_topics,
     get_all_papers,
+    get_page_views,
     get_similar_papers,
     get_stats,
+    increment_page_view,
     load_config,
     search_papers_keyword,
     search_papers_semantic,
@@ -62,6 +64,7 @@ def get_papers_per_page():
 @app.route("/")
 def index():
     """Serve the main page."""
+    increment_page_view("main")
     return render_template("papers.html")
 
 
@@ -142,8 +145,11 @@ def api_similar_papers(paper_id):
 
 @app.route("/api/stats")
 def api_stats():
-    """API endpoint for database and embedding statistics."""
-    return jsonify(get_stats())
+    """API endpoint for database, embedding, and page view statistics."""
+    stats = get_stats()
+    page_view_stats = get_page_views()
+    stats.update(page_view_stats)
+    return jsonify(stats)
 
 
 def parse_args():
