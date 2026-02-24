@@ -264,76 +264,86 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
         top_k: Maximum number of results (None = 1000)
         score_threshold: Minimum similarity score (0-1) to include a result
     """
-    # Check if embeddings are available
-    cursor = execute_with_retry(
-        "SELECT COUNT(*) as total FROM papers WHERE embedding IS NOT NULL"
-    )
-    result = cursor.fetchone()
-    embedding_count = result["total"] if result else 0
+    try:
+        # Check if embeddings are available
+        cursor = execute_with_retry(
+            "SELECT COUNT(*) as total FROM papers WHERE embedding IS NOT NULL"
+        )
+        result = cursor.fetchone()
+        embedding_count = result["total"] if result else 0
 
-    if embedding_count == 0:
-        print("No embeddings available, falling back to keyword search")
-        return search_papers_keyword(query)
+        if embedding_count == 0:
+            print("No embeddings available, falling back to keyword search")
+            return search_papers_keyword(query)
 
-    # Generate query embedding using OpenAI
-    query_embedding = generate_openai_embedding(query)
+        # Generate query embedding using OpenAI
+        query_embedding = generate_openai_embedding(query)
 
-    if query_embedding is None:
-        print("OpenAI embedding failed, falling back to keyword search")
-        return search_papers_keyword(query)
+        if query_embedding is None:
+            print("OpenAI embedding failed, falling back to keyword search")
+            return search_papers_keyword(query)
 
-    # Use pgvector search
-    if top_k is None:
-        top_k = 1000
+        # Use pgvector search
+        if top_k is None:
+            top_k = 1000
 
-    cursor = execute_with_retry(
-        """
-        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
-               1 - (embedding <=> %s::vector) as similarity,
-               CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
-               summary_core->>'topic_relevance' as topic_relevance_json
-        FROM papers
-        WHERE embedding IS NOT NULL
-        ORDER BY embedding <=> %s::vector
-        LIMIT %s
-        """,
-        (query_embedding, query_embedding, top_k),
-    )
+        # Convert embedding list to string format for PostgreSQL vector type
+        # Format: '[0.1, 0.2, 0.3, ...]'
+        embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
 
-    results = []
-    for row in cursor.fetchall():
-        paper = dict(row)
-        # Extract primary_topic from summary_core if available
-        if paper.get("topic_relevance_json"):
-            try:
-                topic_rel = json.loads(paper["topic_relevance_json"])
-                paper["primary_topic"] = topic_rel.get("primary_topic", "")
-            except (json.JSONDecodeError, TypeError):
+        cursor = execute_with_retry(
+            """
+            SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
+                   1 - (embedding <=> %s::vector) as similarity,
+                   CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
+                   summary_core->>'topic_relevance' as topic_relevance_json
+            FROM papers
+            WHERE embedding IS NOT NULL
+            ORDER BY embedding <=> %s::vector
+            LIMIT %s
+            """,
+            (embedding_str, embedding_str, top_k),
+        )
+
+        results = []
+        for row in cursor.fetchall():
+            paper = dict(row)
+            # Extract primary_topic from summary_core if available
+            if paper.get("topic_relevance_json"):
+                try:
+                    topic_rel = json.loads(paper["topic_relevance_json"])
+                    paper["primary_topic"] = topic_rel.get("primary_topic", "")
+                except (json.JSONDecodeError, TypeError):
+                    paper["primary_topic"] = ""
+            else:
                 paper["primary_topic"] = ""
-        else:
-            paper["primary_topic"] = ""
-        paper.pop("topic_relevance_json", None)
-        results.append(paper)
+            paper.pop("topic_relevance_json", None)
+            results.append(paper)
 
-    # Filter by threshold
-    if score_threshold:
-        results = [r for r in results if r.get("similarity", 0) >= score_threshold]
+        # Filter by threshold
+        if score_threshold:
+            results = [r for r in results if r.get("similarity", 0) >= score_threshold]
 
-    # Sort by score bucket, then by date
-    for paper in results:
-        paper["_score"] = paper.get("similarity", 0)
+        # Sort by score bucket, then by date
+        for paper in results:
+            paper["_score"] = paper.get("similarity", 0)
 
-    results.sort(key=lambda p: p.get("recomm_date") or "0000-00-00", reverse=True)
-    results.sort(key=lambda p: get_score_bucket(p["_score"]), reverse=True)
+        results.sort(key=lambda p: p.get("recomm_date") or "0000-00-00", reverse=True)
+        results.sort(key=lambda p: get_score_bucket(p["_score"]), reverse=True)
 
-    # Remove internal fields before returning
-    for paper in results:
-        if "_score" in paper:
-            del paper["_score"]
-        if "similarity" in paper:
-            del paper["similarity"]
+        # Remove internal fields before returning
+        for paper in results:
+            if "_score" in paper:
+                del paper["_score"]
+            if "similarity" in paper:
+                del paper["similarity"]
 
-    return results
+        return results
+
+    except Exception as e:
+        # If anything fails in semantic search, fall back to keyword search
+        print(f"Semantic search error: {e}, falling back to keyword search")
+        return search_papers_keyword(query)
 
 
 def get_similar_papers(paper_id, limit=5):
