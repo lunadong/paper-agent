@@ -15,6 +15,12 @@ from pathlib import Path
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+# Import pgvector for proper vector type handling
+try:
+    from pgvector.psycopg2 import register_vector
+except ImportError:
+    register_vector = None
+
 # Connection pool
 _conn = None
 _config = None
@@ -83,6 +89,9 @@ def get_db_connection():
     if _conn is None or _conn.closed:
         _conn = psycopg2.connect(database_url)
         _conn.autocommit = True  # Avoid transaction issues
+        # Register pgvector type for proper vector handling
+        if register_vector is not None:
+            register_vector(_conn)
     return _conn
 
 

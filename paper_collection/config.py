@@ -109,6 +109,14 @@ class GeminiConfig:
 
 
 @dataclass
+class AnthropicConfig:
+    """Anthropic Claude API configuration for prompt optimization."""
+
+    api_key: str = ""
+    model: str = "claude-opus-4.5"
+
+
+@dataclass
 class Config:
     """Main configuration class."""
 
@@ -123,6 +131,7 @@ class Config:
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     openai: OpenAIConfig = field(default_factory=OpenAIConfig)
     gemini: GeminiConfig = field(default_factory=GeminiConfig)
+    anthropic: AnthropicConfig = field(default_factory=AnthropicConfig)
 
     # Internal: track where config was loaded from
     _config_file: Optional[str] = None
@@ -273,6 +282,14 @@ def create_config_from_dict(data: dict) -> Config:
             lightweight_model=gemini_data.get(
                 "lightweight_model", config.gemini.lightweight_model
             ),
+        )
+
+    # Anthropic settings
+    if "anthropic" in data:
+        anthropic_data = data["anthropic"]
+        config.anthropic = AnthropicConfig(
+            api_key=anthropic_data.get("api_key", config.anthropic.api_key),
+            model=anthropic_data.get("model", config.anthropic.model),
         )
 
     return config

@@ -23,12 +23,15 @@ Usage:
     python3 topic_tagger.py --tag     # Auto-tag ALL papers using exact match
     python3 topic_tagger.py --tag-new # Only tag papers without topics (for daily updates)
     python3 topic_tagger.py --retag KG  # Re-tag only specific topic, keep others
+    python3 topic_tagger.py --set-primary 123:Agent  # Force set primary_topic for paper ID 123
+    python3 topic_tagger.py --set-primary 123:      # Clear primary_topic for paper ID 123
 """
 
 import argparse
 import os
 import re
 import sys
+from typing import Optional
 
 # Add parent directories for imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -320,6 +323,54 @@ def retag_single_topic(tag_to_retag):
     show_topic_stats()
 
 
+def set_primary_topic(paper_id: int, topic: Optional[str]):
+    """Force set the primary_topic for a specific paper.
+
+    Args:
+        paper_id: The paper's database ID
+        topic: The topic to set (must be a valid topic tag), or None to clear
+    """
+    # Validate topic if provided
+    if topic and topic not in TOPICS:
+        print(f"Error: Unknown topic '{topic}'")
+        print(f"Valid topics: {', '.join(sorted(TOPICS.keys()))}")
+        return False
+
+    print("Connecting to PostgreSQL database...")
+    db = PaperDB()
+
+    # Get the paper to verify it exists
+    paper = db.get_paper_by_id(paper_id)
+    if not paper:
+        print(f"Error: Paper with ID {paper_id} not found")
+        db.close()
+        return False
+
+    # Show paper info
+    title = paper.get("title", "N/A")[:60]
+    current_primary = paper.get("primary_topic") or "(none)"
+    current_topics = paper.get("topics") or "(none)"
+
+    print(f"\nPaper ID: {paper_id}")
+    print(f"Title: {title}...")
+    print(f"Current topics: {current_topics}")
+    print(f"Current primary_topic: {current_primary}")
+
+    # Update primary_topic
+    new_primary = topic if topic else None
+    if db.update_paper(paper_id, primary_topic=new_primary):
+        if new_primary:
+            print(f"\n✓ Set primary_topic to '{new_primary}'")
+        else:
+            print("\n✓ Cleared primary_topic")
+        db.close()
+        return True
+    else:
+        print("\n✗ Failed to update primary_topic")
+        db.close()
+        return False
+
+
 def tag_new_papers():
     """Tag only papers that don't have topics yet (for daily updates)."""
     print("Connecting to PostgreSQL database...")
@@ -400,6 +451,12 @@ def parse_args():
         metavar="TOPIC",
         help="Re-tag only a specific topic, keeping other tags",
     )
+    parser.add_argument(
+        "--set-primary",
+        type=str,
+        metavar="ID:TOPIC",
+        help="Force set primary_topic for a paper (e.g., '123:Agent' or '123:' to clear)",
+    )
     return parser.parse_args()
 
 
@@ -412,5 +469,21 @@ if __name__ == "__main__":
         tag_new_papers()
     elif args.retag:
         retag_single_topic(args.retag)
+    elif args.set_primary:
+        # Parse ID:TOPIC format
+        if ":" not in args.set_primary:
+            print("Error: --set-primary requires format 'ID:TOPIC' (e.g., '123:Agent')")
+            print("       Use 'ID:' to clear the primary_topic (e.g., '123:')")
+            sys.exit(1)
+        paper_id_str, topic = args.set_primary.split(":", 1)
+        try:
+            paper_id = int(paper_id_str)
+        except ValueError:
+            print(f"Error: Invalid paper ID '{paper_id_str}' - must be an integer")
+            sys.exit(1)
+        # Empty topic means clear
+        topic = topic.strip() if topic.strip() else None
+        if not set_primary_topic(paper_id, topic):
+            sys.exit(1)
     else:
         show_topic_stats()
