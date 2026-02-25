@@ -25,7 +25,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Config file locations (in order of preference)
+# SCRIPT_DIR is checked first to support standalone deployment (e.g., cron jobs)
+# where config.py is in the same directory as config.yaml
 CONFIG_LOCATIONS = [
+    os.path.join(SCRIPT_DIR, "config.yaml"),
     os.path.join(PROJECT_ROOT, "config.yaml"),
     os.path.join(PROJECT_ROOT, "config.yml"),
     os.path.join(os.path.expanduser("~"), ".paper_agent", "config.yaml"),

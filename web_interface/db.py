@@ -47,9 +47,11 @@ def load_config():
     try:
         import yaml
 
+        # Use absolute path based on this file's location
+        this_file = Path(__file__).resolve()
         config_paths = [
-            Path(__file__).parent.parent / "config.yaml",
-            Path(__file__).parent / "config.yaml",
+            this_file.parent.parent / "config.yaml",  # paper-agent/config.yaml
+            this_file.parent / "config.yaml",  # web_interface/config.yaml
         ]
 
         for config_path in config_paths:
@@ -256,7 +258,7 @@ def search_papers_keyword(query):
     return [dict(row) for row in cursor.fetchall()]
 
 
-def search_papers_semantic(query, top_k=None, score_threshold=0.2):
+def search_papers_semantic(query, top_k=None, score_threshold=0.1):
     """Search papers using vector similarity (pgvector with OpenAI embeddings).
 
     Args:
@@ -296,7 +298,8 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
             SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
                    1 - (embedding <=> %s::vector) as similarity,
                    CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
-                   summary_core->>'topic_relevance' as topic_relevance_json
+                   summary_core->>'topic_relevance' as topic_relevance_json,
+                   primary_topic
             FROM papers
             WHERE embedding IS NOT NULL
             ORDER BY embedding <=> %s::vector
@@ -308,21 +311,28 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
         results = []
         for row in cursor.fetchall():
             paper = dict(row)
-            # Extract primary_topic from summary_core if available
-            if paper.get("topic_relevance_json"):
+            # Extract primary_topic from summary_core if not already set
+            if not paper.get("primary_topic") and paper.get("topic_relevance_json"):
                 try:
                     topic_rel = json.loads(paper["topic_relevance_json"])
                     paper["primary_topic"] = topic_rel.get("primary_topic", "")
                 except (json.JSONDecodeError, TypeError):
                     paper["primary_topic"] = ""
-            else:
-                paper["primary_topic"] = ""
             paper.pop("topic_relevance_json", None)
             results.append(paper)
 
-        # Filter by threshold
+        # Filter by threshold - use a lower threshold for semantic search
+        # to ensure we return results even for less common queries
         if score_threshold:
-            results = [r for r in results if r.get("similarity", 0) >= score_threshold]
+            filtered_results = [
+                r for r in results if r.get("similarity", 0) >= score_threshold
+            ]
+            # If threshold filters out everything, return top results anyway
+            if not filtered_results and results:
+                # Return top 50 results without threshold filtering
+                results = results[:50]
+            else:
+                results = filtered_results
 
         # Sort by score bucket, then by date
         for paper in results:
@@ -342,7 +352,11 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.2):
 
     except Exception as e:
         # If anything fails in semantic search, fall back to keyword search
-        print(f"Semantic search error: {e}, falling back to keyword search")
+        import traceback
+
+        print(f"Semantic search error: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+        print("Falling back to keyword search")
         return search_papers_keyword(query)
 
 
