@@ -1,34 +1,49 @@
 {
   "Basics": {
-    "#1": {
-      "title": "Improving Retrieval-Augmented Generation through Multi-Agent Reinforcement Learning",
-      "arxiv_id": "2501.15228",
-      "doi": "",
-      "pdf_url": "https://arxiv.org/pdf/2501.15228",
-      "venue": "NeurIPS",
-      "year": 2025,
-      "authors": [
-        "Yiqun Chen",
-        "Lingyong Yan",
-        "Weiwei Sun",
-        "Xinyu Ma",
-        "Yi Zhang",
-        "Shuaiqiang Wang",
-        "Dawei Yin",
-        "Yiming Yang",
-        "Jiaxin Mao"
-      ],
-      "institutions": [
-        { "institution": "Renmin University of China", "abbr": "RUC", "full": "Renmin University of China" },
-        { "institution": "Baidu Inc.", "abbr": "Baidu", "full": "Baidu Inc." },
-        { "institution": "Carnegie Mellon University", "abbr": "CMU", "full": "Carnegie Mellon University" }
-      ]
-    }
+    "title": "Improving Retrieval-Augmented Generation through Multi-Agent Reinforcement Learning",
+    "arxiv_id": "2501.15228",
+    "doi": "",
+    "pdf_url": "https://arxiv.org/pdf/2501.15228",
+    "code_url": "https://github.com/chenyiqun/MMOA-RAG",
+    "code_availability": "publicly available (https://github.com/chenyiqun/MMOA-RAG). Prompt templates for each agent are described in Appendix B but not released as standalone files. Trained model weights are not released.",
+    "venue": "NeurIPS",
+    "year": 2025,
+    "authors": [
+      "Yiqun Chen",
+      "Lingyong Yan",
+      "Weiwei Sun",
+      "Xinyu Ma",
+      "Yi Zhang",
+      "Shuaiqiang Wang",
+      "Dawei Yin",
+      "Yiming Yang",
+      "Jiaxin Mao"
+    ],
+    "institutions": [
+      {
+        "institution": "Renmin University of China",
+        "abbr": "RUC",
+        "full": "Renmin University of China"
+      },
+      {
+        "institution": "Baidu Inc.",
+        "abbr": "Baidu",
+        "full": "Baidu Inc."
+      },
+      {
+        "institution": "Carnegie Mellon University",
+        "abbr": "CMU",
+        "full": "Carnegie Mellon University"
+      }
+    ]
   },
 
   "Core": {
     "topic_relevance": {
-      "topics": ["RAG", "Agent"],
+      "topics": [
+        "RAG",
+        "Agent"
+      ],
       "primary_topic": "RAG",
       "sub_topic": [
         "Modularized RAG pipeline",
@@ -42,211 +57,289 @@
         "Agentic multi-step retrieval (via sub-question decomposition)"
       ]
     },
-
+    "one_sentence_thesis": "MMOA-RAG trains all components of a question-answering system (query improver, document picker, answer writer) as a cooperative team sharing the same goal—getting the right answer—rather than optimizing each piece separately.",
     "core_problem": {
-      "problem_statement": "RAG pipelines are typically optimized module-by-module (often via SFT), causing objective misalignment across query rewriting, selection, and generation; optimizing one module can hurt end-to-end answer quality.",
+      "problem_statement": "RAG pipelines are typically optimized module-by-module via supervised fine-tuning, causing misalignment: improving one component's individual metric (e.g., retrieval relevance) does not guarantee better final answers.",
       "why_it_matters": [
-        "End-to-end QA correctness depends on interdependent module behaviors (rewriting affects retrieval, which affects selection, which affects generation).",
-        "Single-module RL methods often assume overly simple RAG pipelines and miss multi-module coordination."
-      ]
+        "Real-world impact: Better coordinated RAG systems can significantly improve AI assistants, search engines, and knowledge-based applications used by millions",
+        "End-to-end QA correctness depends on interdependent module behaviors—optimizing each module in isolation means the query rewriter might produce reformulations that help retrieval but confuse the answer generator, or the selector might pick documents that look relevant individually but lack the combination of facts needed for multi-hop reasoning",
+        "Prior RL-based methods (Rewrite-Retrieve-Read, BGM) optimize only one or two modules with PPO (a single-agent RL algorithm), missing the full multi-module coordination that MMOA-RAG addresses through multi-agent RL"
+      ],
+      "concrete_example": "When asked 'What conference was the Vermont Catamounts men's soccer team's conference formerly known as from 1988 to 1996?', an independently-trained query rewriter produces only one sub-question retrieving football documents, missing the conference history. The paper's case study (Appendix I) shows MMOA-RAG fixing this by decomposing into two coordinated sub-questions that retrieve both the team's conference affiliation and its historical name."
     },
-
-    "one_sentence_thesis": "MMOA-RAG treats a multi-module RAG pipeline as a cooperative multi-agent RL problem and jointly optimizes query rewriting, document selection, and answer generation using a shared outcome reward (answer F1), improving end-to-end QA performance.",
-
     "key_novelty": {
       "main_idea": "Cooperative Multi-Agent RL for Modular RAG (MMOA-RAG)",
       "explanation": [
-        "Model each RAG module (Query Rewriter, Selector, Generator) as an RL agent with its own observation/prompt and action space, but trained to maximize a shared global reward.",
-        "Use Multi-Agent PPO (MAPPO) to jointly optimize multiple LLM-based modules so their behaviors align toward final answer quality rather than local module objectives."
-      ],
-      "why_this_is_new": [
-        "Moves from independently optimized RAG modules to a cooperative learning formulation where coordination is explicitly trained end-to-end.",
-        "Provides a general joint-optimization algorithm that can adapt to different modular configurations (2-agent vs 3-agent variants)."
+        "Model each RAG module (Query Rewriter, Document Selector, Answer Generator) as an RL agent, all sharing the same LLM backbone with different prompts, and trained to maximize a shared reward (F1 score of the final answer)",
+        "Use MAPPO (a multi-agent extension of PPO) to jointly optimize all modules so they learn to coordinate—like training a relay team for overall race time rather than individual leg times",
+        "The technical formulation—shared reward structure, per-agent penalty terms, and MAPPO training loop—is detailed in Technical_details below"
       ]
     },
-
     "evaluation_highlights": [
-      "Main setting (Contriever): HotpotQA F1 improves from best baseline 46.49 (RetRobust) to 48.29 (MMOA-RAG), +1.80.",
-      "Main setting (Contriever): 2WikiMultihopQA F1 improves from best baseline 44.51 (RetRobust) to 46.40 (MMOA-RAG), +1.89.",
-      "Main setting (Contriever): AmbigQA F1 improves from best baseline 45.92 (Rewrite-Retrieve-Read) to 48.59 (MMOA-RAG), +2.67.",
-      "Warm-start vs joint RL (QR+S+G): HotpotQA F1 improves 44.69 → 48.29, +3.60 after MAPPO.",
-      "Retriever robustness (E5): AmbigQA F1 improves 59.75 → 60.80, +1.05 vs best baseline.",
-      "OOD: Training on HotpotQA and testing on AmbigQA yields F1 45.62 vs 44.08 (RetRobust), +1.54."
+      "+1.8 to +2.7 F1 improvement over best baselines across 3 QA benchmarks (Table 1)",
+      "MAPPO joint training adds +3.6 F1 over SFT warm-start on HotpotQA, demonstrating coordination is learned (Table 2)",
+      "Generalizes across retrieval backends (Contriever, BGE, E5) and out-of-domain datasets"
     ],
-
     "breakthrough_assessment": {
-      "score_1_to_10": 4,
-      "justification": "It provides a concrete and general multi-agent RL formulation for jointly optimizing multiple RAG modules with shared outcome reward, achieving consistent multi-dataset gains over strong RAG optimization baselines."
+      "score_1_to_10": 7,
+      "justification": "Novel application of multi-agent RL to RAG with consistent empirical gains across benchmarks. First to demonstrate cooperative learning across 3 RAG modules. Improvements are meaningful (+1.8-2.7 F1) and the framework generalizes to different pipeline configurations. Accepted at NeurIPS 2025."
     }
   },
 
-  "Methods_and_Evidence": {
-    "system_pipeline": {
-      "high_level_flow": [
-        "Input question q",
-        "Query Rewriter generates sub-questions {q_i}",
-        "Retriever (fixed dense retriever) retrieves candidate documents for each q_i",
-        "Selector filters candidates into a smaller evidence set D*",
-        "Generator produces final answer â based on D*",
-        "Compute shared reward from â vs gold answer; update all agents with MAPPO"
-      ],
-      "modules": [
-        {
-          "module": "Query Rewriter (agent)",
-          "role": "Decompose complex/ambiguous question into sub-questions for multi-step retrieval.",
-          "model": "LLM (shared backbone via prompts)",
-          "inputs": ["question q", "rewriter prompt"],
-          "outputs": ["sub-questions {q_i}"],
-          "notes": "Penalty discourages generating too many sub-questions."
-        },
-        {
-          "module": "Retriever (environment / fixed)",
-          "role": "Retrieve candidate documents for each sub-question.",
-          "model": "Contriever (main setting); also evaluated with BGE and E5 retrievers.",
-          "inputs": ["sub-questions {q_i}"],
-          "outputs": ["candidate documents D"]
-        },
-        {
-          "module": "Selector (agent)",
-          "role": "Select helpful document IDs from candidate set for grounding the generator.",
-          "model": "LLM (shared backbone via prompts)",
-          "inputs": ["question q", "candidate documents D", "selector prompt"],
-          "outputs": ["selected doc IDs / subset D*"],
-          "notes": "Action space is constrained to ID tokens/format to reduce exploration."
-        },
-        {
-          "module": "Generator (agent)",
-          "role": "Generate the final short answer using selected documents.",
-          "model": "LLM (shared backbone via prompts)",
-          "inputs": ["question q", "selected documents D*", "generator prompt"],
-          "outputs": ["answer â"],
-          "notes": "Penalty discourages overly long outputs."
-        }
-      ]
+  "Technical_details": {
+
+    "problem_definition": {
+      "formal_setting": "Open-domain question answering over document collections, including multi-hop and ambiguous questions",
+      "inputs": "Natural language question q",
+      "outputs": "Predicted answer Ans_predict",
+      "constraints_assumptions": "Fixed retriever (Contriever), K=10 candidate documents per question, F1 score of final answer as shared reward"
     },
 
-    "technical_details": {
-      "formalization": {
-        "setting": "Cooperative multi-agent reinforcement learning (Co-MARL) over a modular RAG pipeline.",
-        "objective": "Maximize shared outcome reward based on final answer quality (F1) while applying module-specific penalties for stability.",
-        "constraints": "Retriever is fixed (treated as part of environment); learnable agents are LLM-based modules distinguished by prompts (parameter sharing)."
-      },
-      "inference_mechanism": [
-        "Run Query Rewriter to produce sub-questions.",
-        "Retrieve documents per sub-question using a fixed dense retriever to form candidates.",
-        "Run Selector to output document IDs in a constrained format; map IDs to a selected subset.",
-        "Run Generator to produce a brief final answer conditioned on the selected subset."
+    "prerequisite_knowledge": {
+      "prerequisites": [
+        "Basic understanding of language models (LLMs) and how they generate text",
+        "Familiarity with question-answering systems",
+        "Basic knowledge of reinforcement learning concepts (rewards, agents, policies)"
       ],
-      "training_or_optimization": {
-        "uses_post_training": true,
-        "method": "Hybrid: warm-start SFT for each module + MAPPO joint optimization",
-        "reward_function": [
-          "Shared global reward: F1 score of the Generator's predicted answer vs ground truth (used for all agents).",
-          "Query Rewriter penalty: -0.5 if number of sub-questions > 4, else 0 (discourage excessive decomposition).",
-          "Selector penalty: -1 if output contains duplicate IDs or violates required format (e.g., 'Document0,Document3,...'), else 0.",
-          "Generator penalty: -0.5 if generated answer exceeds a length threshold, else 0."
-        ],
-        "loss_functions": [
-          "SFT loss for warm start (standard supervised fine-tuning objective).",
-          "MAPPO actor-critic losses with GAE advantage estimation and PPO-style clipping."
-        ],
-        "data_construction": [
-          "Query Rewriter SFT data: reuse publicly available query rewriting data from Rewrite-Retrieve-Read.",
-          "Selector SFT labels: heuristic overlap—after lowercasing and removing stopwords/punctuation, if any token from (question ∪ gold answer) appears in a candidate document, include that document's ID as a positive label.",
-          "Generator SFT labels: gold answers paired with selected documents, trained to output brief answer-only format."
-        ]
-      },
-      "models_and_system_components": {
-        "llm_backbone": "Llama-3-8B-Instruct (shared across Query Rewriter, Selector, Generator via different prompts).",
-        "retriever_or_index": "Contriever as primary retriever; robustness tested with BGE and E5 retrievers.",
-        "reranker": "Selector functions as a learned filtering step rather than a classical reranker.",
-        "tooling_or_search_engine": "",
-        "key_hyperparameters": {
-          "top_k": "",
-          "context_window": "",
-          "other": "clip_range_MAPPO: 0.2, learning_rate_max: 2e-5, buffer_size: 128, gae_lambda: 1.0, gae_gamma: 0.95, sampling_temperature_or_top_p: 0.9, reward_clip_max: 0.2, reward_clip_min: 0.06"
-        }
+      "key_terms": {
+        "_comment": "Define key terms upfront for accessibility. Every acronym and technical term used in this summary is defined here.",
+        "RAG": "Retrieval-Augmented Generation—AI systems that answer questions by first searching for relevant documents, then generating responses based on what they find",
+        "MAPPO": "Multi-Agent Proximal Policy Optimization—a reinforcement learning algorithm that trains multiple AI components to cooperate by sharing feedback on overall performance",
+        "PPO": "Proximal Policy Optimization—a single-agent RL algorithm that updates a policy in small, stable steps using a clipped objective to prevent destructively large updates",
+        "DPO": "Direct Preference Optimization—a method that aligns language models to human preferences by directly optimizing on preference pairs rather than training a separate reward model",
+        "MARL": "Multi-Agent Reinforcement Learning—an RL setting where multiple agents learn policies simultaneously in a shared environment, as opposed to single-agent RL",
+        "multi-hop QA": "Questions requiring reasoning across multiple documents (e.g., 'Where was the director of Titanic born?' needs info about both the movie and the person)",
+        "F1 score": "A metric balancing precision (are answers correct?) and recall (are answers complete?), ranging from 0 to 100 in this paper",
+        "EM": "Exact Match—whether the predicted answer is exactly identical to the ground-truth answer (stricter than F1)",
+        "SFT": "Supervised Fine-Tuning—training a model on labeled examples before applying reinforcement learning, used here as a 'warm start' so agents can follow instructions before learning to cooperate",
+        "dense retrieval": "A method of finding relevant documents by comparing learned vector representations (embeddings) of queries and passages, as opposed to keyword matching (sparse retrieval)",
+        "Contriever": "A pre-trained dense retrieval model used in this paper as the default document retriever",
+        "silver labels": "Automatically generated training labels (as opposed to human-annotated 'gold' labels)—here, the Selector's SFT data uses heuristic relevance judgments rather than human annotations",
+        "Actor-Critic": "An RL architecture where one network (the Actor) decides what actions to take, and another (the Critic) estimates how good those actions are",
+        "GAE": "Generalized Advantage Estimation—a technique for estimating how much better an action was compared to the average, used to reduce variance in RL training",
+        "KL divergence": "A measure of how much a model's behavior has changed from a reference model; used here as a penalty to prevent agents from drifting too far from their SFT initialization",
+        "clipped surrogate objective": "The core PPO/MAPPO loss function that limits how much the policy can change in a single update step, ensuring stable training",
+        "cosine schedule": "A learning rate schedule that decreases the learning rate following a cosine curve from a maximum to a minimum value over training",
+        "Top-k": "A retrieval strategy that returns the k highest-scoring documents for a given query"
       }
     },
 
-    "evaluation_setup": {
-      "evaluation_setting": "Multi-hop and ambiguous QA with end-to-end metrics; comparison to multiple RAG optimization baselines under the same LLM backbone and retriever settings.",
-      "benchmarks": [
-        { "name": "HotpotQA", "task_type": "multi-hop QA", "newly_constructed": false },
-        { "name": "2WikiMultihopQA", "task_type": "multi-hop QA", "newly_constructed": false },
-        { "name": "AmbigQA", "task_type": "ambiguous QA", "newly_constructed": false },
-        { "name": "Out-of-domain (train HotpotQA → test AmbigQA)", "task_type": "OOD generalization", "newly_constructed": true }
+    "system_pipeline": {
+      "high_level_flow": [
+        "Query Rewriter (decomposes question into sub-questions)",
+        "Retriever (retrieves K candidate documents)",
+        "Selector (filters documents to helpful subset)",
+        "Generator (produces final answer)"
       ],
-      "main_metrics": ["Accuracy", "EM", "F1"]
+      "modules": [
+        {
+          "module": "Query Rewriter",
+          "functional_group": "Input Processing",
+          "role": "Decompose the initial question into one or more sub-questions for better retrieval coverage",
+          "model": "Llama-3-8B-Instruct (shared LLM, distinguished by prompt)",
+          "inputs": ["Prompt_QR + initial question q"],
+          "outputs": ["Set of sub-questions subq"],
+          "notes": "RL agent; penalized if generating more than 4 sub-questions (P_QR = -0.5)"
+        },
+        {
+          "module": "Retriever",
+          "functional_group": "Retrieval & Selection",
+          "role": "Retrieve candidate documents from corpus for each sub-question",
+          "model": "Contriever (frozen dense retriever, not trained)",
+          "inputs": ["Sub-questions from Query Rewriter"],
+          "outputs": ["K=10 candidate documents D (top-5 per sub-question if 2 sub-questions)"],
+          "notes": "Fixed component, treated as part of the environment—not an RL agent"
+        },
+        {
+          "module": "Selector",
+          "functional_group": "Retrieval & Selection",
+          "role": "Filter candidate documents to select the subset most helpful for answering the question",
+          "model": "Llama-3-8B-Instruct (shared LLM, distinguished by prompt)",
+          "inputs": ["Prompt_S + initial question q + K candidate documents D"],
+          "outputs": ["IDs of selected documents D_selected (e.g., 'Document0,Document4,Document6')"],
+          "notes": "RL agent; constrained action space (document IDs only); penalized for duplicate or malformed output (P_S = -1)"
+        },
+        {
+          "module": "Generator",
+          "functional_group": "Generation",
+          "role": "Generate the final answer based on selected documents",
+          "model": "Llama-3-8B-Instruct (shared LLM, distinguished by prompt)",
+          "inputs": ["Prompt_G + initial question q + selected documents D_selected"],
+          "outputs": ["Predicted answer Ans_predict"],
+          "notes": "RL agent; penalized for excessively long answers (P_G = -0.5)"
+        }
+      ],
+      "novel_architectural_elements": [
+        "Multi-agent formulation of RAG pipeline: 3 agents (QR, S, G) share the same LLM but are distinguished by different prompts (parameter sharing)",
+        "Cooperative reward sharing: all agents receive the same F1 reward R_shared plus agent-specific penalty terms",
+        "Modular design allowing flexible configurations (QR+S+G, S+G, or QR+G)"
+      ]
+    },
+
+    "model_architecture": {
+      "base_model": "Llama-3-8B-Instruct for all three agents (parameter sharing)",
+      "training_details": {
+        "uses_post_training": true,
+        "method": "Multi-Agent Proximal Policy Optimization (MAPPO) with Actor-Critic architecture",
+        "objective_functions": [
+          "Actor loss: PPO clipped surrogate objective (limits how much the policy changes per update) summed over all agents i and timesteps t",
+          "Critic loss: Clipped value function loss with GAE (Generalized Advantage Estimation) for stable advantage computation",
+          "Combined: L(θ,ϕ) = L_Actor(θ) + α * L_Critic(ϕ)",
+          "Final reward includes KL penalty against SFT model: R = R_shared + P_i - β * log(π_θ/π_SFT)"
+        ],
+        "warm_start": "Each module warm-started via SFT on task-specific data: Query Rewriter uses Rewrite-Retrieve-Read data, Selector uses heuristic silver labels (automatically generated relevance judgments), Generator uses golden answers",
+        "adaptation": "Full fine-tuning with parameter sharing across agents (same LLM, different prompts)",
+        "training_data_construction": [
+          "HotpotQA, 2WikiMultihopQA, AmbigQA train sets",
+          "SFT training data constructed per-module (see Appendix B of paper)"
+        ],
+        "key_hyperparameters": {
+          "learning_rate": "2e-5 (max, cosine schedule)",
+          "ppo_clip_epsilon": "0.2",
+          "gae_lambda": "0.95",
+          "gae_gamma": "1.0",
+          "critic_coefficient_alpha": "0.1",
+          "kl_beta_max": "0.2",
+          "kl_beta_min": "0.06",
+          "buffer_size": "128",
+          "top_p_sampling": "0.9"
+        },
+        "computational_requirements": "Not reported in the paper"
+      }
+    },
+
+    "comparison_to_sota": {
+      "related_methods": [
+        "RetRobust: Makes generator robust to irrelevant retrieved context via training with noisy data",
+        "Rewrite-Retrieve-Read: Trains a query rewrite module with PPO (single-agent RL), but does not jointly optimize selector or generator",
+        "BGM: Trains a bridge module between retriever and generator using PPO (single-agent RL), but does not jointly optimize other modules",
+        "Self-RAG: Uses special self-reflection tokens to decide when to retrieve and how to critique outputs",
+        "RAG-DDR: Uses DPO (Direct Preference Optimization) to align data preferences between RAG modules"
+      ],
+      "key_differences": [
+        "vs. RetRobust: Joint optimization of all 3 modules vs. only training generator for robustness",
+        "vs. Rewrite-Retrieve-Read: Simultaneous MAPPO optimization of QR+S+G vs. PPO on query rewriter only",
+        "vs. BGM: Optimizes QR+S+G together vs. PPO on bridge module only",
+        "vs. Self-RAG: Implicit coordination via shared MARL rewards vs. explicit self-reflection within single model",
+        "vs. RA-DIT (not cited in paper): RA-DIT uses dual instruction tuning to align retriever and generator, but tunes only two components sequentially rather than jointly optimizing three agents with shared reward",
+        "vs. RAFT (not cited in paper): RAFT fine-tunes a generator to be robust to distractor documents via chain-of-thought training, but does not optimize query rewriting or document selection—complementary to MMOA-RAG's multi-agent coordination",
+        "Novel contribution: First cooperative MARL approach treating RAG pipeline as multi-agent system"
+      ]
+    },
+
+    "Limitations": {
+      "acknowledged_limitations": [
+        "Training time scales linearly with number of agents (n agents = n× rollout and update time)",
+        "Focused on QA tasks only; not evaluated on summarization, dialogue, or other RAG applications"
+      ],
+      "potential_issues": [
+        "Parameter sharing across agents may limit specialization as number of agents grows",
+        "Requires ground truth answers for F1-based reward during training—not applicable to open-ended generation",
+        "Retriever is frozen; optimizing it jointly could yield further gains but is left for future work"
+      ],
+      "scope_restrictions": [
+        "Evaluated on 3 English QA datasets (HotpotQA, 2WikiMultihopQA, AmbigQA)",
+        "Retriever limited to dense retrieval (Contriever, BGE, E5); not tested with sparse or generative retrieval"
+      ]
+    }
+  },
+
+  "Experiments": {
+    "evaluation_setup": {
+      "evaluation_setting": "Open-domain question answering with retrieval from Wikipedia passages",
+      "benchmarks": [
+        {
+          "name": "HotpotQA",
+          "task_type": "Multi-hop reasoning QA",
+          "newly_constructed": false
+        },
+        {
+          "name": "2WikiMultihopQA",
+          "task_type": "Wikipedia multi-hop QA",
+          "newly_constructed": false
+        },
+        {
+          "name": "AmbigQA",
+          "task_type": "Ambiguous question answering (single-hop)",
+          "newly_constructed": false
+        }
+      ],
+      "main_metrics": [
+        "F1 score",
+        "Exact Match (EM)",
+        "Accuracy"
+      ],
+      "statistical_methodology": "Not explicitly reported in the paper"
     },
 
     "key_results": [
       {
-        "result_type": "end_to_end_main_table",
+        "result_type": "Main comparison (Table 1)",
         "benchmark": "HotpotQA",
         "metric": "F1",
-        "baseline": "RetRobust (best baseline by F1 in Table 1)",
+        "baseline": "RetRobust (best baseline F1)",
         "baseline_value": "46.49",
         "paper_value": "48.29",
         "delta": "+1.80",
-        "notes": "Contriever retriever; Llama-3-8B-Instruct backbone."
+        "notes": "Using Contriever retriever. Arithmetic check: 48.29 − 46.49 = 1.80 ✓. Rewrite-Retrieve-Read scored 46.32 F1."
       },
       {
-        "result_type": "end_to_end_main_table",
+        "result_type": "Main comparison (Table 1)",
+        "benchmark": "HotpotQA",
+        "metric": "EM",
+        "baseline": "RetRobust (best baseline)",
+        "baseline_value": "34.60",
+        "paper_value": "36.15",
+        "delta": "+1.55",
+        "notes": "Using Contriever retriever. Arithmetic check: 36.15 − 34.60 = 1.55 ✓."
+      },
+      {
+        "result_type": "Main comparison (Table 1)",
         "benchmark": "2WikiMultihopQA",
         "metric": "F1",
-        "baseline": "RetRobust (best baseline by F1 in Table 1)",
+        "baseline": "RetRobust (best baseline)",
         "baseline_value": "44.51",
         "paper_value": "46.40",
         "delta": "+1.89",
-        "notes": "Contriever retriever; Llama-3-8B-Instruct backbone."
+        "notes": "Using Contriever retriever. Arithmetic check: 46.40 − 44.51 = 1.89 ✓."
       },
       {
-        "result_type": "end_to_end_main_table",
+        "result_type": "Main comparison (Table 1)",
         "benchmark": "AmbigQA",
         "metric": "F1",
-        "baseline": "Rewrite-Retrieve-Read (best baseline by F1 in Table 1)",
+        "baseline": "Rewrite-Retrieve-Read (best baseline F1)",
         "baseline_value": "45.92",
         "paper_value": "48.59",
         "delta": "+2.67",
-        "notes": "Contriever retriever; Llama-3-8B-Instruct backbone."
+        "notes": "Using Contriever retriever. Arithmetic check: 48.59 − 45.92 = 2.67 ✓. Other close baselines: RAG-DDR 45.83, BGM 45.76."
       },
       {
-        "result_type": "joint_training_gain",
+        "result_type": "Generality / Ablation (Table 2)",
         "benchmark": "HotpotQA",
-        "metric": "F1 (SFT → MAPPO)",
-        "baseline": "SFT warm-start (QR+S+G)",
+        "metric": "F1",
+        "baseline": "QR+S+G after SFT warm-start (before MAPPO)",
         "baseline_value": "44.69",
         "paper_value": "48.29",
         "delta": "+3.60",
-        "notes": "Shows benefit of MAPPO joint optimization over SFT for full 3-agent configuration."
+        "notes": "Shows benefit of MAPPO joint training over SFT alone. Arithmetic check: 48.29 − 44.69 = 3.60 ✓. Similar gains on other datasets."
       },
       {
-        "result_type": "retriever_robustness",
-        "benchmark": "AmbigQA (Retriever: E5)",
+        "result_type": "Cross-retriever (Table 7, Appendix E)",
+        "benchmark": "HotpotQA",
         "metric": "F1",
-        "baseline": "RAG-DDR (best baseline by F1 in Table 7)",
-        "baseline_value": "59.75",
-        "paper_value": "60.80",
-        "delta": "+1.05",
-        "notes": "Demonstrates method remains competitive when swapping the retriever."
-      },
-      {
-        "result_type": "out_of_domain",
-        "benchmark": "Train HotpotQA → Test AmbigQA",
-        "metric": "F1",
-        "baseline": "RetRobust",
-        "baseline_value": "44.08",
-        "paper_value": "45.62",
-        "delta": "+1.54",
-        "notes": "OOD generalization result (Table 8)."
+        "baseline": "Best baseline with BGE and E5 retrievers",
+        "baseline_value": "See Table 7 in paper",
+        "paper_value": "See Table 7 in paper",
+        "delta": "MMOA-RAG surpasses most baselines with both BGE and E5 retrievers",
+        "notes": "Demonstrates generalization across retrieval backends. Exact values are in Appendix E, Table 7 of the paper."
       }
     ],
 
     "main_takeaways": [
-      "Jointly optimizing multiple RAG modules as cooperative agents can yield consistent end-to-end QA gains over strong single-module or SFT-only baselines.",
-      "A simple shared outcome reward (answer F1) plus lightweight per-module penalties is sufficient to stabilize multi-agent RL training for modular RAG.",
-      "The framework is configurable (2-agent vs 3-agent) and remains effective across different retrievers (Contriever/BGE/E5)."
+      "MMOA-RAG outperforms all baselines across all 3 metrics (Acc, EM, F1) on all 3 datasets (Table 1)",
+      "MAPPO joint training adds +2-4 F1 over SFT warm-start across different pipeline configurations (Table 2)",
+      "Ablation: Removing any single agent from joint optimization degrades performance; full QR+S+G is best (Figure 2)",
+      "Generalizes across retrievers (Contriever, BGE, E5) and out-of-domain datasets (Appendix E, F)"
     ]
   },
 
@@ -254,16 +347,36 @@
     "figures": {
       "architecture_figure": {
         "figure_id": "Figure 1",
-        "what_it_shows": "Overall MMOA-RAG framework: Query Rewriter → Retriever → Selector → Generator, trained with shared reward."
+        "what_it_shows": "The overall framework of MMOA-RAG showing the four-module pipeline and MAPPO training loop—focuses on the core mechanism of cooperative multi-agent optimization",
+        "visual_layout": "Left-to-right flow: Input Question → Query Rewriter → Retriever → Selector → Generator → Predicted Answer, with a shared reward (F1) feedback loop flowing back from right to left",
+        "key_components_visible": [
+          "Query Rewriter producing sub-questions from initial question (trainable RL agent, color-highlighted)",
+          "Retriever fetching candidate documents D for each sub-question (frozen component, visually distinct from trainable agents)",
+          "Selector filtering D to helpful subset D_selected (trainable RL agent, color-highlighted)",
+          "Generator producing final answer Ans_predict (trainable RL agent, color-highlighted)",
+          "Shared reward R_shared (F1 score) feeding back to all three trainable agents (shown with dashed reward arrows)",
+          "Per-agent penalty terms (P_QR, P_S, P_G) shown alongside shared reward"
+        ],
+        "reading_guide": "Follow the pipeline left-to-right for inference flow. Solid arrows indicate data flow between modules. Dashed arrows show reward/gradient signals flowing back from the answer evaluation. The Retriever is visually distinguished (frozen, no reward arrows) from the three trainable agents. The yellow/highlighted section represents the shared reward computation. During training, the F1 score of the predicted answer is used as reward for all 3 agents via MAPPO."
       },
       "major_experiment_figures": [
-        { "figure_id": "Table 1", "what_it_shows": "Main end-to-end results (Acc/EM/F1) on HotpotQA, 2WikiMultihopQA, AmbigQA with Contriever." },
-        { "figure_id": "Figure 2", "what_it_shows": "Ablation on optimizing different agents (exclude QR/S/G) showing full joint optimization performs best." },
-        { "figure_id": "Figure 3", "what_it_shows": "Training curves on AmbigQA vs number of training samples (shared reward/F1)." },
-        { "figure_id": "Table 2", "what_it_shows": "Generality across module configurations (QR+S+G vs S+G vs QR+G), comparing SFT vs MAPPO." },
-        { "figure_id": "Table 7", "what_it_shows": "Robustness when swapping retrievers to BGE and E5." },
-        { "figure_id": "Table 8", "what_it_shows": "Out-of-domain generalization (train HotpotQA → test AmbigQA)." },
-        { "figure_id": "Figure 4", "what_it_shows": "Heuristic construction process for Selector SFT labels." }
+        {
+          "figure_id": "Figure 2",
+          "what_it_shows": "Ablation results: F1 scores for MMOA-RAG vs. variants with each agent removed (w/o QR, w/o S, w/o G) across all 3 datasets",
+          "key_insights": [
+            "Full MMOA-RAG (all 3 agents) achieves highest performance on all datasets",
+            "Removing Generator (w/o G) causes the largest drop, especially on single-hop AmbigQA",
+            "Removing Selector (w/o S) has the smallest impact, suggesting Generator can partially compensate"
+          ]
+        },
+        {
+          "figure_id": "Figure 3",
+          "what_it_shows": "Training reward curves (F1 score) over training samples for MMOA-RAG and ablation variants on AmbigQA",
+          "key_insights": [
+            "MMOA-RAG converges fastest and to the highest reward value",
+            "MMOA-RAG w/o G converges slowest, confirming Generator is the most critical agent for single-hop QA"
+          ]
+        }
       ]
     }
   }

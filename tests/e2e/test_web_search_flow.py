@@ -104,7 +104,15 @@ def sample_paper_with_summary() -> Dict[str, Any]:
                 "breakthrough_score": 7,
             }
         ),
-        "summary_methods_evidence": json.dumps(
+        "summary_techniques": json.dumps(
+            {
+                "pipeline": ["Retrieve relevant passages", "Generate with context"],
+                "results": [
+                    {"metric": "Accuracy", "value": "85.3%", "baseline": "78.1%"}
+                ],
+            }
+        ),
+        "summary_experiments": json.dumps(
             {
                 "pipeline": ["Retrieve relevant passages", "Generate with context"],
                 "results": [
@@ -475,7 +483,8 @@ class TestPaperDetailFlow:
         paper_no_summary["summary_generated_at"] = None
         paper_no_summary["summary_basics"] = None
         paper_no_summary["summary_core"] = None
-        paper_no_summary["summary_methods_evidence"] = None
+        paper_no_summary["summary_techniques"] = None
+        paper_no_summary["summary_experiments"] = None
         paper_no_summary["summary_figures"] = None
         mock_get_paper.return_value = paper_no_summary
         mock_get_images.return_value = []

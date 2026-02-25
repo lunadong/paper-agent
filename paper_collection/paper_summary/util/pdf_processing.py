@@ -339,7 +339,7 @@ def download_pdf_with_figures(
     # Extract figures if requested
     if extract_figures and pdf_bytes:
         try:
-            from . import extract_figures as fig_module
+            from . import figure_extraction_from_pdf as fig_module
 
             if fig_module.PYMUPDF_AVAILABLE:
                 if paper_id is None:
@@ -356,7 +356,7 @@ def download_pdf_with_figures(
             else:
                 print("  PyMuPDF not available, skipping figure extraction")
         except ImportError as e:
-            print(f"  Could not import extract_figures module: {e}")
+            print(f"  Could not import figure_extraction_from_pdf module: {e}")
         except Exception as e:
             print(f"  Error extracting figures: {e}")
 
@@ -458,7 +458,7 @@ def extract_and_store_figures(
     result = {"figures": [], "image_ids": []}
 
     try:
-        from . import extract_figures as fig_module
+        from . import figure_extraction_from_pdf as fig_module
 
         if not fig_module.PYMUPDF_AVAILABLE:
             print("  PyMuPDF not available, skipping figure extraction")
@@ -486,7 +486,7 @@ def extract_and_store_figures(
             result["image_ids"] = image_ids
 
     except ImportError as e:
-        print(f"  Could not import extract_figures module: {e}")
+        print(f"  Could not import figure_extraction_from_pdf module: {e}")
     except Exception as e:
         print(f"  Error extracting/storing figures: {e}")
 

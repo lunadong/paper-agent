@@ -558,6 +558,67 @@
             text-align: center;
             max-width: 80%;
         }
+
+        /* New styles for Technical Details and Experiments sections */
+        .problem-definition {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .definition-item {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .definition-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .key-terms-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .key-term {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .evaluation-setting {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .result-narrative {
+            background: #fefce8;
+            border-left: 4px solid #eab308;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-radius: 0 8px 8px 0;
+            line-height: 1.6;
+        }
+
+        .figure-insights {
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .figure-insights ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .figure-insights li {
+            margin-bottom: 4px;
+            color: #555;
+        }
     </style>
 </head>
 
@@ -573,15 +634,15 @@
             {% endif %}
         </h1>
         <div class="paper-meta">
-            {% if paper.summary and paper.summary.basics and paper.summary.basics.get('#1', {}).authors %}
-            {{ paper.summary.basics['#1'].authors | join(', ') }}
+            {% if paper.summary and paper.summary.basics and paper.summary.basics.authors %}
+            {{ paper.summary.basics.authors | join(', ') }}
             {% else %}
             {{ paper.authors or 'Unknown authors' }}
             {% endif %}
         </div>
-        {% if paper.summary and paper.summary.basics and paper.summary.basics.get('#1', {}).institutions %}
+        {% if paper.summary and paper.summary.basics and paper.summary.basics.institutions %}
         <div class="paper-institutions">
-            {% for inst in paper.summary.basics['#1'].institutions %}
+            {% for inst in paper.summary.basics.institutions %}
             {{ inst.full or inst.institution }}{% if not loop.last %}, {% endif %}
             {% endfor %}
         </div>
@@ -591,9 +652,9 @@
             {% if paper.year %} ({{ paper.year }}){% endif %}
         </div>
         {% set core = paper.summary.get('core', {}) if paper.summary else {} %}
-        {% if core.topic_relevance and core.topic_relevance.topic %}
+        {% if core.topic_relevance and core.topic_relevance.topics %}
         <div class="rag-type-tags">
-            {% for tag in core.topic_relevance.topic %}
+            {% for tag in core.topic_relevance.topics %}
             <span class="rag-type-tag" data-topic="{{ tag }}" onclick="handleTagClick(this, event)">{{ tag }}</span>
             {% endfor %}
         </div>
@@ -602,7 +663,8 @@
 
     {% if paper.has_summary %}
     {% set core = paper.summary.get('core', {}) %}
-    {% set methods = paper.summary.get('methods', {}) %}
+    {% set techniques = paper.summary.get('techniques', {}) %}
+    {% set experiments = paper.summary.get('experiments', {}) %}
 
     <!-- Core Summary Section -->
     <div class="section">
@@ -704,12 +766,33 @@
     </div>
 
 
-    <!-- Methods Section (Collapsible) -->
-    {% if methods.system_pipeline or methods.technical_details %}
+    <!-- Technical Details Section (Collapsible) -->
+    {% if techniques.system_pipeline or techniques.problem_definition or techniques.model_architecture %}
     <div class="section">
-        <h2 class="section-title collapsible collapsed" onclick="toggleSection(this)">⚙️ Pipeline and Models</h2>
+        <h2 class="section-title collapsible collapsed" onclick="toggleSection(this)">⚙️ Technical Details</h2>
         <div class="collapsible-content collapsed">
-            {% if methods.system_pipeline and methods.system_pipeline.high_level_flow %}
+
+            {% if techniques.problem_definition %}
+            <div class="subsection">
+                <div class="subsection-title">Problem Definition</div>
+                <div class="problem-definition">
+                    {% if techniques.problem_definition.formal_setting %}
+                    <div class="definition-item"><strong>Setting:</strong> {{ techniques.problem_definition.formal_setting }}</div>
+                    {% endif %}
+                    {% if techniques.problem_definition.inputs %}
+                    <div class="definition-item"><strong>Inputs:</strong> {{ techniques.problem_definition.inputs }}</div>
+                    {% endif %}
+                    {% if techniques.problem_definition.outputs %}
+                    <div class="definition-item"><strong>Outputs:</strong> {{ techniques.problem_definition.outputs }}</div>
+                    {% endif %}
+                    {% if techniques.problem_definition.constraints_assumptions %}
+                    <div class="definition-item"><strong>Constraints:</strong> {{ techniques.problem_definition.constraints_assumptions }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if techniques.system_pipeline and techniques.system_pipeline.high_level_flow %}
             <div class="subsection">
                 <div class="subsection-title">Pipeline Flow</div>
                 {% if core.topic_relevance and core.topic_relevance.primary_focus %}
@@ -721,7 +804,7 @@
                 {% endif %}
                 <div class="pipeline-flow">
                     <ol>
-                        {% for step in methods.system_pipeline.high_level_flow %}
+                        {% for step in techniques.system_pipeline.high_level_flow %}
                         <li>{{ step }}</li>
                         {% endfor %}
                     </ol>
@@ -729,23 +812,10 @@
             </div>
             {% endif %}
 
-            {% if methods.technical_details and methods.technical_details.models_and_system_components %}
-            {% set comps = methods.technical_details.models_and_system_components %}
+            {% if techniques.system_pipeline and techniques.system_pipeline.modules %}
             <div class="subsection">
-                <div class="subsection-title">System Components</div>
-                <div class="module-card" style="padding-bottom: 20px;">
-                    {% if comps.llm_backbone %}<div><strong>LLM:</strong> {{ comps.llm_backbone }}</div>{% endif %}
-                    {% if comps.retriever_or_index %}<div><strong>Retriever:</strong> {{ comps.retriever_or_index }}
-                    </div>{% endif %}
-                    {% if comps.reranker %}<div><strong>Reranker:</strong> {{ comps.reranker }}</div>{% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            {% if methods.system_pipeline and methods.system_pipeline.modules %}
-            <div class="subsection">
-                <div class="subsection-title">Modules</div>
-                {% for module in methods.system_pipeline.modules %}
+                <div class="subsection-title">System Modules</div>
+                {% for module in techniques.system_pipeline.modules %}
                 {% if module.module %}
                 <div class="module-card">
                     <div class="module-name">{{ module.module }}</div>
@@ -753,47 +823,135 @@
                     {% if module.model %}
                     <div class="module-details">Model: {{ module.model }}</div>
                     {% endif %}
+                    {% if module.functional_group %}
+                    <div class="module-details">Group: {{ module.functional_group }}</div>
+                    {% endif %}
                 </div>
                 {% endif %}
                 {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if techniques.system_pipeline and techniques.system_pipeline.novel_architectural_elements %}
+            <div class="subsection">
+                <div class="subsection-title">Novel Architectural Elements</div>
+                <ul>
+                    {% for element in techniques.system_pipeline.novel_architectural_elements %}
+                    <li>{{ element }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if techniques.model_architecture %}
+            <div class="subsection">
+                <div class="subsection-title">Model Architecture</div>
+                <div class="module-card" style="padding-bottom: 20px;">
+                    {% if techniques.model_architecture.base_model %}
+                    <div><strong>Base Model:</strong> {{ techniques.model_architecture.base_model }}</div>
+                    {% endif %}
+                    {% if techniques.model_architecture.training_details %}
+                    {% set training = techniques.model_architecture.training_details %}
+                    {% if training.method and training.method != 'N/A' %}
+                    <div><strong>Training Method:</strong> {{ training.method }}</div>
+                    {% endif %}
+                    {% if training.trainable_parameters and training.trainable_parameters != 'N/A' %}
+                    <div><strong>Trainable Parameters:</strong> {{ training.trainable_parameters }}</div>
+                    {% endif %}
+                    {% if training.computational_requirements and training.computational_requirements != 'N/A' %}
+                    <div><strong>Compute:</strong> {{ training.computational_requirements }}</div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if techniques.comparison_to_sota and techniques.comparison_to_sota.key_differences %}
+            <div class="subsection">
+                <div class="subsection-title">Comparison to Prior Work</div>
+                <ul>
+                    {% for diff in techniques.comparison_to_sota.key_differences %}
+                    <li>{{ diff }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if techniques.Limitations %}
+            <div class="subsection">
+                <div class="subsection-title">Limitations</div>
+                {% if techniques.Limitations.acknowledged_limitations %}
+                <ul>
+                    {% for limit in techniques.Limitations.acknowledged_limitations %}
+                    <li>{{ limit }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if techniques.Limitations.scope_restrictions %}
+                <div style="margin-top: 10px;"><strong>Scope:</strong></div>
+                <ul>
+                    {% for scope in techniques.Limitations.scope_restrictions %}
+                    <li>{{ scope }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if techniques.prerequisite_knowledge and techniques.prerequisite_knowledge.key_terms %}
+            <div class="subsection">
+                <div class="subsection-title collapsible collapsed" onclick="toggleSection(this)">Key Terms</div>
+                <div class="collapsible-content collapsed">
+                    <div class="key-terms-grid">
+                        {% for term, definition in techniques.prerequisite_knowledge.key_terms.items() %}
+                        <div class="key-term">
+                            <strong>{{ term }}:</strong> {{ definition }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Results Section (Collapsible) -->
-    {% if methods.key_results %}
+    <!-- Experiments Section (Collapsible) -->
+    {% if experiments.key_results or experiments.evaluation_setup or experiments.main_takeaways %}
     <div class="section">
-        <h2 class="section-title collapsible collapsed" onclick="toggleSection(this)">📊 Experimental Results</h2>
+        <h2 class="section-title collapsible collapsed" onclick="toggleSection(this)">📊 Experiments & Results</h2>
         <div class="collapsible-content collapsed">
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Benchmark</th>
-                        <th>Metric</th>
-                        <th>Baseline</th>
-                        <th>This Paper</th>
-                        <th>Δ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result in methods.key_results %}
-                    {% if result.benchmark %}
-                    <tr>
-                        <td>{{ result.benchmark }}</td>
-                        <td>{{ result.metric }}</td>
-                        <td>{{ result.baseline_value or '-' }}</td>
-                        <td><strong>{{ result.paper_value or '-' }}</strong></td>
-                        <td
-                            class="{% if result.delta and result.delta.startswith('+') %}delta-positive{% elif result.delta and result.delta.startswith('-') %}delta-negative{% endif %}">
-                            {{ result.delta or '-' }}
-                        </td>
-                    </tr>
-                    {% endif %}
+
+            {% if experiments.evaluation_setup %}
+            <div class="subsection">
+                <div class="subsection-title">Evaluation Setup</div>
+                {% if experiments.evaluation_setup.evaluation_setting %}
+                <div class="evaluation-setting">{{ experiments.evaluation_setup.evaluation_setting }}</div>
+                {% endif %}
+                {% if experiments.evaluation_setup.benchmarks %}
+                <div style="margin-top: 12px;"><strong>Benchmarks:</strong></div>
+                <ul>
+                    {% for bench in experiments.evaluation_setup.benchmarks %}
+                    <li><strong>{{ bench.name }}</strong>{% if bench.task_type %} ({{ bench.task_type }}){% endif %}{% if bench.newly_constructed %} <span style="color: #22c55e;">[New]</span>{% endif %}</li>
                     {% endfor %}
-                </tbody>
-            </table>
+                </ul>
+                {% endif %}
+                {% if experiments.evaluation_setup.main_metrics %}
+                <div style="margin-top: 12px;"><strong>Metrics:</strong> {{ experiments.evaluation_setup.main_metrics | join(', ') }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if experiments.key_results %}
+            <div class="subsection">
+                <div class="subsection-title">Key Results</div>
+                {% for result_group in experiments.key_results %}
+                {% if result_group.result_group_narrative %}
+                <div class="result-narrative">{{ result_group.result_group_narrative }}</div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
 
             {% set figures_data = paper.summary.get('figures', {}) %}
             {% set exp_figs = figures_data.get('figures', {}).get('major_experiment_figures', []) %}
@@ -819,6 +977,15 @@
                         {% if fig.what_it_shows %}
                         <div class="figure-caption">{{ fig.what_it_shows }}</div>
                         {% endif %}
+                        {% if fig.key_insights %}
+                        <div class="figure-insights">
+                            <ul>
+                                {% for insight in fig.key_insights %}
+                                <li>{{ insight }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
                     {% endfor %}
@@ -826,12 +993,12 @@
             </div>
             {% endif %}
 
-            {% if methods.main_takeaways %}
+            {% if experiments.main_takeaways %}
             <div class="subsection" style="margin-top: 20px;">
-                <div class="subsection-title">Key Takeaways</div>
+                <div class="subsection-title">Main Takeaways</div>
                 <div class="takeaways">
                     <ul>
-                        {% for takeaway in methods.main_takeaways %}
+                        {% for takeaway in experiments.main_takeaways %}
                         <li>{{ takeaway }}</li>
                         {% endfor %}
                     </ul>

@@ -28,6 +28,11 @@ from typing import Optional
 try:
     # When imported as a package
     from .prompt_manager import ALLOWED_TOPICS, load_prompt_template, load_topic_prompt
+    from .util.arxiv_html_processing import (
+        download_arxiv_html_with_figures,
+        get_arxiv_id_from_url,
+        is_arxiv_url,
+    )
     from .util.checkpoint import (
         CheckpointManager,
         is_shutdown_requested,
@@ -52,6 +57,11 @@ try:
 except ImportError:
     # When run directly as a script
     from prompt_manager import ALLOWED_TOPICS, load_prompt_template, load_topic_prompt
+    from util.arxiv_html_processing import (
+        download_arxiv_html_with_figures,
+        get_arxiv_id_from_url,
+        is_arxiv_url,
+    )
     from util.checkpoint import (
         CheckpointManager,
         is_shutdown_requested,
@@ -366,73 +376,124 @@ def generate_summary_for_paper(
             return result
 
         # =================================================================
-        # Stage 0: PDF Download
+        # Stage 0: Content Download (HTML for arXiv, PDF otherwise)
         # =================================================================
-        print("\n========== Stage 0: PDF Download ==========")
-        stages_run.append("stage0_pdf_download")
+        print("\n========== Stage 0: Content Download ==========")
+        stages_run.append("stage0_content_download")
         pdf_bytes = None
         pdf_text = None
+        html_figures = []
         use_abstract_fallback = False
+        content_source = None  # "html", "pdf", or "abstract"
 
-        try:
-            pdf_bytes = download_pdf_bytes(pdf_url)
-            print(f"  Downloaded {len(pdf_bytes)} bytes")
-        except Exception as e:
-            print(f"  PDF download failed: {e}")
-            abstract = paper.get("abstract")
-            if abstract and need_text:
-                print("  Falling back to abstract for topic classification...")
-                pdf_text = f"Title: {title}\n\nAbstract:\n{abstract}"
-                use_abstract_fallback = True
-            elif not need_text and run_figures:
-                # Only needed figures, but PDF failed
-                print("  Cannot extract figures without PDF")
-                run_figures = False
-            else:
-                result["error"] = f"PDF download failed, no abstract: {e}"
-                return result
+        # Try HTML extraction for arXiv papers first
+        if is_arxiv_url(link):
+            arxiv_id = get_arxiv_id_from_url(link)
+            print(f"  arXiv paper detected (ID: {arxiv_id}), trying HTML extraction...")
+            try:
+                html_result = download_arxiv_html_with_figures(
+                    url=link,
+                    paper_id=str(paper_id),
+                    extract_figures=run_figures,
+                )
+                if html_result.get("text"):
+                    pdf_text = html_result["text"]
+                    html_figures = html_result.get("figures", [])
+                    content_source = "html"
+                    print(f"  HTML extraction successful: {len(pdf_text)} chars")
+                    if html_figures:
+                        print(f"  Extracted {len(html_figures)} figures from HTML")
+            except Exception as e:
+                print(f"  HTML extraction failed: {e}")
+                print("  Falling back to PDF extraction...")
+
+        # Fall back to PDF if HTML extraction failed or not arXiv
+        if content_source is None:
+            try:
+                pdf_bytes = download_pdf_bytes(pdf_url)
+                content_source = "pdf"
+                print(f"  Downloaded {len(pdf_bytes)} bytes from PDF")
+            except Exception as e:
+                print(f"  PDF download failed: {e}")
+                abstract = paper.get("abstract")
+                if abstract and need_text:
+                    print("  Falling back to abstract for topic classification...")
+                    pdf_text = f"Title: {title}\n\nAbstract:\n{abstract}"
+                    use_abstract_fallback = True
+                    content_source = "abstract"
+                elif not need_text and run_figures:
+                    # Only needed figures, but PDF failed
+                    print("  Cannot extract figures without PDF or HTML")
+                    run_figures = False
+                else:
+                    result["error"] = f"Content download failed, no abstract: {e}"
+                    return result
 
         # =================================================================
         # Stage 1: Figure Extraction
         # =================================================================
-        if run_figures and pdf_bytes:
-            print("\n========== Stage 1: Figure Extraction ==========")
-            stages_run.append("stage1_figures")
-            try:
-                try:
-                    from . import extract_figures as fig_module
-                except ImportError:
-                    import extract_figures as fig_module
-
-                if fig_module.PYMUPDF_AVAILABLE:
-                    figures = fig_module.extract_figures_from_pdf_bytes(
-                        pdf_bytes=pdf_bytes,
-                        paper_id=str(paper_id),
-                    )
-                    if figures:
-                        print(f"  Extracted {len(figures)} figures, storing...")
+        if run_figures:
+            if html_figures:
+                # Use figures already extracted from HTML
+                print("\n========== Stage 1: Figure Extraction (HTML) ==========")
+                stages_run.append("stage1_figures_html")
+                print(f"  Using {len(html_figures)} figures from HTML extraction")
+                if save_db:
+                    try:
                         image_ids = store_figures_in_db(
                             paper_db_id=paper_id,
-                            figures=figures,
+                            figures=html_figures,
                             store_image_data=True,
                         )
                         print(f"  Stored {len(image_ids)} figures in DB")
+                    except Exception as e:
+                        print(f"  Error storing HTML figures: {e}")
+            elif pdf_bytes:
+                # Fall back to PDF figure extraction
+                print("\n========== Stage 1: Figure Extraction (PDF) ==========")
+                stages_run.append("stage1_figures_pdf")
+                try:
+                    try:
+                        from .util import figure_extraction_from_pdf as fig_module
+                    except ImportError:
+                        from util import figure_extraction_from_pdf as fig_module
+
+                    if fig_module.PYMUPDF_AVAILABLE:
+                        figures = fig_module.extract_figures_from_pdf_bytes(
+                            pdf_bytes=pdf_bytes,
+                            paper_id=str(paper_id),
+                        )
+                        if figures:
+                            print(f"  Extracted {len(figures)} figures, storing...")
+                            image_ids = store_figures_in_db(
+                                paper_db_id=paper_id,
+                                figures=figures,
+                                store_image_data=True,
+                            )
+                            print(f"  Stored {len(image_ids)} figures in DB")
+                        else:
+                            print("  No figures found in PDF")
                     else:
-                        print("  No figures found in PDF")
-                else:
-                    print("  PyMuPDF not available, skipping")
-            except Exception as e:
-                print(f"  Figure extraction error: {e}")
-        elif run_figures:
+                        print("  PyMuPDF not available, skipping")
+                except Exception as e:
+                    print(f"  Figure extraction error: {e}")
+            else:
+                print("\n========== Stage 1: Figure Extraction (SKIPPED) ==========")
+                print("  No content source available for figures")
+        else:
             print("\n========== Stage 1: Figure Extraction (SKIPPED) ==========")
-            print("  No PDF bytes available")
+            print("  Figures already exist or not requested")
 
         # =================================================================
         # Stage 2: Text Extraction
         # =================================================================
-        if need_text and pdf_bytes and not use_abstract_fallback:
-            print("\n========== Stage 2: Text Extraction ==========")
-            stages_run.append("stage2_text")
+        if need_text and content_source == "html":
+            print("\n========== Stage 2: Text Extraction (HTML) ==========")
+            stages_run.append("stage2_text_html")
+            print(f"  Already extracted {len(pdf_text)} characters from HTML")
+        elif need_text and pdf_bytes and not use_abstract_fallback:
+            print("\n========== Stage 2: Text Extraction (PDF) ==========")
+            stages_run.append("stage2_text_pdf")
             pdf_text = extract_text_from_pdf_bytes(pdf_bytes)
             print(f"  Extracted {len(pdf_text)} characters")
         elif need_text and use_abstract_fallback:

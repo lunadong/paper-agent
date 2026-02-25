@@ -283,7 +283,8 @@ The system supports the following research topics:
 | embedding | vector(512) | OpenAI embedding |
 | summary_basics | JSONB | Basic paper info |
 | summary_core | JSONB | Core problem and novelty |
-| summary_methods_evidence | JSONB | Methods and evaluation |
+| summary_techniques | JSONB | Technical details |
+| summary_experiments | JSONB | Experiments and results |
 | summary_figures | JSONB | Figure descriptions |
 | summary_generated_at | TEXT | When summary was generated |
 | created_at | TIMESTAMP | Record creation time |

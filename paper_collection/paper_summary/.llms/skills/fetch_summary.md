@@ -3,7 +3,7 @@ description: Fetch paper summaries from database or local files by paper_id
 input:
   - paper_id: integer (e.g., 3569, 3584)
 output:
-  - JSON summary with summary_basics, summary_core, summary_methods_evidence, summary_figures
+  - JSON summary with summary_basics, summary_core, summary_techniques, summary_experiments, summary_figures
   - Saved to: prompt_optimization/paper_summaries/paper_{paper_id}.json
 ---
 
@@ -79,7 +79,8 @@ else:
     # Summary fields (JSON stored in database)
     print(f"Summary Basics: {paper.get('summary_basics')}")
     print(f"Summary Core: {paper.get('summary_core')}")
-    print(f"Summary Methods & Evidence: {paper.get('summary_methods_evidence')}")
+    print(f"Summary Technique: {paper.get('summary_techniques')}")
+    print(f"Summary Experiments: {paper.get('summary_experiments')}")
     print(f"Summary Figures: {paper.get('summary_figures')}")
 
 db.close()
@@ -91,7 +92,8 @@ db.close()
 |-------|-------------|
 | `summary_basics` | Paper metadata (title, arxiv_id, authors, institutions) |
 | `summary_core` | Core content (thesis, problem, novelty, evaluation highlights) |
-| `summary_methods_evidence` | Technical details (pipeline, methods, results, takeaways) |
+| `summary_techniques` | Technical details (problem definition, system pipeline, methods) |
+| `summary_experiments` | Experiments and results (setup, key results, takeaways) |
 | `summary_figures` | Figure descriptions (architecture, experiment figures) |
 
 ### Step 4: Save to Local File (Optional)
@@ -114,7 +116,8 @@ The output should be a JSON object containing either:
   "primary_topic": "TopicName",
   "Basics": {...},
   "Core": {...},
-  "Methods_and_Evidence": {...},
+  "Technical_details": {...},
+  "Experiments": {...},
   "Figures": {...}
 }
 ```
@@ -147,10 +150,13 @@ The output should be a JSON object containing either:
     "evaluation_highlights": [...],
     "breakthrough_assessment": {...}
   },
-  "summary_methods_evidence": {
-    "system_pipeline": {...},
-    "technical_details": {...},
-    "evaluation_setup": {...},
+  "summary_techniques": {
+    "problem_definition": {...},
+    "prerequisite_knowledge": {...},
+    "system_pipeline": {...}
+  },
+  "summary_experiments": {
+    "setup": {...},
     "key_results": [...],
     "main_takeaways": [...]
   },

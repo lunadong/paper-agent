@@ -14,9 +14,14 @@ Hard Requirements
 
 3) Select exactly ONE primary_topic from the list above - the main research area that best describes this paper's core contribution. THIS MUST BE A SINGLE STRING, NOT AN ARRAY.
 
-4) Output ONLY valid JSON with the exact structure shown below
+4) A few priorities of the topics:
+   - If a paper talks about memory management, make it "memory" instead of "Agent", "P13N", etc.
+   - Don't mark a paper "Benchmark" unless the paper does not have any other relevant topics
+   - Don't mark a paper "ResponsiveAI" unless the paper does not have any other relevant topics
 
-5) Be conservative - only include topics if the paper genuinely contributes to that area
+5) Output ONLY valid JSON with the exact structure shown below
+
+6) Be conservative - only include topics if the paper genuinely contributes to that area
 
 ========================
 Topic Definitions
@@ -35,6 +40,7 @@ Topic Definitions
 - MM: Multi-Modal - vision-language, audio-text, multi-modal understanding
 - Speech: Speech processing - ASR, TTS, speech-to-text, voice AI
 - Benchmark: Evaluation benchmarks, metrics, datasets for LLM evaluation
+- ResponsiveAI: Privacy, security, safety, fairness, accountability
 
 ========================
 JSON Output Format

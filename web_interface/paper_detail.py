@@ -122,15 +122,25 @@ def get_paper_with_summary(paper_id: int) -> dict:
             except (json.JSONDecodeError, TypeError):
                 summary["core"] = {}
 
-        if paper.get("summary_methods_evidence"):
+        if paper.get("summary_techniques"):
             try:
-                summary["methods"] = (
-                    json.loads(paper["summary_methods_evidence"])
-                    if isinstance(paper["summary_methods_evidence"], str)
-                    else paper["summary_methods_evidence"]
+                summary["techniques"] = (
+                    json.loads(paper["summary_techniques"])
+                    if isinstance(paper["summary_techniques"], str)
+                    else paper["summary_techniques"]
                 )
             except (json.JSONDecodeError, TypeError):
-                summary["methods"] = {}
+                summary["techniques"] = {}
+
+        if paper.get("summary_experiments"):
+            try:
+                summary["experiments"] = (
+                    json.loads(paper["summary_experiments"])
+                    if isinstance(paper["summary_experiments"], str)
+                    else paper["summary_experiments"]
+                )
+            except (json.JSONDecodeError, TypeError):
+                summary["experiments"] = {}
 
         if paper.get("summary_figures"):
             try:

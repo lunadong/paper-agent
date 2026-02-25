@@ -209,6 +209,7 @@ class TestAllowedTopics:
             "Recommendation",
             "MM",
             "Speech",
+            "ResponsiveAI",
         }
 
         assert ALLOWED_TOPICS == expected_topics

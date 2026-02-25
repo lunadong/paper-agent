@@ -36,6 +36,7 @@ ALLOWED_TOPICS = {
     "Recommendation",
     "MM",
     "Speech",
+    "ResponsiveAI",
 }
 
 

@@ -23,7 +23,7 @@ def get_papers_by_primary_topic(topic: str) -> list:
     """Get all papers with the specified primary_topic."""
     cursor = execute_with_retry(
         "SELECT id, title, abstract, venue, year, recomm_date, "
-        "summary_basics, summary_core, summary_methods_evidence "
+        "summary_basics, summary_core, summary_techniques, summary_experiments "
         "FROM papers WHERE primary_topic = %s "
         "ORDER BY created_at DESC",
         (topic,),
@@ -66,7 +66,9 @@ def format_paper_description(paper: dict) -> str:
 
     # Then add summaries if available
     summary_basics = paper.get("summary_basics") or ""
-    summary_core = paper.get("summary_core") or ""
+    summary_techniques = paper.get("summary_techniques") or ""
+
+    if summary_basics:
     summary_methods = paper.get("summary_methods_evidence") or ""
 
     if summary_basics:

@@ -136,7 +136,8 @@ def sample_paper_db_row() -> Dict[str, Any]:
         "summary_generated_at": None,
         "summary_basics": None,
         "summary_core": None,
-        "summary_methods_evidence": None,
+        "summary_techniques": None,
+        "summary_experiments": None,
         "summary_figures": None,
     }
 
@@ -161,7 +162,11 @@ def sample_summary_json() -> Dict[str, Any]:
             "novelty": "Novel retrieval-generation fusion mechanism",
             "breakthrough_score": 7,
         },
-        "methods_and_evidence": {
+        "technical_details": {
+            "pipeline": ["Retrieve relevant passages", "Generate with context"],
+            "results": [{"metric": "Accuracy", "value": "85.3%", "baseline": "78.1%"}],
+        },
+        "experiments": {
             "pipeline": ["Retrieve relevant passages", "Generate with context"],
             "results": [{"metric": "Accuracy", "value": "85.3%", "baseline": "78.1%"}],
         },

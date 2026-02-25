@@ -483,7 +483,7 @@ def get_paper_by_id(paper_id):
         """
         SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
                summary_generated_at, summary_basics, summary_core,
-               summary_methods_evidence, summary_figures
+               summary_techniques, summary_experiments, summary_figures
         FROM papers WHERE id = %s
         """,
         (paper_id,),

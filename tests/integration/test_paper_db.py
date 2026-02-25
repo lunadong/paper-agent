@@ -54,7 +54,8 @@ def sample_paper_row() -> Dict[str, Any]:
         "summary_generated_at": None,
         "summary_basics": None,
         "summary_core": None,
-        "summary_methods_evidence": None,
+        "summary_techniques": None,
+        "summary_experiments": None,
         "summary_figures": None,
         "created_at": "2024-01-15T10:00:00",
     }

@@ -271,7 +271,8 @@ class PaperDB:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 summary_basics TEXT,
                 summary_core TEXT,
-                summary_methods_evidence TEXT,
+                summary_techniques TEXT,
+                summary_experiments TEXT,
                 summary_figures TEXT,
                 summary_generated_at TEXT,
                 embedding vector({EMBEDDING_DIM}),
@@ -831,10 +832,11 @@ class PaperDB:
         """
         Update a paper's summary fields from a generated summary JSON.
 
-        The summary is stored in 4 columns corresponding to top-level sections:
+        The summary is stored in 5 columns corresponding to top-level sections:
         - summary_basics: JSON for "Basics" section
         - summary_core: JSON for "Core" section
-        - summary_methods_evidence: JSON for "Methods_and_Evidence" section
+        - summary_techniques: JSON for "Technical_details" section
+        - summary_experiments: JSON for "Experiments" section
         - summary_figures: JSON for "Figures" section
 
         Args:
@@ -850,9 +852,8 @@ class PaperDB:
         update_values = {
             "summary_basics": json.dumps(summary.get("Basics", {})),
             "summary_core": json.dumps(summary.get("Core", {})),
-            "summary_methods_evidence": json.dumps(
-                summary.get("Methods_and_Evidence", {})
-            ),
+            "summary_techniques": json.dumps(summary.get("Technical_details", {})),
+            "summary_experiments": json.dumps(summary.get("Experiments", {})),
             "summary_figures": json.dumps(summary.get("Figures", {})),
             "summary_generated_at": datetime.now().isoformat(),
         }

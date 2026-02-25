@@ -1,132 +1,244 @@
 {
+  "_comment": "Template for paper summaries. Use _comment fields for documentation.",
+
   "Basics": {
-    "#1": {
-      "title": "",
-      "arxiv_id": "",
-      "doi": "",
-      "pdf_url": "",
-      "venue": "",
-      "year": null,
-      "authors": [],
-      "institutions": [
-        {
-          "institution": "",
-          "abbr": "",
-          "full": ""
-        }
-      ]
-    }
+    "_comment": "Basic metadata about the paper",
+    "title": "",
+    "_title_guidance": "Exact title as it appears on the paper.",
+    "arxiv_id": "",
+    "doi": "",
+    "pdf_url": "",
+    "code_url": "",
+    "_code_url_guidance": "Link to official code repository if available. Check paper footnotes, abstract, or appendix.",
+    "venue": "",
+    "_venue_guidance": "Only state what the paper explicitly claims (e.g., in comments or header). If unverifiable, use 'arXiv preprint'.",
+    "year": null,
+    "authors": [],
+    "institutions": [
+      {
+        "institution": "",
+        "abbr": "",
+        "full": ""
+      }
+    ],
+    "code_availability": "",
+    "_code_availability_guidance": "REQUIRED. One of: 'publicly available' (+ URL), 'not yet released' (paper promises but unavailable), 'not provided' (no mention). Also note any unreleased artifacts: prompt templates, evaluation scripts, trained model weights."
   },
 
   "Core": {
+    "_comment": "High-level summary accessible to beginners. Avoid jargon in one_sentence_thesis.",
+
     "topic_relevance": {
       "topics": [],
+      "_topics_guidance": "Research areas this paper belongs to. Use standard terms from the field.",
       "primary_topic": "",
+      "_primary_topic_guidance": "The single most relevant research area.",
       "sub_topic": [],
-      "primary_focus": []
-    },
-
-    "core_problem": {
-      "problem_statement": "",
-      "why_it_matters": []
+      "_sub_topic_guidance": "Specific sub-areas within the primary topic.",
+      "primary_focus": [],
+      "_primary_focus_guidance": "List specific aspects the paper addresses within the sub-topic."
     },
 
     "one_sentence_thesis": "",
+    "_one_sentence_thesis_guidance": "MUST be under 30 words. No jargon. Explain the core idea in plain language.",
+
+    "core_problem": {
+      "problem_statement": "",
+      "_problem_statement_guidance": "1-2 sentences describing the core challenge. Be specific about what fails and why.",
+      "why_it_matters": [],
+      "_why_it_matters_guidance": "Include: (1) real-world impact, (2) research gaps in prior work. Provide plain-language explanations alongside any technical references.",
+      "concrete_example": "",
+      "_concrete_example_guidance": "REQUIRED. A specific input/output scenario showing what goes wrong with current approaches. If the paper includes a case study, use it. Example: 'When asked [question], an independently-trained rewriter produces [bad output] because [reason], while the proposed approach produces [good output].'"
+    },
 
     "key_novelty": {
       "main_idea": "",
+      "_main_idea_guidance": "Short name for the contribution: e.g., 'Cooperative Multi-Agent RL for Modular RAG (MMOA-RAG)'",
       "explanation": [],
-      "why_this_is_new": []
+      "_explanation_guidance": "2-3 bullets explaining HOW the method works at INTUITION/ANALOGY level ONLY. Do NOT include formal notation, loss functions, or algorithmic specifics here—those belong exclusively in Technical_details. The last bullet should bridge to Technical_details (e.g., 'The technical formulation as a multi-agent RL problem is detailed below')."
     },
 
     "evaluation_highlights": [],
+    "_evaluation_highlights_guidance": "2-3 most impressive results only. Include relative improvement (%). Detailed results go in Experiments.key_results.",
 
     "breakthrough_assessment": {
       "score_1_to_10": null,
       "justification": ""
-    }
+    },
+    "_breakthrough_guidance": "Score must be consistent with novelty claims. If claiming 'first to do X', score should reflect significance."
   },
 
-  "Methods_and_Evidence": {
+  "Technical_details": {
+    "_comment": "Technical details for expert readers. Include model sizes, hyperparameters, compute requirements. Do NOT repeat analogies or intuitive explanations already given in Core.key_novelty; provide the formal specification here.",
+
+    "problem_definition": {
+      "_comment": "Formal problem setting - what are we solving?",
+      "formal_setting": "",
+      "inputs": "",
+      "_inputs_guidance": "What the system receives: e.g., 'Natural language question q'",
+      "outputs": "",
+      "_outputs_guidance": "What the system produces: e.g., 'Predicted answer Ans_predict'",
+      "constraints_assumptions": "",
+      "_constraints_guidance": "Key assumptions or constraints: e.g., 'Fixed retriever, K=10 documents, F1 as reward'"
+    },
+
+    "prerequisite_knowledge": {
+      "_comment": "Prerequisite knowledge and key terms users should know to understand this paper.",
+      "prerequisites": [],
+      "_prerequisites_guidance": "List concepts the reader should know to understand this paper.",
+      "key_terms": {
+        "_comment": "REQUIRED: Define ALL technical terms, acronyms, and method names used ANYWHERE in the entire summary. After drafting the summary, perform a MANDATORY POST-DRAFT SCAN: check every section individually (Core.one_sentence_thesis, evaluation_highlights, core_problem, Technical_details, Experiments.key_results notes, Figures descriptions and key_insights). HIGH-VISIBILITY RULE: Terms appearing in one_sentence_thesis, evaluation_highlights, or figure key_insights MUST be defined—these are the first things readers see. Common terms easy to miss: PPO, DPO, MARL, dense retrieval, silver labels, cosine schedule, clipped surrogate objective, Top-k, greedy decoding, beam search, logit, ViT, CLIP, Pareto improvement, HCI, BLEU, ROUGE, perplexity, attention heads. If in doubt, define it.",
+        "_example": {
+          "RAG": "Retrieval-Augmented Generation—AI systems that answer questions by first searching for relevant documents",
+          "F1 score": "A metric balancing precision (are answers correct?) and recall (are answers complete?)",
+          "PPO": "Proximal Policy Optimization—a reinforcement learning algorithm that updates a policy in small, stable steps using a clipped objective",
+          "MARL": "Multi-Agent Reinforcement Learning—RL setting where multiple agents learn simultaneously in a shared environment"
+        }
+      }
+    },
+
     "system_pipeline": {
+      "_comment": "Only show e2e pipeline for the main INFERENCE task. NOT for data generation or training.",
+      "_functional_grouping_guidance": "When the pipeline has >5 modules, group them by function. Add a 'functional_group' field to each module (e.g., 'Input Processing', 'Retrieval & Selection', 'Generation'). List groups in high_level_flow as: 'Group Name: module1 → module2'.",
       "high_level_flow": [],
       "modules": [
         {
           "module": "",
+          "functional_group": "",
           "role": "",
           "model": "",
+          "_model_guidance": "Specify exact architecture: 'LLaMA-2-7B with LoRA adapters' not 'LLaMA-based'",
           "inputs": [],
+          "_inputs_guidance": "Include context length limits: 'Original question (max 128 tokens)'",
           "outputs": [],
           "notes": ""
         }
-      ]
+      ],
+      "novel_architectural_elements": [],
+      "_novel_elements_guidance": "List genuinely new design choices introduced by this paper, not standard techniques."
     },
 
-    "technical_details": {
-      "formalization": {
-        "setting": "",
-        "objective": "",
-        "constraints": ""
-      },
-      "inference_mechanism": [],
-      "training_or_optimization": {
+    "model_architecture": {
+      "_comment": "Specify exact model variants, sizes, and training details, for the major model",
+
+      "base_model": "",
+      "_base_model_guidance": "Be specific: 'LLaMA-2-7B' not 'LLaMA-based'",
+
+      "training_details": {
+        "_comment": "Only if paper uses post-training (fine-tuning, RL, etc.)",
+
         "uses_post_training": null,
         "method": "",
-        "reward_function": [],
-        "loss_functions": [],
-        "data_construction": []
+        "objective_functions": [],
+        "warm_start": "",
+        "_warm_start_guidance": "Describe initialization procedure if any SFT/pretraining before main training",
+        "adaptation": "",
+        "_adaptation_guidance": "If applicable: 'LoRA (rank=16, α=32)' or 'Full fine-tuning'",
+        "trainable_parameters": "",
+        "training_data_construction": [],
+        "_data_guidance": "Include train/val/test split sizes",
+        "key_hyperparameters": {},
+        "_hyperparameters_guidance": "For RL: include clip_epsilon, gae_lambda, entropy_coefficient, value_coefficient. Always include learning_rate, batch_size, epochs. Only include values explicitly stated in the paper.",
+        "computational_requirements": "",
+        "_compute_guidance": "REQUIRED field. GPU type/count, training time, inference latency. If not reported in the paper, state 'Not reported in the paper'. Do NOT omit this field."
       },
-      "models_and_system_components": {
-        "llm_backbone": "",
-        "retriever_or_index": "",
-        "reranker": "",
-        "tooling_or_search_engine": "",
-        "key_hyperparameters": {
-          "top_k": "",
-          "context_window": "",
-          "other": ""
-        }
+
+      "optimization_details": {
+        "_comment": "Only if paper uses optimization without post-training",
+        "method": "",
+        "optimization_objective": [],
+        "approximation_technique": [],
+        "_approximation_guidance": "Only if applicable: 'DQN (Q-learning), DDPG (deep deterministic policy gradient)', etc."
       }
     },
 
+    "comparison_to_sota": {
+      "_comment": "Compare to SOTA methods beyond just the baselines in the paper.",
+      "related_methods": [],
+      "_related_methods_guidance": "Include brief description: 'RetRobust: Single-module RL optimizing retriever only'",
+      "key_differences": [],
+      "_differences_guidance": "Format: 'vs. [Method]: [specific difference]'. BROADER POSITIONING: Include at least one comparison to a technique the paper does NOT cite but that addresses a similar problem from the wider literature. Example: if the paper uses multi-agent RL, compare to joint SFT and DPO alternatives; if attention manipulation, compare to activation steering."
+    },
+
+    "Limitations": {
+      "_comment": "What remaining problems this paper cannot solve? Top-level section parallel to Core, Experiments, etc.",
+      "acknowledged_limitations": [],
+      "_acknowledged_guidance": "Limitations the paper itself states explicitly.",
+      "potential_issues": [],
+      "_potential_issues_guidance": "Issues you identify that the paper does not discuss (e.g., scalability, generalization concerns).",
+      "scope_restrictions": [],
+      "_scope_guidance": "What the paper explicitly does NOT cover (languages, domains, tasks)."
+    }
+  },
+
+  "Experiments": {
+    "_comment": "Experimental setup and quantitative results. NEVER use TODO placeholders in any field.",
+
     "evaluation_setup": {
       "evaluation_setting": "",
+      "_eval_setting_guidance": "High-level description of how evaluation is done: e.g., 'Open-domain QA with retrieval from Wikipedia'.",
       "benchmarks": [
         {
           "name": "",
           "task_type": "",
+          "_task_type_guidance": "What kind of task: e.g., 'Multi-hop reasoning QA', 'Single-hop ambiguous QA'.",
           "newly_constructed": null
         }
       ],
-      "main_metrics": []
+      "main_metrics": [],
+      "_metrics_guidance": "List ALL metrics the paper reports, not just the primary one.",
+      "statistical_methodology": "",
+      "_stats_guidance": "Only include if paper explicitly reports statistical tests. If not reported, state 'Not explicitly reported in the paper'. Do NOT fabricate."
     },
 
+    "_key_results_organization_guidance": "When there are >5 entries, group them by result_type and insert a 'result_group_narrative' entry before each group explaining what the group demonstrates. Example: {\"result_group_narrative\": \"The following ablation results isolate each agent's contribution to the full pipeline.\"}",
     "key_results": [
       {
+        "_comment": "One entry per significant result. NEVER use TODO for any field. If a value is unavailable, use 'Not reported in the paper' or omit the entry entirely.",
         "result_type": "",
+        "_result_type_guidance": "e.g., 'Main comparison (Table 1)', 'Ablation (Table 2)', 'Cross-retriever (Appendix)'",
         "benchmark": "",
         "metric": "",
         "baseline": "",
+        "_baseline_guidance": "Name the specific method AND verify it is the actual best baseline for this metric from the paper's table.",
         "baseline_value": "",
+        "_baseline_value_guidance": "Must be an actual number from the paper. If not available, use 'See [Table X] in paper'.",
         "paper_value": "",
+        "_paper_value_guidance": "Must be an actual number from the paper. If not available, use 'See [Table X] in paper'.",
         "delta": "",
+        "_delta_guidance": "Must equal paper_value minus baseline_value. ARITHMETIC CHECK: verify paper_value − baseline_value = delta before finalizing. If baseline_value or paper_value is not a number, describe qualitatively.",
+        "confidence_interval": "",
+        "_ci_guidance": "Only include if paper reports CIs. If not reported, omit this field entirely. Do NOT fabricate.",
+        "statistical_significance": "",
         "notes": ""
       }
     ],
 
-    "main_takeaways": []
+    "main_takeaways": [],
+    "_takeaways_guidance": "Include both absolute improvements and relative percentages (e.g., '+1.8 F1, ~4% relative improvement')"
   },
 
   "Figures": {
+    "_comment": "Key figures from the paper.",
+
     "figures": {
       "architecture_figure": {
+        "_comment": "MUST be system architecture/workflow diagram, NOT results plots or tables. Prioritize depicting the paper's CORE mechanism, not auxiliary data pipelines.",
         "figure_id": "",
-        "what_it_shows": ""
+        "what_it_shows": "",
+        "visual_layout": "",
+        "_layout_guidance": "Describe spatial arrangement: 'Left-to-right flow: Input → Module A → Module B → Output'",
+        "key_components_visible": [],
+        "_visual_detail_guidance": "REQUIRED details: (1) color coding/shading conventions (e.g., 'blue = trainable, gray = frozen'); (2) which components are trainable vs. fixed/frozen; (3) arrow semantics (solid = data flow, dashed = gradient/reward, etc.). If color coding is not discernible, note 'Color coding not discernible'.",
+        "reading_guide": "",
+        "_reading_guidance": "Help readers parse the figure: 'Solid arrows show inference flow; dashed arrows show training signals'"
       },
       "major_experiment_figures": [
         {
+          "_comment": "Figures (NOT tables) showing key experimental results. Include diagnostic/analysis figures (attention maps, convergence curves, error breakdowns) if present.",
           "figure_id": "",
-          "what_it_shows": ""
+          "what_it_shows": "",
+          "key_insights": []
         }
       ]
     }

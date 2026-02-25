@@ -5,13 +5,178 @@ For the above paper in the given link, generate a structured JSON summary for an
 ========================
 Hard Requirements
 ========================
-1) The JSON must be self-contained and grounded in the paper.
+1) The JSON must be self-contained and grounded ONLY in the paper's actual content.
 2) Follow the exact JSON structure as shown in the template below.
-3) Extract evaluation numbers from the paper's tables/figures. Do not guess. Use TODO markers if not found.
+3) Extract evaluation numbers from the paper's tables/figures. Do not guess or fabricate.
+   - NEVER use TODO placeholders. If a value cannot be found in the paper, use "Not reported in the paper" instead.
+   - Every numeric field must contain an actual value or "Not reported in the paper". No exceptions.
 4) Keep text concise, bullet-like, and informative for scientists.
-5) For "topic_relevance.topic", identify which research areas the paper belongs to from: RAG, Agent, Memory, P13N, Factuality, Benchmark, Reasoning, RL, Pretraining, KG, QA, Recommendation, MM, Speech. A paper can belong to multiple topics.
-6) For "topic_relevance.sub_topic", identify specific sub-areas within the PRIMARY TOPIC (indicated in the Area Background section). Focus on the primary topic's taxonomy.
-7) For "topic_relevance.primary_focus", list the specific aspects/stages the paper addresses within the PRIMARY TOPIC area.
+
+========================
+Factual Grounding Requirements (CRITICAL)
+========================
+Every claim in the summary MUST be traceable to the paper. Specifically:
+- "venue" and "year": Only state what the paper explicitly claims (e.g., in comments, header, or footnotes). If unverifiable, use "arXiv preprint".
+- "model" fields: Use the EXACT model name from the paper (e.g., "Llama-3-8B-Instruct", not "LLaMA-2-7B"). Check Section/Appendix for implementation details.
+- "key_hyperparameters": Only include values explicitly listed in the paper's tables or text. Do NOT fill in standard defaults (e.g., PPO clip=0.2) unless the paper states them.
+- "statistical_methodology" and "confidence_interval": Only include if the paper explicitly reports statistical tests or intervals. If not reported, state "Not explicitly reported in the paper". Do NOT fabricate confidence intervals or p-values.
+- "key_results": Copy numbers directly from the paper's result tables. Verify baseline names and values match.
+  - For each result entry, the "baseline" must name the actual highest-scoring method for that metric from the table.
+  - "delta" must equal paper_value minus baseline_value—double-check the arithmetic.
+  - Do NOT have notes that contradict the structured fields (baseline, baseline_value, delta).
+  - ARITHMETIC VERIFICATION: After computing each delta, re-check: paper_value − baseline_value = delta. If the arithmetic does not hold, fix the delta before proceeding.
+- Module "role" descriptions: Each module must have a distinct, accurate role. Do not copy-paste between modules.
+- Figure descriptions: Describe the conceptual content. Do not fabricate specific visual elements (arrow styles, exact axis values) unless clearly visible.
+- "code_url": Check paper footnotes, abstract, or appendix for a code repository link and include it in Basics.
+
+========================
+No TODO / No Placeholder Policy (CRITICAL)
+========================
+The summary must NEVER contain "TODO", "TBD", "N/A", or empty placeholder values in data fields.
+- If a number is not found in the paper: use "Not reported in the paper".
+- If a baseline value is unavailable: omit that key_results entry entirely rather than leaving fields blank or with TODO.
+- If a cross-retriever or appendix result lacks exact numbers: describe the qualitative finding (e.g., "MMOA-RAG outperforms baselines with E5 retriever per Table 7") and set baseline_value and paper_value to "See Table 7 in paper".
+- Review the entire JSON before finalizing: search for any "TODO" string and resolve it.
+
+========================
+Explicit Reporting vs. Omission Markers
+========================
+When a detail is not available, clearly distinguish between:
+- "Not reported in the paper" — the paper does not provide this information.
+- "Not applicable" — the concept does not apply to this paper's method.
+Do NOT silently omit fields. If a template field exists, fill it with one of the above markers or the actual value.
+
+========================
+Accessibility Requirements (For Beginners)
+========================
+5) Define all key terms upfront in a "key_terms" section within Technical_details.prerequisite_knowledge:
+   - Define RAG, any algorithm names (MAPPO, PPO, DPO), metrics (F1, EM), and domain-specific terms
+   - IMPORTANT: Every technical term, acronym, or method name used ANYWHERE in the summary must be defined here.
+     MANDATORY POST-DRAFT SCAN: After completing the full summary, scan EVERY section individually:
+       □ Core.one_sentence_thesis
+       □ Core.evaluation_highlights
+       □ Core.core_problem (including concrete_example)
+       □ Technical_details (all subsections)
+       □ Experiments.key_results (including notes fields)
+       □ Figures (all figure descriptions, key_insights, and reading_guide)
+     For EACH section, list every technical term, acronym, metric name, model name, or method name.
+     Cross-check against key_terms. Add any missing entries.
+     HIGH-VISIBILITY RULE: Terms appearing in one_sentence_thesis, evaluation_highlights, or figure key_insights
+     MUST be defined either inline (parenthetical) or in key_terms—these are the first things readers see.
+     Common terms that are easy to miss: PPO, DPO, MARL, dense retrieval, silver labels, cosine schedule,
+     clipped surrogate objective, Top-k, greedy decoding, beam search, logit, ViT, CLIP, Pareto improvement,
+     HCI, BLEU, ROUGE, perplexity, attention heads, cross-attention, self-attention.
+     If the Technical_details section uses "Actor-Critic", "GAE", "KL divergence", "SFT", or retriever names, define them.
+   - Format: {"term": "plain language explanation"}
+   - Example: "RAG": "Retrieval-Augmented Generation—AI systems that answer questions by first searching for relevant documents"
+
+6) The "one_sentence_thesis" MUST be under 30 words and jargon-free:
+   - BAD: "MMOA-RAG treats a retrieval-augmented generation (RAG) system—which answers questions by first finding relevant documents, then generating answers from them—as a cooperative team where each component (query rewriter, document selector, answer generator) learns to work together using shared feedback on final answer quality, rather than optimizing each component independently." (47 words, too complex)
+   - GOOD: "MMOA-RAG trains all components of a question-answering system as a cooperative team sharing the same goal, rather than optimizing each piece separately." (24 words)
+
+7) Include a concrete failure example in "core_problem.concrete_example":
+   - Show a specific input/output that illustrates what goes wrong with current approaches
+   - Example: "A query rewriter trained independently might reformulate 'Who directed Titanic?' as 'James Cameron films'—good for retrieval but confusing for the answer generator"
+   - If the paper includes a case study, use it; otherwise construct a plausible example from the paper's domain.
+
+8) Provide bridging context between the Core and Technical_details sections:
+   - The last bullet of core_problem.why_it_matters or the key_novelty.explanation should set up what comes next in Technical_details.
+   - Avoid abrupt transitions from high-level overview to dense technical content.
+   - Example bridging: "To address this coordination challenge, the paper formulates RAG as a multi-agent RL problem, detailed in the Technical_details section below."
+
+9) For "topic_relevance.topic", identify which research areas from:
+   [List of valid topics]
+10) For "topic_relevance.sub_topic", identify specific sub-areas within the PRIMARY TOPIC.
+11) For "topic_relevance.primary_focus", list the specific aspects the paper addresses.
+
+========================
+Technical Precision Requirements (For Experts)
+========================
+12) Specify model details precisely in system_pipeline modules:
+    - Include "model" field with specific architecture (e.g., "LLaMA-2-7B with LoRA adapters")
+    - Include context length limits in inputs (e.g., "max 2048 tokens")
+    - Include action space details in outputs where applicable
+
+13) Include complete hyperparameters in training_details:
+    - PPO/RL: clip_epsilon, gae_lambda, entropy_coefficient, value_coefficient
+    - Training: learning_rate, batch_size, epochs, parallel_environments
+    - Warm-start/initialization procedure if applicable
+
+14) Only include confidence intervals and statistical methodology if the paper reports them:
+    - If the paper reports CIs, include "confidence_interval" field
+    - If the paper specifies statistical tests, include in "statistical_methodology"
+    - If not reported, state "Not explicitly reported in the paper" for statistical_methodology and omit confidence_interval
+
+15) Include computational requirements IF reported in the paper:
+    - GPU type and count (e.g., "8× NVIDIA A100 80GB")
+    - Training time (e.g., "~48 hours")
+    - Inference latency breakdown if available
+    - If not reported, state "Not reported in the paper" rather than omitting silently
+
+16) Add cross-baseline results to substantiate robustness claims:
+    - If claiming "robust across X", include results for each X variant with actual numbers
+    - If exact numbers are in appendix tables, reference the table AND include the numbers if available
+
+========================
+Structure Requirements
+========================
+17) "system_pipeline" should focus on the main task pipeline, not data generation or training.
+    - FUNCTIONAL GROUPING: When the pipeline has more than 3 modules, group them by function
+      (e.g., "Input Processing" for query rewrite + decomposition, "Retrieval & Selection" for retriever + filter,
+      "Generation" for answer synthesis). Add a "functional_group" field to each module and list groups in high_level_flow.
+    - Each module's "role" must be distinct and non-overlapping with other modules.
+
+18) "evaluation_highlights" should contain 2-3 most impressive results; detailed numbers go in "key_results".
+    - KEY_RESULTS ORGANIZATION: When there are more than 5 key_results entries, group them by result_type
+      (e.g., "Main comparison", "Ablation", "Cross-setting generalization") and add a brief narrative transition
+      in a "result_group_narrative" field before each group explaining what that group demonstrates.
+      Example: "result_group_narrative": "The following ablation results isolate each agent's contribution to the full pipeline."
+
+19) For figures:
+    - "architecture_figure" MUST be a system architecture diagram, NOT results plots
+    - Include "visual_layout" and "reading_guide" fields for accessibility
+    - VISUAL DETAIL: The architecture_figure description MUST include:
+      (a) color coding or shading conventions used in the figure (e.g., "blue = trainable, gray = frozen")
+      (b) which components are trainable vs. fixed/frozen
+      (c) arrow semantics (solid = data flow, dashed = gradient/reward flow, etc.)
+      (d) the figure should prioritize depicting the paper's CORE mechanism, not auxiliary data pipelines
+    - "major_experiment_figures" should be figures only, no tables
+    - DIAGNOSTIC FIGURES: If the paper includes diagnostic/analysis figures (e.g., attention maps,
+      convergence curves, error breakdowns), include them in major_experiment_figures with key_insights.
+
+20) "comparison_to_sota" should explicitly compare to SOTA methods beyond paper's baselines:
+    - Format: "vs. [Method]: [key difference]"
+    - BROADER POSITIONING: Position the paper's novelty against broader related techniques from the
+      wider literature, not just the baselines the paper happens to compare against.
+      Examples: If the paper uses attention manipulation, compare to activation steering and probing methods.
+      If the paper uses multi-agent RL, compare to joint SFT, DPO, and constitutional AI alternatives.
+      If the paper proposes a new architecture component, compare to similar components in other domains.
+    - Include at least one comparison to a technique the paper does NOT cite but that addresses a similar problem.
+
+========================
+Avoiding Core ↔ Technical_details Overlap
+========================
+21) Core.key_novelty MUST remain at intuition/analogy level ONLY:
+    - Use plain language and analogies (e.g., "like training a relay team for overall race time")
+    - Do NOT include formal notation, loss functions, or algorithmic specifics
+    - The last bullet should bridge to Technical_details with a forward reference
+22) Technical_details provides the full technical specification:
+    - Formal notation, loss functions, algorithmic details belong ONLY here
+    - Do NOT repeat analogies or intuitive explanations already in Core.key_novelty
+    - If a concept was introduced with an analogy in Core, Technical_details should reference it briefly
+      then provide the formal version: "The 'relay team' coordination described above is formalized as..."
+
+========================
+Code & Reproducibility Status
+========================
+23) Include "code_availability" in the Basics section with one of these values:
+    - "publicly available" + URL (if code/data are released)
+    - "not yet released" (if the paper promises code but it is not available)
+    - "not provided" (if no mention of code release)
+    - Additionally note any unreleased artifacts: prompt templates, evaluation scripts, trained weights.
+24) "computational_requirements" in training_details is REQUIRED (not optional):
+    - If the paper reports GPU type, count, training time, or inference latency, include all of them.
+    - If not reported, state "Not reported in the paper" — do NOT omit the field.
 
 ========================
 JSON Template

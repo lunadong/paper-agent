@@ -239,7 +239,7 @@ class TestSummaryStructureValidation:
                 "year": "2024",
             },
             "core": {},
-            "methods_and_evidence": {},
+            "technical_details": {},
         }
 
         # Assert: basics section should exist with required fields
@@ -258,7 +258,7 @@ class TestSummaryStructureValidation:
                 "problem_statement": "Improving retrieval",
                 "thesis": "Our method improves accuracy",
             },
-            "methods_and_evidence": {},
+            "technical_details": {},
         }
 
         # Assert: core section should exist with required fields
@@ -267,28 +267,28 @@ class TestSummaryStructureValidation:
         assert "primary_topic" in summary["core"]
 
     def test_summary_has_methods_section(self) -> None:
-        """Test that summary includes methods_and_evidence section."""
+        """Test that summary includes technical_details section."""
         # Setup: Valid summary structure
         summary = {
             "basics": {},
             "core": {},
-            "methods_and_evidence": {
+            "technical_details": {
                 "pipeline": ["Step 1", "Step 2"],
                 "results": [{"metric": "Accuracy", "value": "85%"}],
             },
         }
 
         # Assert: methods section should exist
-        assert "methods_and_evidence" in summary
-        assert "pipeline" in summary["methods_and_evidence"]
-        assert "results" in summary["methods_and_evidence"]
+        assert "technical_details" in summary
+        assert "pipeline" in summary["technical_details"]
+        assert "results" in summary["technical_details"]
 
     def test_summary_missing_section_detected(self) -> None:
         """Test detection of missing required section."""
         # Setup: Summary missing core section
         summary = {
             "basics": {"title": "Test"},
-            "methods_and_evidence": {},
+            "technical_details": {},
         }
 
         # Assert: core section should be missing
@@ -301,7 +301,7 @@ class TestSummaryStructureValidation:
         # Setup: Use fixture from conftest.py
 
         # Assert: All main sections should exist
-        required_sections = ["basics", "core", "methods_and_evidence"]
+        required_sections = ["basics", "core", "technical_details"]
         for section in required_sections:
             assert section in sample_summary_json
 
@@ -336,7 +336,7 @@ class TestGeneratePaperSummary:
         )
         mock_download.return_value = "Sample PDF text content"
         mock_api.return_value = (
-            '{"basics": {"title": "Test"}, "core": {}, "methods_and_evidence": {}}'
+            '{"basics": {"title": "Test"}, "core": {}, "technical_details": {}}'
         )
 
         # Execute
