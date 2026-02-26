@@ -249,85 +249,75 @@ def load_config_from_file(path: str) -> dict:
         return yaml.safe_load(f) or {}
 
 
-def create_config_from_dict(data: dict) -> Config:
-    """Create a Config object from a dictionary."""
-    config = Config()
+def _apply_gmail_config(config: Config, data: dict) -> None:
+    """Apply gmail settings from data dict to config."""
+    if "gmail" not in data:
+        return
+    gmail_data = data["gmail"]
+    config.gmail = GmailConfig(
+        credentials_file=gmail_data.get(
+            "credentials_file", config.gmail.credentials_file
+        ),
+        token_file=gmail_data.get("token_file", config.gmail.token_file),
+        search_query=gmail_data.get("search_query", config.gmail.search_query),
+    )
 
-    # Top-level settings
-    if "notification_email" in data:
-        config.notification_email = data["notification_email"]
-    if "website_url" in data:
-        config.website_url = data["website_url"]
 
-    # Gmail settings
-    if "gmail" in data:
-        gmail_data = data["gmail"]
-        config.gmail = GmailConfig(
-            credentials_file=gmail_data.get(
-                "credentials_file", config.gmail.credentials_file
-            ),
-            token_file=gmail_data.get("token_file", config.gmail.token_file),
-            search_query=gmail_data.get("search_query", config.gmail.search_query),
-        )
+def _apply_web_config(config: Config, data: dict) -> None:
+    """Apply web settings from data dict to config."""
+    if "web" not in data:
+        return
+    web_data = data["web"]
+    config.web = WebConfig(
+        host=web_data.get("host", config.web.host),
+        port=web_data.get("port", config.web.port),
+        debug=web_data.get("debug", config.web.debug),
+        papers_per_page=web_data.get("papers_per_page", config.web.papers_per_page),
+    )
 
-    # Data settings
-    if "data" in data:
-        data_config = data["data"]
-        config.data = DataConfig(
-            data_dir=data_config.get("data_dir", config.data.data_dir),
-        )
 
-    # Web settings
-    if "web" in data:
-        web_data = data["web"]
-        config.web = WebConfig(
-            host=web_data.get("host", config.web.host),
-            port=web_data.get("port", config.web.port),
-            debug=web_data.get("debug", config.web.debug),
-            papers_per_page=web_data.get("papers_per_page", config.web.papers_per_page),
-        )
+def _apply_search_config(config: Config, data: dict) -> None:
+    """Apply search settings from data dict to config."""
+    if "search" not in data:
+        return
+    search_data = data["search"]
+    config.search = SearchConfig(
+        model_name=search_data.get("model_name", config.search.model_name),
+        score_threshold=search_data.get(
+            "score_threshold", config.search.score_threshold
+        ),
+    )
 
-    # Search settings
-    if "search" in data:
-        search_data = data["search"]
-        config.search = SearchConfig(
-            model_name=search_data.get("model_name", config.search.model_name),
-            score_threshold=search_data.get(
-                "score_threshold", config.search.score_threshold
-            ),
-        )
 
-    # Topics settings
-    if "topics" in data:
-        topics_data = data["topics"]
-        config.topics = TopicsConfig(
-            score_threshold=topics_data.get(
-                "score_threshold", config.topics.score_threshold
-            ),
-            definitions=topics_data.get("definitions", {}),
-        )
+def _apply_topics_config(config: Config, data: dict) -> None:
+    """Apply topics settings from data dict to config."""
+    if "topics" not in data:
+        return
+    topics_data = data["topics"]
+    config.topics = TopicsConfig(
+        score_threshold=topics_data.get(
+            "score_threshold", config.topics.score_threshold
+        ),
+        definitions=topics_data.get("definitions", {}),
+    )
 
-    # Daily update settings
-    if "daily_update" in data:
-        daily_data = data["daily_update"]
-        config.daily_update = DailyUpdateConfig(
-            default_days=daily_data.get(
-                "default_days", config.daily_update.default_days
-            ),
-            max_emails=daily_data.get("max_emails", config.daily_update.max_emails),
-            send_notification=daily_data.get(
-                "send_notification", config.daily_update.send_notification
-            ),
-        )
 
-    # Database settings
-    if "database" in data:
-        db_data = data["database"]
-        config.database = DatabaseConfig(
-            url=db_data.get("url", config.database.url),
-        )
+def _apply_daily_update_config(config: Config, data: dict) -> None:
+    """Apply daily_update settings from data dict to config."""
+    if "daily_update" not in data:
+        return
+    daily_data = data["daily_update"]
+    config.daily_update = DailyUpdateConfig(
+        default_days=daily_data.get("default_days", config.daily_update.default_days),
+        max_emails=daily_data.get("max_emails", config.daily_update.max_emails),
+        send_notification=daily_data.get(
+            "send_notification", config.daily_update.send_notification
+        ),
+    )
 
-    # OpenAI settings
+
+def _apply_llm_configs(config: Config, data: dict) -> None:
+    """Apply LLM provider settings (openai, gemini, anthropic) from data dict to config."""
     if "openai" in data:
         openai_data = data["openai"]
         config.openai = OpenAIConfig(
@@ -337,7 +327,6 @@ def create_config_from_dict(data: dict) -> Config:
             ),
         )
 
-    # Gemini settings
     if "gemini" in data:
         gemini_data = data["gemini"]
         config.gemini = GeminiConfig(
@@ -349,13 +338,41 @@ def create_config_from_dict(data: dict) -> Config:
             ),
         )
 
-    # Anthropic settings
     if "anthropic" in data:
         anthropic_data = data["anthropic"]
         config.anthropic = AnthropicConfig(
             api_key=anthropic_data.get("api_key", config.anthropic.api_key),
             model=anthropic_data.get("model", config.anthropic.model),
         )
+
+
+def create_config_from_dict(data: dict) -> Config:
+    """Create a Config object from a dictionary."""
+    config = Config()
+
+    if "notification_email" in data:
+        config.notification_email = data["notification_email"]
+    if "website_url" in data:
+        config.website_url = data["website_url"]
+
+    _apply_gmail_config(config, data)
+
+    if "data" in data:
+        config.data = DataConfig(
+            data_dir=data["data"].get("data_dir", config.data.data_dir),
+        )
+
+    _apply_web_config(config, data)
+    _apply_search_config(config, data)
+    _apply_topics_config(config, data)
+    _apply_daily_update_config(config, data)
+
+    if "database" in data:
+        config.database = DatabaseConfig(
+            url=data["database"].get("url", config.database.url),
+        )
+
+    _apply_llm_configs(config, data)
 
     return config
 

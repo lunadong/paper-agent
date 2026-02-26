@@ -115,19 +115,19 @@ def _validate_topics(result: dict) -> dict:
 
 
 def classify_paper_topics(
-    pdf_url: str,
+    paper_url: str,
     model_name: Optional[str] = None,
     api_key: Optional[str] = None,
-    pdf_text: Optional[str] = None,
+    paper_text: Optional[str] = None,
 ) -> dict:
     """
     Stage 1: Classify paper topics and determine primary topic.
 
     Args:
-        pdf_url: URL to the paper PDF (e.g., arXiv PDF link)
+        paper_url: URL to the paper (arXiv abstract, PDF, or HTML link)
         model_name: Gemini model to use (default: from config)
         api_key: API key. If None, uses default.
-        pdf_text: Pre-extracted PDF text. If None, downloads and extracts.
+        paper_text: Pre-extracted paper text. If None, downloads and extracts.
 
     Returns:
         Dictionary with:
@@ -141,24 +141,27 @@ def classify_paper_topics(
     # Load topic classification prompt
     prompt_template = load_topic_prompt()
 
-    # Use provided pdf_text or download
-    print(f"Classifying topics for: {pdf_url}")
-    if pdf_text is None:
-        pdf_text = download_pdf_text(pdf_url)
+    # Use provided paper_text or download
+    print(f"Classifying topics for: {paper_url}")
+    if paper_text is None:
+        paper_text = download_pdf_text(paper_url)
 
-    # Build the prompt with actual PDF content
-    prompt = prompt_template.replace("<PDF_URL>", pdf_url)
+    # Build the prompt with actual paper content
+    prompt = prompt_template.replace("<PAPER_URL>", paper_url)
 
-    # Insert the PDF content after the URL line
-    pdf_content_section = (
+    # Insert the paper content after the first line (which contains the URL)
+    paper_content_section = (
         "\n\n========================\n"
-        "Paper Content (extracted from PDF)\n"
-        f"========================\n\n{pdf_text}\n"
+        "Paper Content\n"
+        f"========================\n\n{paper_text}\n\n"
     )
-    prompt = prompt.replace(
-        "For the above paper,",
-        f"{pdf_content_section}\nFor the above paper,",
-    )
+    # Insert after "Read the paper at: <url>" line
+    first_newline = prompt.find("\n")
+    if first_newline != -1:
+        prompt = prompt[:first_newline] + paper_content_section + prompt[first_newline:]
+    else:
+        # Fallback: prepend content section
+        prompt = paper_content_section + prompt
 
     print(f"  Using model: {model_name}")
     print(f"  Prompt length: {len(prompt)} characters")
@@ -218,21 +221,21 @@ def classify_paper_topics(
 
 
 def generate_paper_summary(
-    pdf_url: str,
+    paper_url: str,
     prompt_template: Optional[str] = None,
     model_name: Optional[str] = None,
     api_key: Optional[str] = None,
-    pdf_text: Optional[str] = None,
+    paper_text: Optional[str] = None,
 ) -> dict:
     """
-    Generate a structured summary for a paper given its PDF URL.
+    Generate a structured summary for a paper given its URL.
 
     Args:
-        pdf_url: URL to the paper PDF (e.g., arXiv PDF link)
+        paper_url: URL to the paper (arXiv abstract, PDF, or HTML link)
         prompt_template: Custom prompt template. If None, loads from prompt.txt
         model_name: Gemini model to use (default: from config)
         api_key: API key. If None, uses default.
-        pdf_text: Pre-extracted PDF text. If None, downloads and extracts.
+        paper_text: Pre-extracted paper text. If None, downloads and extracts.
 
     Returns:
         Parsed JSON summary dictionary.
@@ -244,24 +247,27 @@ def generate_paper_summary(
     if prompt_template is None:
         prompt_template = load_prompt_template()
 
-    # Use provided pdf_text or download
-    print(f"Generating summary for: {pdf_url}")
-    if pdf_text is None:
-        pdf_text = download_pdf_text(pdf_url)
+    # Use provided paper_text or download
+    print(f"Generating summary for: {paper_url}")
+    if paper_text is None:
+        paper_text = download_pdf_text(paper_url)
 
-    # Build the prompt with actual PDF content
-    prompt = prompt_template.replace("<PDF_URL>", pdf_url)
+    # Build the prompt with actual paper content
+    prompt = prompt_template.replace("<PAPER_URL>", paper_url)
 
-    # Insert the PDF content after the URL line
-    pdf_content_section = (
+    # Insert the paper content after the first line (which contains the URL)
+    paper_content_section = (
         "\n\n========================\n"
-        "Paper Content (extracted from PDF)\n"
-        f"========================\n\n{pdf_text}\n"
+        "Paper Content\n"
+        f"========================\n\n{paper_text}\n\n"
     )
-    prompt = prompt.replace(
-        "For the above paper in the given link,",
-        f"{pdf_content_section}\nFor the above paper content,",
-    )
+    # Insert after "Read the paper at: <url>" line
+    first_newline = prompt.find("\n")
+    if first_newline != -1:
+        prompt = prompt[:first_newline] + paper_content_section + prompt[first_newline:]
+    else:
+        # Fallback: prepend content section
+        prompt = paper_content_section + prompt
 
     print(f"  Using model: {model_name}")
     print(f"  Prompt length: {len(prompt)} characters")
@@ -292,12 +298,22 @@ def generate_summary_for_paper(
     api_key: Optional[str] = None,
     db=None,
     prompt_file: Optional[str] = None,
-    output_file: Optional[str] = None,
+    output_dir: Optional[str] = None,
     save_db: bool = False,
     overwrite: bool = False,
 ) -> dict:
     """
     Generate summary for a paper using multi-stage approach.
+
+    Args:
+        paper_id: Database ID of the paper
+        model_name: LLM model to use
+        api_key: API key for the LLM
+        db: Database connection (optional)
+        prompt_file: File to save generated prompts for debugging
+        output_dir: Directory to save all outputs (figures, summary JSON)
+        save_db: Whether to save results to database
+        overwrite: Whether to regenerate everything regardless of existing data
 
     Stages:
         Stage 0: PDF download (only if any later stage needs it)
@@ -346,16 +362,35 @@ def generate_summary_for_paper(
         print(f"Processing paper ID {paper_id}: {title}...")
 
         # =================================================================
+        # Setup output directory if specified
+        # =================================================================
+        paper_output_dir = None
+        if output_dir:
+            # Create directory structure: output_dir/paper_{id}/
+            # Use arxiv_id if available, otherwise use paper_id
+            arxiv_id = get_arxiv_id_from_url(link) if is_arxiv_url(link) else None
+            dir_name = f"arxiv_{arxiv_id}" if arxiv_id else f"paper_{paper_id}"
+            paper_output_dir = Path(output_dir) / dir_name
+            paper_output_dir.mkdir(parents=True, exist_ok=True)
+            print(f"  Output directory: {paper_output_dir}")
+
+        # =================================================================
         # Determine which stages to run
         # =================================================================
         existing_images = db.get_paper_images(paper_id) if save_db else []
 
-        if save_db:
-            run_figures = overwrite or not existing_images
-            run_topics = overwrite or not paper.get("primary_topic")
-            run_summary = overwrite or not paper.get("summary_generated_at")
+        if overwrite:
+            # Overwrite mode: regenerate everything
+            run_figures = True
+            run_topics = True
+            run_summary = True
+        elif save_db:
+            # Normal mode with DB: only run what's missing
+            run_figures = not existing_images
+            run_topics = not paper.get("primary_topic")
+            run_summary = not paper.get("summary_generated_at")
         else:
-            # Testing mode: always run topics and summary, skip figures
+            # Testing mode (no save_db, no overwrite): run topics and summary only
             run_figures = False
             run_topics = True
             run_summary = True
@@ -381,7 +416,7 @@ def generate_summary_for_paper(
         print("\n========== Stage 0: Content Download ==========")
         stages_run.append("stage0_content_download")
         pdf_bytes = None
-        pdf_text = None
+        paper_text = None
         html_figures = []
         use_abstract_fallback = False
         content_source = None  # "html", "pdf", or "abstract"
@@ -397,12 +432,10 @@ def generate_summary_for_paper(
                     extract_figures=run_figures,
                 )
                 if html_result.get("text"):
-                    pdf_text = html_result["text"]
+                    paper_text = html_result["text"]
                     html_figures = html_result.get("figures", [])
                     content_source = "html"
-                    print(f"  HTML extraction successful: {len(pdf_text)} chars")
-                    if html_figures:
-                        print(f"  Extracted {len(html_figures)} figures from HTML")
+                    print(f"  HTML extraction successful: {len(paper_text)} chars")
             except Exception as e:
                 print(f"  HTML extraction failed: {e}")
                 print("  Falling back to PDF extraction...")
@@ -418,7 +451,7 @@ def generate_summary_for_paper(
                 abstract = paper.get("abstract")
                 if abstract and need_text:
                     print("  Falling back to abstract for topic classification...")
-                    pdf_text = f"Title: {title}\n\nAbstract:\n{abstract}"
+                    paper_text = f"Title: {title}\n\nAbstract:\n{abstract}"
                     use_abstract_fallback = True
                     content_source = "abstract"
                 elif not need_text and run_figures:
@@ -438,6 +471,22 @@ def generate_summary_for_paper(
                 print("\n========== Stage 1: Figure Extraction (HTML) ==========")
                 stages_run.append("stage1_figures_html")
                 print(f"  Using {len(html_figures)} figures from HTML extraction")
+
+                # Save figures locally if output_dir specified
+                if paper_output_dir:
+                    figures_dir = paper_output_dir / "figures"
+                    figures_dir.mkdir(exist_ok=True)
+                    saved_count = 0
+                    for fig in html_figures:
+                        fig_name = fig.get("filename", f"figure_{saved_count}.png")
+                        fig_data = fig.get("image_data")
+                        if fig_data:
+                            fig_path = figures_dir / fig_name
+                            with open(fig_path, "wb") as f:
+                                f.write(fig_data)
+                            saved_count += 1
+                    print(f"  Saved {saved_count} figures to {figures_dir}")
+
                 if save_db:
                     try:
                         image_ids = store_figures_in_db(
@@ -464,13 +513,32 @@ def generate_summary_for_paper(
                             paper_id=str(paper_id),
                         )
                         if figures:
-                            print(f"  Extracted {len(figures)} figures, storing...")
-                            image_ids = store_figures_in_db(
-                                paper_db_id=paper_id,
-                                figures=figures,
-                                store_image_data=True,
-                            )
-                            print(f"  Stored {len(image_ids)} figures in DB")
+                            print(f"  Extracted {len(figures)} figures")
+
+                            # Save figures locally if output_dir specified
+                            if paper_output_dir:
+                                figures_dir = paper_output_dir / "figures"
+                                figures_dir.mkdir(exist_ok=True)
+                                saved_count = 0
+                                for fig in figures:
+                                    fig_name = fig.get(
+                                        "filename", f"figure_{saved_count}.png"
+                                    )
+                                    fig_data = fig.get("image_data")
+                                    if fig_data:
+                                        fig_path = figures_dir / fig_name
+                                        with open(fig_path, "wb") as f:
+                                            f.write(fig_data)
+                                        saved_count += 1
+                                print(f"  Saved {saved_count} figures to {figures_dir}")
+
+                            if save_db:
+                                image_ids = store_figures_in_db(
+                                    paper_db_id=paper_id,
+                                    figures=figures,
+                                    store_image_data=True,
+                                )
+                                print(f"  Stored {len(image_ids)} figures in DB")
                         else:
                             print("  No figures found in PDF")
                     else:
@@ -490,16 +558,16 @@ def generate_summary_for_paper(
         if need_text and content_source == "html":
             print("\n========== Stage 2: Text Extraction (HTML) ==========")
             stages_run.append("stage2_text_html")
-            print(f"  Already extracted {len(pdf_text)} characters from HTML")
+            print(f"  Already extracted {len(paper_text)} characters from HTML")
         elif need_text and pdf_bytes and not use_abstract_fallback:
             print("\n========== Stage 2: Text Extraction (PDF) ==========")
             stages_run.append("stage2_text_pdf")
-            pdf_text = extract_text_from_pdf_bytes(pdf_bytes)
-            print(f"  Extracted {len(pdf_text)} characters")
+            paper_text = extract_text_from_pdf_bytes(pdf_bytes)
+            print(f"  Extracted {len(paper_text)} characters")
         elif need_text and use_abstract_fallback:
             print("\n========== Stage 2: Text Extraction (ABSTRACT) ==========")
             stages_run.append("stage2_text_abstract")
-            text_len = len(pdf_text) if pdf_text else 0
+            text_len = len(paper_text) if paper_text else 0
             print(f"  Using abstract fallback ({text_len} chars)")
         elif not need_text:
             print("\n========== Stage 2: Text Extraction (SKIPPED) ==========")
@@ -517,7 +585,7 @@ def generate_summary_for_paper(
             print(f"  Using model: {stage_model}")
 
             topic_result = classify_paper_topics(
-                pdf_url, stage_model, api_key, pdf_text=pdf_text
+                pdf_url, stage_model, api_key, paper_text=paper_text
             )
             topics = topic_result.get("topics", [])
             primary_topic = topic_result.get("primary_topic")
@@ -555,7 +623,7 @@ def generate_summary_for_paper(
             last_raw_response = None
             for llm_attempt in range(max_llm_retries):
                 summary = generate_paper_summary(
-                    pdf_url, prompt, model_name, api_key, pdf_text=pdf_text
+                    pdf_url, prompt, model_name, api_key, paper_text=paper_text
                 )
 
                 if "raw_response" not in summary:
@@ -576,10 +644,12 @@ def generate_summary_for_paper(
 
             result["summary"] = summary
 
-            if output_file:
-                with open(output_file, "w") as f:
+            # Save summary to output directory
+            if paper_output_dir:
+                summary_path = paper_output_dir / "summary.json"
+                with open(summary_path, "w") as f:
                     json.dump(summary, f, indent=2)
-                print(f"  Summary saved to: {output_file}")
+                print(f"  Summary saved to: {summary_path}")
 
             if save_db:
                 db.update_paper_summary(paper_id, summary)
@@ -649,7 +719,7 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        help="Output file path for JSON summary",
+        help="Output directory to save all results (figures, summary JSON)",
     )
     parser.add_argument(
         "--prompt-file",
@@ -939,7 +1009,7 @@ def main():
             model_name=args.model,
             api_key=args.api_key,
             prompt_file=args.prompt_file,
-            output_file=args.output,
+            output_dir=args.output,
             save_db=args.save_db,
             overwrite=args.overwrite,
         )
@@ -963,7 +1033,7 @@ def main():
     if args.pdf_url:
         # Generate summary
         summary = generate_paper_summary(
-            pdf_url=args.pdf_url,
+            paper_url=args.pdf_url,
             prompt_template=None,
             model_name=args.model,
             api_key=args.api_key,

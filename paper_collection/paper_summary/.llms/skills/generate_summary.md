@@ -1,10 +1,7 @@
 ---
 description: Generate structured JSON summaries of research papers using current prompt templates
-input:
-  - pdf_url or paper_id to identify the paper
-output:
-  - JSON summary following template structure
-  - Saved to prompt_optimization/paper_summaries/paper_{paper_id}.json (replaces existing)
+oncalls:
+  - paper_agent
 ---
 
 # Generate Paper Summary
@@ -48,7 +45,7 @@ task(
     .llms/skills/generate_summary.md
 
     Generate a summary for paper_id: {paper_id}
-    PDF URL: {pdf_url}
+    Paper URL: {paper_url}
 
     Use prompt templates from:
     prompt_optimization/revised_prompts/
@@ -74,7 +71,7 @@ from paper_db import PaperDB
 
 db = PaperDB()
 paper = db.get_paper_by_id(paper_id)
-pdf_url = paper['link']  # Should be the arxiv/PDF URL
+paper_url = paper['link']  # Should be the arxiv URL
 db.close()
 ```
 
@@ -90,7 +87,7 @@ Required files:
 - `summary_example.json` - Example output
 
 Placeholders in prompt.txt:
-- `<PDF_URL>` - Replaced with the actual PDF URL
+- `<PAPER_URL>` - Replaced with the actual paper URL
 - `<json_template>` - Replaced with `summary_template.json`
 - `<json_example>` - Replaced with `summary_example.json`
 - `<topic_background>` - Replaced with topic-specific context

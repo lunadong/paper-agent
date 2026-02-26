@@ -1,13 +1,7 @@
 ---
 description: Run a single optimization pass on paper summaries - fetch or generate, analyze, and revise
-input:
-  - paper_ids (list of integers to analyze, optional)
-  - use_example (analyze the example json, default true)
-  - threshold (quality target, default 8.0)
-output:
-  - Fetched/generated summaries in paper_summaries/
-  - Analysis results in analysis_critics/
-  - Revised prompts in revised_prompts/
+oncalls:
+  - paper_agent
 ---
 
 # Single-Pass Prompt Optimization Skill

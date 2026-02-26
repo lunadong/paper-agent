@@ -206,10 +206,10 @@
           "kl_beta_min": "0.06",
           "buffer_size": "128",
           "top_p_sampling": "0.9"
-        },
-        "reproducibility_notes": "Available: code repository (https://github.com/chenyiqun/MMOA-RAG), benchmark datasets (HotpotQA, 2WikiMultihopQA, AmbigQA are public). Missing: trained model weights not released, prompt templates described in Appendix B but not released as standalone files, SFT training data sizes not specified, exact training duration and GPU requirements not reported. No closed-source model dependencies (uses open-source Llama-3-8B-Instruct)."
+        }
       }
     },
+    "reproducibility_notes": "Available: code repository (https://github.com/chenyiqun/MMOA-RAG), benchmark datasets (HotpotQA, 2WikiMultihopQA, AmbigQA are public). Missing: trained model weights not released, prompt templates described in Appendix B but not released as standalone files, SFT training data sizes not specified, exact training duration and GPU requirements not reported. No closed-source model dependencies (uses open-source Llama-3-8B-Instruct).",
     "comparison_to_sota": {
       "related_methods": [
         "RetRobust: Makes generator robust to irrelevant retrieved context via training with noisy data",

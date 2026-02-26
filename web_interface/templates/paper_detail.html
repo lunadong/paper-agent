@@ -721,6 +721,7 @@
     </div>
 
     {% if paper.has_summary %}
+    {% set basics = paper.summary.get('basics', {}) %}
     {% set core = paper.summary.get('core', {}) %}
     {% set techniques = paper.summary.get('techniques', {}) %}
     {% set experiments = paper.summary.get('experiments', {}) %}
@@ -976,14 +977,30 @@
             </div>
             {% endif %}
 
-            {% if techniques.Limitations and techniques.Limitations.acknowledged_limitations %}
+            {% if techniques.Limitations and techniques.Limitations | length > 0 %}
             <div class="subsection">
                 <div class="subsection-title">Limitations</div>
                 <ul>
-                    {% for limit in techniques.Limitations.acknowledged_limitations %}
+                    {% for limit in techniques.Limitations %}
                     <li>{{ limit }}</li>
                     {% endfor %}
                 </ul>
+            </div>
+            {% endif %}
+
+            {% if techniques.reproducibility_notes or basics.code_url %}
+            <div class="subsection">
+                <div class="subsection-title">Reproducibility</div>
+                <div class="module-card" style="padding-bottom: 20px;">
+                    {% if basics.code_url %}
+                    <div style="margin-bottom: 12px;">
+                        <strong>Code:</strong> <a href="{{ basics.code_url }}" target="_blank" style="color: #2563eb;">{{ basics.code_url }}</a>
+                    </div>
+                    {% endif %}
+                    {% if techniques.reproducibility_notes %}
+                    <div>{{ techniques.reproducibility_notes }}</div>
+                    {% endif %}
+                </div>
             </div>
             {% endif %}
         </div>
@@ -1083,6 +1100,9 @@
                              alt="{{ fig.figure_id }}"
                              class="paper-figure"
                              onclick="openImageModal(this.src, '{{ fig.figure_id }}')">
+                        {% if fig.what_it_shows %}
+                        <div class="figure-caption">{{ fig.what_it_shows }}</div>
+                        {% endif %}
                     </div>
                     {% endif %}
                     {% endfor %}

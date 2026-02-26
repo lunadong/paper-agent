@@ -1,15 +1,7 @@
 ---
 description: Analyze paper summaries from beginner and expert perspectives to identify quality issues
-input:
-  - summary_file or paper_id to analyze
-  - perspective (beginner, expert, or both - default both)
-  - threshold (quality threshold - default 7.0)
-  - use_pdf (fetch original PDF for verification - default false)
-output:
-  - beginner_score and expert_score
-  - combined_score (when perspective is both)
-  - issues and suggestions per criterion
-  - Saved to prompt_optimization/analysis_critics/
+oncalls:
+  - paper_agent
 ---
 
 # Paper Summary Analysis Skill

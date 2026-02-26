@@ -1,11 +1,7 @@
 ---
 description: Revise paper summary prompts and examples based on analysis feedback to improve quality
-input:
-  - analysis_feedback from analyze_summary skill
-  - user_instructions from .llms/skills/user_instructions.md (loaded at runtime)
-  - pdf_url of the paper used in summary_example.json (fetch and read to verify/correct claims)
-output:
-  - Updated prompt.txt, summary_template.json, summary_example.json in revised_prompts/
+oncalls:
+  - paper_agent
 ---
 
 # Prompt Revision Skill

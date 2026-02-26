@@ -67,3 +67,9 @@ tmp/*
 # Internal planning docs
 plan/
 REFACTOR_PLAN.md
+
+# Database migrations (handled separately)
+migrations/
+
+# Prompt optimization (experimental, large files)
+paper_collection/paper_summary/prompt_optimization/

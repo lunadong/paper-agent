@@ -1,4 +1,4 @@
-Read the paper at: <PDF_URL>
+Read the paper at: <PAPER_URL>
 
 Generate a structured JSON summary of the above paper for an ML researcher who may or may not be in the specific field. Use the topic background at the end for context.
 

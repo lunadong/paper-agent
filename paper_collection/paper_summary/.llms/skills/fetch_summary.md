@@ -1,10 +1,7 @@
 ---
 description: Fetch paper summaries from database or local files by paper_id
-input:
-  - paper_id: integer (e.g., 3569, 3584)
-output:
-  - JSON summary with summary_basics, summary_core, summary_techniques, summary_experiments, summary_figures
-  - Saved to: prompt_optimization/paper_summaries/paper_{paper_id}.json
+oncalls:
+  - paper_agent
 ---
 
 # Fetch Paper Summary

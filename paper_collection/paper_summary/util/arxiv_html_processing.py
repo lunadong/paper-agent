@@ -7,6 +7,7 @@ This is preferred over PDF extraction for arXiv papers as it provides cleaner te
 and better figure handling.
 """
 
+import io
 import re
 import time
 from pathlib import Path
@@ -27,6 +28,14 @@ try:
 except ImportError:
     BeautifulSoup = None
     BS4_AVAILABLE = False
+
+try:
+    from PIL import Image
+
+    PILLOW_AVAILABLE = True
+except ImportError:
+    Image = None
+    PILLOW_AVAILABLE = False
 
 
 # Retry configuration
@@ -153,7 +162,7 @@ def download_html(
             if response.status_code == 200:
                 return response.text
             elif response.status_code == 404:
-                raise Exception(f"HTML not available for this paper: HTTP 404")
+                raise Exception("HTML not available for this paper: HTTP 404")
             elif response.status_code in {429, 503}:
                 wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
                 print(f"  HTTP {response.status_code}, retrying in {wait_time}s...")
@@ -248,6 +257,100 @@ def extract_text_from_html(
     return full_text[:max_chars]
 
 
+def _convert_to_png(image_data: bytes) -> bytes:
+    """
+    Convert image data to PNG format if not already PNG.
+
+    Args:
+        image_data: Raw image bytes.
+
+    Returns:
+        PNG-formatted image bytes.
+    """
+    if not PILLOW_AVAILABLE or Image is None:
+        return image_data
+
+    try:
+        img = Image.open(io.BytesIO(image_data))
+        if img.format == "PNG":
+            return image_data
+
+        output = io.BytesIO()
+        if img.mode in ("RGBA", "LA") or (
+            img.mode == "P" and "transparency" in img.info
+        ):
+            img.save(output, format="PNG")
+        else:
+            img = img.convert("RGB")
+            img.save(output, format="PNG")
+        return output.getvalue()
+    except Exception:
+        return image_data
+
+
+def _download_and_save_figure(
+    fig_data: dict,
+    output_dir: Optional[Path],
+    paper_id: Optional[str],
+) -> None:
+    """Download figure image, convert to PNG if needed, and optionally save to disk."""
+    try:
+        image_url = fig_data["image_url"]
+        response = requests.get(image_url, timeout=30)
+        if response.status_code != 200:
+            print(
+                f"  Warning: Failed to download figure {fig_data['figure_num']}: "
+                f"HTTP {response.status_code} from {image_url}"
+            )
+            return
+
+        image_data = _convert_to_png(response.content)
+        fig_data["image_data"] = image_data
+
+        if output_dir:
+            paper_dir = output_dir / paper_id if paper_id else output_dir
+            paper_dir.mkdir(parents=True, exist_ok=True)
+            file_path = paper_dir / fig_data["filename"]
+            file_path.write_bytes(image_data)
+            fig_data["path"] = str(file_path)
+    except Exception as e:
+        print(f"  Warning: Could not download figure {fig_data['figure_num']}: {e}")
+
+
+def _extract_figure_data(
+    figure,
+    idx: int,
+    base_url: str,
+) -> Optional[dict]:
+    """Extract data from a single figure element."""
+    img = figure.find("img")
+    if not img or not img.get("src"):
+        return None
+
+    src = img["src"]
+    if src.startswith("data:"):
+        return None
+
+    # Ensure base_url ends with "/" for proper urljoin behavior
+    if not base_url.endswith("/"):
+        base_url = base_url + "/"
+
+    fig_data = {
+        "figure_num": idx,
+        "caption": "",
+        "image_url": urljoin(base_url, src),
+        "filename": f"{idx}.png",
+        "path": "",
+        "image_data": None,
+    }
+
+    caption = figure.find("figcaption", class_="ltx_caption")
+    if caption:
+        fig_data["caption"] = caption.get_text(strip=True)
+
+    return fig_data
+
+
 def extract_figures_from_html(
     html_content: str,
     base_url: str,
@@ -282,58 +385,21 @@ def extract_figures_from_html(
 
     soup = BeautifulSoup(html_content, "html.parser")
     figures = []
+    downloaded_count = 0
 
     for idx, figure in enumerate(soup.find_all("figure", class_="ltx_figure"), start=1):
-        fig_data = {
-            "figure_num": idx,
-            "caption": "",
-            "image_url": "",
-            "filename": "",
-            "path": "",
-            "image_data": None,
-        }
-
-        # Get image
-        img = figure.find("img")
-        if img and img.get("src"):
-            src = img["src"]
-            # Skip data URIs (base64 encoded images like logos)
-            if src.startswith("data:"):
-                continue
-            fig_data["image_url"] = urljoin(base_url, src)
-            fig_data["filename"] = f"figure_{idx}.png"
-
-        # Get caption
-        caption = figure.find("figcaption", class_="ltx_caption")
-        if caption:
-            fig_data["caption"] = caption.get_text(strip=True)
-
-        if not fig_data["image_url"]:
+        fig_data = _extract_figure_data(figure, idx, base_url)
+        if not fig_data:
             continue
 
-        # Download image if requested
         if download_images:
-            try:
-                response = requests.get(fig_data["image_url"], timeout=30)
-                if response.status_code == 200:
-                    fig_data["image_data"] = response.content
-
-                    # Save to file if output_dir provided
-                    if output_dir:
-                        if paper_id:
-                            paper_dir = output_dir / paper_id
-                        else:
-                            paper_dir = output_dir
-                        paper_dir.mkdir(parents=True, exist_ok=True)
-                        file_path = paper_dir / fig_data["filename"]
-                        file_path.write_bytes(response.content)
-                        fig_data["path"] = str(file_path)
-            except Exception as e:
-                print(f"  Warning: Could not download figure {idx}: {e}")
+            _download_and_save_figure(fig_data, output_dir, paper_id)
+            if fig_data.get("image_data"):
+                downloaded_count += 1
 
         figures.append(fig_data)
 
-    print(f"  Extracted {len(figures)} figures from HTML")
+    print(f"  Found {len(figures)} figures, downloaded {downloaded_count} successfully")
     return figures
 
 

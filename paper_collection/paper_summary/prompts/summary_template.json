@@ -133,9 +133,7 @@
         "key_hyperparameters": {},
         "_hyperparameters_guidance": "For RL: include clip_epsilon, gae_lambda, entropy_coefficient, value_coefficient. Always include learning_rate, batch_size, epochs. Only include values explicitly stated in the paper.",
         "computational_requirements": "",
-        "_compute_guidance": "GPU type/count, training time, inference latency. If not reported in the paper, state 'Not reported in the paper'. If the paper does NOT involve training (evaluation-only/inference-only), OMIT this field entirely. Do NOT write 'No training performed' or 'No training time reported (evaluation-only)'.",
-        "reproducibility_notes": "",
-        "_reproducibility_notes_guidance": "REQUIRED. List: (a) what artifacts are available (code, data, model weights, prompt templates), (b) what is missing for full replication (exact prompts, SFT data sizes, hyperparameters), (c) any closed-source model dependencies (e.g., 'Uses GPT-4 for data generation'). If everything is available, state so. If nothing is mentioned, state 'No replication artifacts mentioned in the paper'."
+        "_compute_guidance": "GPU type/count, training time, inference latency. If not reported in the paper, state 'Not reported in the paper'. If the paper does NOT involve training (evaluation-only/inference-only), OMIT this field entirely. Do NOT write 'No training performed' or 'No training time reported (evaluation-only)'."
       },
 
       "optimization_details": {
@@ -146,6 +144,9 @@
         "_approximation_guidance": "Only if applicable: 'DQN (Q-learning), DDPG (deep deterministic policy gradient)', etc."
       }
     },
+
+    "reproducibility_notes": "",
+    "_reproducibility_notes_guidance": "REQUIRED. List: (a) what artifacts are available (code, data, model weights, prompt templates), (b) what is missing for full replication (exact prompts, SFT data sizes, hyperparameters), (c) any closed-source model dependencies (e.g., 'Uses GPT-4 for data generation'). If everything is available, state so. If nothing is mentioned, state 'No replication artifacts mentioned in the paper'.",
 
     "comparison_to_sota": {
       "_comment": "Compare to SOTA methods beyond just the baselines in the paper.",

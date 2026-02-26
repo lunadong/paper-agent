@@ -302,6 +302,32 @@ class PaperDB:
             self.conn.commit()
             print("Migration complete: primary_topic column added")
 
+        # Check if summary_techniques column exists, add if not
+        cursor.execute(
+            """
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'papers' AND column_name = 'summary_techniques'
+        """
+        )
+        if cursor.fetchone() is None:
+            print("Adding summary_techniques column to papers table...")
+            cursor.execute("ALTER TABLE papers ADD COLUMN summary_techniques TEXT")
+            self.conn.commit()
+            print("Migration complete: summary_techniques column added")
+
+        # Check if summary_experiments column exists, add if not
+        cursor.execute(
+            """
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'papers' AND column_name = 'summary_experiments'
+        """
+        )
+        if cursor.fetchone() is None:
+            print("Adding summary_experiments column to papers table...")
+            cursor.execute("ALTER TABLE papers ADD COLUMN summary_experiments TEXT")
+            self.conn.commit()
+            print("Migration complete: summary_experiments column added")
+
         # Create paper_images table if it doesn't exist
         cursor.execute(
             """

@@ -1,4 +1,4 @@
-Read the paper at: <PDF_URL>
+Read the paper at: <PAPER_URL>
 
 For the above paper, identify what research topics it belongs to and select a PRIMARY topic.
 

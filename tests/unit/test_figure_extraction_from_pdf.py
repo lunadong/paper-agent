@@ -70,7 +70,9 @@ class TestCaptionDataclass:
         mock_rect.x1 = 200.0
 
         # Execute: Import and create Caption
-        from paper_collection.paper_summary.util.figure_extraction_from_pdf import Caption
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            Caption,
+        )
 
         caption = Caption(
             fig_num=1,
@@ -96,7 +98,9 @@ class TestCaptionDataclass:
         mock_rect.x0 = 0.0
         mock_rect.x1 = 100.0
 
-        from paper_collection.paper_summary.util.figure_extraction_from_pdf import Caption
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            Caption,
+        )
 
         caption = Caption(
             fig_num=1,
@@ -118,7 +122,9 @@ class TestCaptionDataclass:
         mock_rect.x0 = 100.0
         mock_rect.x1 = 300.0
 
-        from paper_collection.paper_summary.util.figure_extraction_from_pdf import Caption
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            Caption,
+        )
 
         caption = Caption(
             fig_num=1,
@@ -374,7 +380,9 @@ class TestFiguresDir:
 
     def test_figures_dir_path(self) -> None:
         """Test that FIGURES_DIR points to expected location."""
-        from paper_collection.paper_summary.util.figure_extraction_from_pdf import FIGURES_DIR
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            FIGURES_DIR,
+        )
 
         # Assert: Should be under tmp/figures
         assert FIGURES_DIR.name == "figures"

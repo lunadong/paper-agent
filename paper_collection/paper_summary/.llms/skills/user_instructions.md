@@ -1,3 +1,9 @@
+---
+description: User-specified instructions and constraints for prompt revision
+oncalls:
+  - paper_agent
+---
+
 # Prompt Improvement Instructions
 
 ## Goals
