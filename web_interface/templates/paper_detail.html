@@ -95,8 +95,17 @@
             user-select: none;
         }
 
+        .rag-type-tag.primary-topic {
+            background: #1e3a8a;
+            color: white;
+        }
+
         .rag-type-tag:hover {
             background: #bfdbfe;
+        }
+
+        .rag-type-tag.primary-topic:hover {
+            background: #1e40af;
         }
 
         .rag-type-tag.topic-selected {
@@ -358,6 +367,12 @@
             margin-bottom: 4px;
         }
 
+        .module-group {
+            font-weight: 400;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
         .module-role {
             color: #6b7280;
             font-size: 13px;
@@ -367,6 +382,22 @@
             font-size: 12px;
             color: #9ca3af;
             margin-top: 8px;
+        }
+
+        .more-toggle {
+            list-style: none;
+            margin-left: -16px;
+        }
+
+        .more-toggle a {
+            font-size: 13px;
+            color: #6366f1;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .more-toggle a:hover {
+            text-decoration: underline;
         }
 
         .results-table {
@@ -392,6 +423,27 @@
 
         .results-table tr:hover {
             background: #f9fafb;
+        }
+
+        .results-table .narrative-row {
+            background: #f3f4f6;
+        }
+
+        .results-table .narrative-row td {
+            font-style: italic;
+            color: #4b5563;
+            padding: 12px 16px;
+            line-height: 1.5;
+        }
+
+        .results-table .narrative-row:hover {
+            background: #e5e7eb;
+        }
+
+        .nested-modules {
+            margin-top: 16px;
+            padding-left: 16px;
+            border-left: 3px solid #e5e7eb;
         }
 
         .delta-positive {
@@ -651,12 +703,19 @@
             {% if paper.venue %}{{ paper.venue }}{% endif %}
             {% if paper.year %} ({{ paper.year }}){% endif %}
         </div>
-        {% set core = paper.summary.get('core', {}) if paper.summary else {} %}
-        {% if core.topic_relevance and core.topic_relevance.topics %}
+        {% if paper.topics or paper.primary_topic %}
         <div class="rag-type-tags">
-            {% for tag in core.topic_relevance.topics %}
-            <span class="rag-type-tag" data-topic="{{ tag }}" onclick="handleTagClick(this, event)">{{ tag }}</span>
+            {% if paper.topics %}
+            {% set topic_list = paper.topics.split(',') if paper.topics is string else paper.topics %}
+            {% for tag in topic_list %}
+            {% set tag_clean = tag.strip() %}
+            {% if tag_clean %}
+            <span class="rag-type-tag{% if tag_clean == paper.primary_topic %} primary-topic{% endif %}" data-topic="{{ tag_clean }}" onclick="handleTagClick(this, event)">{{ tag_clean }}</span>
+            {% endif %}
             {% endfor %}
+            {% elif paper.primary_topic %}
+            <span class="rag-type-tag primary-topic" data-topic="{{ paper.primary_topic }}" onclick="handleTagClick(this, event)">{{ paper.primary_topic }}</span>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -693,7 +752,7 @@
                 <em>Why it matters:</em>
                 <ul>
                     {% for reason in core.core_problem.why_it_matters %}
-                    <li>{{ reason }}</li>
+                    <li>{{ reason | replace_colon_bold | safe }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -767,7 +826,7 @@
 
 
     <!-- Technical Details Section (Collapsible) -->
-    {% if techniques.system_pipeline or techniques.problem_definition or techniques.model_architecture %}
+    {% if techniques.system_pipeline or techniques.problem_definition or techniques.model_details %}
     <div class="section">
         <h2 class="section-title collapsible collapsed" onclick="toggleSection(this)">⚙️ Technical Details</h2>
         <div class="collapsible-content collapsed">
@@ -785,9 +844,6 @@
                     {% if techniques.problem_definition.outputs %}
                     <div class="definition-item"><strong>Outputs:</strong> {{ techniques.problem_definition.outputs }}</div>
                     {% endif %}
-                    {% if techniques.problem_definition.constraints_assumptions %}
-                    <div class="definition-item"><strong>Constraints:</strong> {{ techniques.problem_definition.constraints_assumptions }}</div>
-                    {% endif %}
                 </div>
             </div>
             {% endif %}
@@ -795,13 +851,6 @@
             {% if techniques.system_pipeline and techniques.system_pipeline.high_level_flow %}
             <div class="subsection">
                 <div class="subsection-title">Pipeline Flow</div>
-                {% if core.topic_relevance and core.topic_relevance.primary_focus %}
-                <div class="rag-tags" style="margin-bottom: 12px;">
-                    {% for focus in core.topic_relevance.primary_focus %}
-                    <span class="rag-tag">{{ focus }}</span>
-                    {% endfor %}
-                </div>
-                {% endif %}
                 <div class="pipeline-flow">
                     <ol>
                         {% for step in techniques.system_pipeline.high_level_flow %}
@@ -809,26 +858,29 @@
                         {% endfor %}
                     </ol>
                 </div>
-            </div>
-            {% endif %}
 
-            {% if techniques.system_pipeline and techniques.system_pipeline.modules %}
-            <div class="subsection">
-                <div class="subsection-title">System Modules</div>
-                {% for module in techniques.system_pipeline.modules %}
-                {% if module.module %}
-                <div class="module-card">
-                    <div class="module-name">{{ module.module }}</div>
-                    <div class="module-role">{{ module.role }}</div>
-                    {% if module.model %}
-                    <div class="module-details">Model: {{ module.model }}</div>
-                    {% endif %}
+                {% if techniques.system_pipeline.modules %}
+                <div class="nested-modules">
+                    <div class="subsection-title" style="font-size: 14px; margin-top: 16px;">System Modules</div>
+                    {% set ns = namespace(group_counts={}) %}
+                    {% for module in techniques.system_pipeline.modules %}
                     {% if module.functional_group %}
-                    <div class="module-details">Group: {{ module.functional_group }}</div>
+                    {% set _ = ns.group_counts.update({module.functional_group: ns.group_counts.get(module.functional_group, 0) + 1}) %}
                     {% endif %}
+                    {% endfor %}
+                    {% for module in techniques.system_pipeline.modules %}
+                    {% if module.module %}
+                    <div class="module-card">
+                        <div class="module-name">{{ module.module }}{% if module.functional_group and ns.group_counts.get(module.functional_group, 0) > 1 %} <span class="module-group">({{ module.functional_group }})</span>{% endif %}</div>
+                        <div class="module-role">{{ module.role }}</div>
+                        {% if module.model %}
+                        <div class="module-details">Model or implementation: {{ module.model }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
                 </div>
                 {% endif %}
-                {% endfor %}
             </div>
             {% endif %}
 
@@ -843,22 +895,56 @@
             </div>
             {% endif %}
 
-            {% if techniques.model_architecture %}
+            {% if techniques.model_details %}
             <div class="subsection">
-                <div class="subsection-title">Model Architecture</div>
+                <div class="subsection-title">Modeling</div>
                 <div class="module-card" style="padding-bottom: 20px;">
-                    {% if techniques.model_architecture.base_model %}
-                    <div><strong>Base Model:</strong> {{ techniques.model_architecture.base_model }}</div>
+                    {% if techniques.model_details.base_model %}
+                    <div><strong>Base Model:</strong> {{ techniques.model_details.base_model }}</div>
                     {% endif %}
-                    {% if techniques.model_architecture.training_details %}
-                    {% set training = techniques.model_architecture.training_details %}
-                    {% if training.method and training.method != 'N/A' %}
+                    {% if techniques.model_details.training_details %}
+                    {% set training = techniques.model_details.training_details %}
+                    {% if training.method and training.method != 'N/A' and training.method != 'Not applicable' %}
                     <div><strong>Training Method:</strong> {{ training.method }}</div>
                     {% endif %}
-                    {% if training.trainable_parameters and training.trainable_parameters != 'N/A' %}
+                    {% if training.objective_functions and training.objective_functions | length > 0 %}
+                    <div style="margin-top: 8px;"><strong>Objective Functions:</strong></div>
+                    <ul style="margin: 4px 0;">
+                        {% for obj in training.objective_functions %}
+                        <li style="margin-bottom: 12px;">
+                            {% if 'Purpose:' in obj and 'Formally:' in obj %}
+                            {% set parts = obj.split('Formally:') %}
+                            <div style="margin-bottom: 0;">{{ parts[0] | trim | replace('Purpose:', '<em>Purpose:</em>') | safe }}</div>
+                            <div style="margin-top: 0;"><em>Formally:</em>{{ parts[1] }}</div>
+                            {% else %}
+                            {{ obj }}
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if training.adaptation and training.adaptation != 'N/A' and training.adaptation != 'Not applicable' %}
+                    <div style="margin-top: 12px;"><strong>Adaptation:</strong> {{ training.adaptation }}</div>
+                    {% endif %}
+                    {% if training.trainable_parameters and training.trainable_parameters != 'N/A' and training.trainable_parameters != 'Not applicable' and 'Not applicable' not in training.trainable_parameters %}
                     <div><strong>Trainable Parameters:</strong> {{ training.trainable_parameters }}</div>
                     {% endif %}
-                    {% if training.computational_requirements and training.computational_requirements != 'N/A' %}
+                    {% if training.key_hyperparameters and training.key_hyperparameters is mapping %}
+                    <div style="margin-top: 8px;"><strong>Key Hyperparameters:</strong></div>
+                    {% set hp_items = training.key_hyperparameters.items() | list %}
+                    <ul style="margin: 4px 0;" class="hyperparams-list">
+                        {% for key, value in hp_items[:3] %}
+                        <li>{{ key }}: {{ value }}</li>
+                        {% endfor %}
+                        {% if hp_items | length > 3 %}
+                        <li class="more-toggle"><a href="#" onclick="toggleMoreItems(this, event)">+ {{ hp_items | length - 3 }} more</a></li>
+                        {% for key, value in hp_items[3:] %}
+                        <li class="more-item" style="display: none;">{{ key }}: {{ value }}</li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                    {% endif %}
+                    {% if training.computational_requirements and training.computational_requirements != 'N/A' and training.computational_requirements != 'Not applicable' %}
                     <div><strong>Compute:</strong> {{ training.computational_requirements }}</div>
                     {% endif %}
                     {% endif %}
@@ -869,47 +955,29 @@
             {% if techniques.comparison_to_sota and techniques.comparison_to_sota.key_differences %}
             <div class="subsection">
                 <div class="subsection-title">Comparison to Prior Work</div>
+                {% set diffs = techniques.comparison_to_sota.key_differences %}
                 <ul>
-                    {% for diff in techniques.comparison_to_sota.key_differences %}
-                    <li>{{ diff }}</li>
+                    {% for diff in diffs[:3] %}
+                    <li>{{ diff | replace_colon_bold | safe }}</li>
                     {% endfor %}
+                    {% if diffs | length > 3 %}
+                    <li class="more-toggle"><a href="#" onclick="toggleMoreItems(this, event)">+ {{ diffs | length - 3 }} more</a></li>
+                    {% for diff in diffs[3:] %}
+                    <li class="more-item" style="display: none;">{{ diff | replace_colon_bold | safe }}</li>
+                    {% endfor %}
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}
 
-            {% if techniques.Limitations %}
+            {% if techniques.Limitations and techniques.Limitations.acknowledged_limitations %}
             <div class="subsection">
                 <div class="subsection-title">Limitations</div>
-                {% if techniques.Limitations.acknowledged_limitations %}
                 <ul>
                     {% for limit in techniques.Limitations.acknowledged_limitations %}
                     <li>{{ limit }}</li>
                     {% endfor %}
                 </ul>
-                {% endif %}
-                {% if techniques.Limitations.scope_restrictions %}
-                <div style="margin-top: 10px;"><strong>Scope:</strong></div>
-                <ul>
-                    {% for scope in techniques.Limitations.scope_restrictions %}
-                    <li>{{ scope }}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </div>
-            {% endif %}
-
-            {% if techniques.prerequisite_knowledge and techniques.prerequisite_knowledge.key_terms %}
-            <div class="subsection">
-                <div class="subsection-title collapsible collapsed" onclick="toggleSection(this)">Key Terms</div>
-                <div class="collapsible-content collapsed">
-                    <div class="key-terms-grid">
-                        {% for term, definition in techniques.prerequisite_knowledge.key_terms.items() %}
-                        <div class="key-term">
-                            <strong>{{ term }}:</strong> {{ definition }}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
             </div>
             {% endif %}
         </div>
@@ -936,8 +1004,18 @@
                     {% endfor %}
                 </ul>
                 {% endif %}
-                {% if experiments.evaluation_setup.main_metrics %}
-                <div style="margin-top: 12px;"><strong>Metrics:</strong> {{ experiments.evaluation_setup.main_metrics | join(', ') }}</div>
+                {% if experiments.evaluation_setup.main_metrics or experiments.evaluation_setup.statistical_methodology %}
+                <div style="margin-top: 12px;"><strong>Metrics:</strong></div>
+                <ul>
+                    {% if experiments.evaluation_setup.main_metrics %}
+                    {% for metric in experiments.evaluation_setup.main_metrics %}
+                    <li>{{ metric }}</li>
+                    {% endfor %}
+                    {% endif %}
+                    {% if experiments.evaluation_setup.statistical_methodology %}
+                    <li><em>Statistical methodology:</em> {{ experiments.evaluation_setup.statistical_methodology }}</li>
+                    {% endif %}
+                </ul>
                 {% endif %}
             </div>
             {% endif %}
@@ -945,11 +1023,36 @@
             {% if experiments.key_results %}
             <div class="subsection">
                 <div class="subsection-title">Key Results</div>
-                {% for result_group in experiments.key_results %}
-                {% if result_group.result_group_narrative %}
-                <div class="result-narrative">{{ result_group.result_group_narrative }}</div>
-                {% endif %}
-                {% endfor %}
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Benchmark</th>
+                            <th>Metric</th>
+                            <th>Baseline</th>
+                            <th>This Paper</th>
+                            <th>Δ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in experiments.key_results %}
+                        {% if result.result_group_narrative %}
+                        <tr class="narrative-row">
+                            <td colspan="5">{{ result.result_group_narrative }}</td>
+                        </tr>
+                        {% elif result.benchmark %}
+                        <tr>
+                            <td>{{ result.benchmark }}</td>
+                            <td>{{ result.metric }}</td>
+                            <td>{{ result.baseline_value or '-' }}</td>
+                            <td><strong>{{ result.paper_value or '-' }}</strong></td>
+                            <td class="{% if result.delta and '+' in result.delta %}delta-positive{% elif result.delta and '-' in result.delta %}delta-negative{% endif %}">
+                                {{ result.delta or '-' }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
             {% endif %}
 
@@ -971,21 +1074,9 @@
                     {% if fig_num and paper.image_map.get(fig_num) and fig.figure_id|is_figure %}
                     <div class="figure-container">
                         <img src="/api/paper/image/{{ paper.image_map.get(fig_num) }}"
-                             alt="Experiment Figure {{ fig.figure_id }}"
+                             alt="{{ fig.figure_id }}"
                              class="paper-figure"
-                             onclick="openImageModal(this.src, this.alt)">
-                        {% if fig.what_it_shows %}
-                        <div class="figure-caption">{{ fig.what_it_shows }}</div>
-                        {% endif %}
-                        {% if fig.key_insights %}
-                        <div class="figure-insights">
-                            <ul>
-                                {% for insight in fig.key_insights %}
-                                <li>{{ insight }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
+                             onclick="openImageModal(this.src, '{{ fig.figure_id }}')">
                     </div>
                     {% endif %}
                     {% endfor %}
@@ -1002,6 +1093,38 @@
                         <li>{{ takeaway }}</li>
                         {% endfor %}
                     </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Prerequisite Knowledge Section (Collapsible, folded by default) -->
+    {% if techniques.prerequisite_knowledge and (techniques.prerequisite_knowledge.prerequisites or techniques.prerequisite_knowledge.key_terms) %}
+    <div class="section">
+        <h2 class="section-title collapsible collapsed" onclick="toggleSection(this)">📚 Prerequisite Knowledge</h2>
+        <div class="collapsible-content collapsed">
+            {% if techniques.prerequisite_knowledge.prerequisites %}
+            <div class="subsection">
+                <div class="subsection-title">Prerequisites</div>
+                <ul>
+                    {% for prereq in techniques.prerequisite_knowledge.prerequisites %}
+                    <li>{{ prereq }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if techniques.prerequisite_knowledge.key_terms %}
+            <div class="subsection">
+                <div class="subsection-title">Key Terms</div>
+                <div class="key-terms-grid">
+                    {% for term, definition in techniques.prerequisite_knowledge.key_terms.items() %}
+                    <div class="key-term">
+                        <strong>{{ term }}:</strong> {{ definition }}
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
             {% endif %}
@@ -1081,6 +1204,24 @@
             element.classList.toggle('collapsed');
             const content = element.nextElementSibling;
             content.classList.toggle('collapsed');
+        }
+
+        function toggleMoreItems(element, event) {
+            event.preventDefault();
+            const ul = element.closest('ul');
+            const moreItems = ul.querySelectorAll('.more-item');
+            const toggleLi = element.closest('.more-toggle');
+            const isHidden = moreItems[0].style.display === 'none';
+
+            moreItems.forEach(item => {
+                item.style.display = isHidden ? 'list-item' : 'none';
+            });
+
+            if (isHidden) {
+                element.textContent = '- Show less';
+            } else {
+                element.textContent = '+ ' + moreItems.length + ' more';
+            }
         }
 
 

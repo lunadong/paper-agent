@@ -112,21 +112,34 @@ else:
 
 ## Integrating User Instructions
 
-**IMPORTANT:** Before revising, always load and integrate user instructions:
+**CRITICAL:** Before revising, you MUST load and address ALL instructions in user_instructions.md:
 
 ```
 Read: .llms/skills/user_instructions.md
 ```
 
-The user instructions define:
-- **Goals** - What to improve overall
+The user instructions contain:
+- **Goals** - Overall improvement objectives
 - **For Beginners** - Accessibility requirements
 - **For Experts** - Technical precision requirements
-- **Good and Keep** - What's working (don't change)
-- **Specific Issues** - Known problems to fix
-- **Examples** - Good vs bad examples
+- **Good and Keep** - What's working (DO NOT CHANGE)
+- **Specific Issues with Current Output** - Known problems to FIX
+- **Examples of Good vs Bad** - Reference examples
 
-These instructions MUST guide all revisions.
+### Addressing User Instructions Checklist
+
+When revising, go through EACH section in user_instructions.md:
+
+| Section | Action |
+|---------|--------|
+| Goals | Ensure revisions align with stated goals |
+| For Beginners | Apply beginner-specific fixes |
+| For Experts | Apply expert-specific fixes |
+| Good and Keep | **DO NOT modify these elements** |
+| Specific Issues | **FIX each listed issue** |
+| Examples | Follow good examples, avoid bad patterns |
+
+**⚠️ Every specific issue listed in user_instructions.md MUST be addressed in the revision.**
 
 ---
 
@@ -175,6 +188,129 @@ prompt_optimization/revised_prompts/summary_example.json
 ```
 
 **DO NOT save to prompts/v2/ or any other location.**
+
+### Step 7: Update revision_metadata.json
+
+**REQUIRED:** After every revision, update `prompt_optimization/revised_prompts/revision_metadata.json`:
+
+```json
+{
+  "revision_date": "<ISO timestamp>",
+  "revision_pass": "<pass name>",
+  "previous_passes": ["<prior pass summaries>"],
+  "inputs_analyzed": [
+    { "file": "<filename>", "beginner": <score>, "expert": <score>, "combined": <score> }
+  ],
+  "averages": {
+    "beginner": <avg>,
+    "expert": <avg>,
+    "combined": <avg>
+  },
+  "threshold": 8.0,
+  "passed": <true|false>,
+  "files_revised": ["prompt.txt", "summary_template.json", "summary_example.json"],
+  "key_changes": {
+    "prompt.txt": ["<change 1>", "<change 2>"],
+    "summary_template.json": ["<change 1>", "<change 2>"],
+    "summary_example.json": ["<change 1>", "<change 2>"]
+  },
+  "user_instructions_addressed": {
+    "specific_issues_fixed": ["<issue from user_instructions.md>", "..."],
+    "good_and_keep_preserved": ["<item preserved>", "..."]
+  },
+  "issues_addressed": {
+    "beginner": ["<issue> → <fix>"],
+    "expert": ["<issue> → <fix>"]
+  }
+}
+```
+
+This metadata tracks:
+- What was analyzed and scores
+- What changes were made
+- Which user instructions were addressed
+- Progress across revision passes
+
+### Step 8: Handle Completed User Instructions (Final Step)
+
+After completing all revisions, check if ALL points in `user_instructions.md` have been addressed.
+
+#### 8.1 Verify All Instructions Fixed
+
+Review `revision_metadata.json` → `user_instructions_addressed.specific_issues_fixed` to confirm every item from `user_instructions.md` has been addressed.
+
+**If any items remain unaddressed:** Stop here and continue revising until all are fixed.
+
+#### 8.2 If All Instructions Fixed → Ask User Two Questions
+
+> 🛑 **MANDATORY USER CONFIRMATION**
+>
+> When ALL user_instructions are fixed, you MUST ask the user these two questions before proceeding.
+
+**YOU MUST** use the `ask_user_question` tool:
+
+```
+ask_user_question(
+    preamble="All specific issues from user_instructions.md have been addressed in this revision pass. Before completing, I need your input on two follow-up actions.",
+    questions=[
+        {
+            "question": "Update analyze_summary.md critics with these instructions?",
+            "header": "Critics",
+            "options": [
+                {"label": "Yes", "description": "Add the fixed issues to analyze_summary.md criteria so future analyses check for them"},
+                {"label": "No", "description": "Keep analyze_summary.md as is"}
+            ]
+        },
+        {
+            "question": "Clear the specific issues from user_instructions.md?",
+            "header": "Clear",
+            "options": [
+                {"label": "Yes", "description": "Clear the issues (keep skeleton placeholders)"},
+                {"label": "No", "description": "Keep user_instructions.md as is"}
+            ]
+        }
+    ]
+)
+```
+
+#### 8.3 If User Confirms "Update Critics" → Update analyze_summary.md
+
+Add the fixed issues as new criteria checks in `analyze_summary.md`:
+
+1. Read current `.llms/skills/analyze_summary.md`
+2. Add the fixed issues to the "User Instructions Checklist" tables
+3. Add `USER_INSTRUCTION:` annotations to relevant criteria
+4. Save the updated file
+
+#### 8.4 If User Confirms "Clear Instructions" → Clear user_instructions.md
+
+**IMPORTANT:** Do NOT delete the file or empty it completely. Keep the skeleton structure.
+
+Replace the content of `.llms/skills/user_instructions.md` with the skeleton:
+
+```markdown
+# Prompt Improvement Instructions
+
+## Goals
+<!-- Add your high-level improvement goals here -->
+
+## For Beginners (people new to the field)
+<!-- What should be improved for accessibility? -->
+
+## For Experts (domain specialists)
+<!-- What should be improved for technical precision? -->
+
+## Good and keep
+<!-- Current outputs that are great and should be preserved -->
+
+## Specific Issues with Current Output
+<!-- What specific problems have you noticed? Add issues here as you find them. -->
+
+## Examples of Good vs Bad
+<!-- If you have examples, include them here -->
+```
+
+This preserves the file structure for future use while clearing resolved issues.
 
 ---
 
@@ -237,6 +373,8 @@ Any claim not supported by the paper must be removed or corrected.
 ## Your Task
 
 Based on the analysis results and user instructions, generate REVISED versions of ALL THREE prompt files.
+
+**IMPORTANT:** You MUST address EVERY specific issue listed in user_instructions.md. Check off each item as you fix it.
 
 For each file, explain your changes first, then provide the complete revised content.
 
@@ -374,14 +512,22 @@ After revision, report:
 1. What files were changed
 2. Summary of changes per file
 3. Which analysis issues were addressed
+4. Which user_instructions issues were addressed
+5. Updated revision_metadata.json
 
 ```
 Revised files saved to prompt_optimization/revised_prompts/:
 - prompt.txt: Added methodology clarity instructions
 - summary_template.json: Restructured Technical_details
 - summary_example.json: Fixed jargon in one_sentence_thesis
+- revision_metadata.json: Updated with pass details
 
-Issues addressed:
+User Instructions Addressed:
+✓ Core section: Avoided long texts and specific tech details
+✓ Don't give metric numbers in one_sentence_thesis
+✓ why_it_matters contains only motivation
+
+Analysis Issues Addressed:
 - Beginner jargon_handling (7 → target 8.0)
 - Expert technical_precision (7 → target 8.0)
 ```

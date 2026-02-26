@@ -27,6 +27,26 @@ paper_detail_bp = Blueprint(
 )
 
 
+def bold_before_colon(text: str) -> str:
+    """
+    Make text before the first colon bold.
+
+    Examples:
+        "Real-world impact: Over-personalized..." -> "<strong>Real-world impact:</strong> Over-personalized..."
+        "vs. Constitutional AI / RLHF (not cited in paper): While..." -> "<strong>vs. Constitutional AI / RLHF (not cited in paper):</strong> While..."
+        "No colon here" -> "No colon here"
+    """
+    if not text or ":" not in text:
+        return text
+
+    # Only bold if the colon appears in the first 100 characters (likely a label)
+    # and there's content after the colon
+    first_colon = text.find(":")
+    if first_colon > 0 and first_colon < 100 and first_colon < len(text) - 1:
+        return f"<strong>{text[: first_colon + 1]}</strong>{text[first_colon + 1 :]}"
+    return text
+
+
 def extract_figure_number(figure_id: str) -> str:
     """
     Extract the numeric part from a figure ID.
@@ -48,6 +68,12 @@ def extract_figure_number(figure_id: str) -> str:
 def extract_fig_num_filter(value):
     """Jinja2 filter to extract figure number from figure_id."""
     return extract_figure_number(value)
+
+
+@paper_detail_bp.app_template_filter("replace_colon_bold")
+def replace_colon_bold_filter(value):
+    """Jinja2 filter to make text before the first colon bold."""
+    return bold_before_colon(value)
 
 
 @paper_detail_bp.app_template_filter("is_figure")
@@ -178,6 +204,7 @@ def get_paper_with_summary(paper_id: int) -> dict:
         "link": paper.get("link"),
         "recomm_date": paper.get("recomm_date"),
         "topics": paper.get("topics"),
+        "primary_topic": paper.get("primary_topic"),
         "has_summary": has_summary,
         "summary_generated_at": paper.get("summary_generated_at"),
         "summary": summary,

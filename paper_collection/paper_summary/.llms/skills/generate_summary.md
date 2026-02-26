@@ -121,6 +121,66 @@ prompt_optimization/paper_summaries/paper_{paper_id}.json
 
 **Note:** This replaces any existing file with the same name. No versioning or renaming.
 
+---
+
+### Step 6: Populate Database (Optional)
+
+> 🛑 **STOP: MANDATORY USER CONFIRMATION REQUIRED**
+>
+> After saving the JSON file, you MUST ask the user if they want to populate the database.
+> **DO NOT skip this confirmation. DO NOT assume the answer.**
+
+#### 6.1 Ask User for Confirmation
+
+**YOU MUST** use the `ask_user_question` tool to confirm:
+
+```
+ask_user_question(
+    preamble="The summary has been saved to prompt_optimization/paper_summaries/paper_{paper_id}.json. I can also update the database with this summary.",
+    questions=[
+        {
+            "question": "Do you want to populate the database with this summary?",
+            "header": "Database",
+            "options": [
+                {"label": "Yes", "description": "Update the database with the generated summary"},
+                {"label": "No", "description": "Keep the JSON file only, do not update database"}
+            ]
+        }
+    ]
+)
+```
+
+#### 6.2 If User Confirms "Yes"
+
+Use the `paper_db` module to update the summary in the database:
+
+```python
+import sys
+import json
+sys.path.insert(0, '/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection')
+from paper_db import PaperDB
+
+# Load the generated summary
+with open(f'prompt_optimization/paper_summaries/paper_{paper_id}.json', 'r') as f:
+    summary_json = json.load(f)
+
+# Update database
+db = PaperDB()
+db.update_paper_summary(paper_id, summary_json)
+db.close()
+
+print(f"✅ Database updated for paper_id: {paper_id}")
+```
+
+#### 6.3 If User Declines "No"
+
+Simply acknowledge and complete:
+```
+"Summary saved to file only. Database not updated."
+```
+
+---
+
 ## Storage Location
 
 Results should be stored in:

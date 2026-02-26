@@ -79,7 +79,7 @@ else:
     # Summary fields (JSON stored in database)
     print(f"Summary Basics: {paper.get('summary_basics')}")
     print(f"Summary Core: {paper.get('summary_core')}")
-    print(f"Summary Technique: {paper.get('summary_techniques')}")
+    print(f"Summary Techniques: {paper.get('summary_techniques')}")
     print(f"Summary Experiments: {paper.get('summary_experiments')}")
     print(f"Summary Figures: {paper.get('summary_figures')}")
 

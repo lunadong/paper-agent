@@ -16,6 +16,33 @@ output:
 
 Analyze paper summaries from beginner and expert perspectives to identify quality issues and improvement opportunities.
 
+## 🔍 User Instructions Checklist
+
+**CRITICAL:** In addition to weighted criteria, ALWAYS check these specific issues from `user_instructions.md`:
+
+### Beginner-Side Checks
+| Check | Where to Look | What Fails |
+|-------|--------------|------------|
+| `why_it_matters` motivation-only | Core.why_it_matters | Bullets that describe the solution ("To address this, the paper proposes X") or forward-reference it ("To close this gap, the paper trains Y") |
+| Bullet length ~30 words | Core fields (key_novelty, evaluation_highlights, breakthrough_assessment) | Any bullet exceeding ~35 words |
+| No "The following" in narratives | key_results entries with `result_group_narrative` | Narratives starting with "The following ... results" |
+| Editorial labeling for uncited comparisons | comparison_to_sota.differences | Comparisons to methods not cited in the paper that lack `[not cited in paper]` suffix |
+| No metric numbers in one_sentence_thesis | Core.one_sentence_thesis | Contains specific percentages or metric values |
+| No forward refs | Core section | "detailed in Technical_details below" or similar bridging sentences |
+| No Table/Figure numbers | Core.evaluation_highlights | References like "Table 1" or "Figure 3" |
+
+### Expert-Side Checks
+| Check | Where to Look | What Fails |
+|-------|--------------|------------|
+| OVERLAP CHECK: constraints ≠ limitations | Technical_details.problem_definition.constraints_assumptions vs Limitations | Same point appears in both sections |
+| novel_architectural_elements = architecture only | Technical_details.novel_architectural_elements | Includes modeling innovations (loss functions), benchmark contributions, or evaluation methodology |
+| FIELD OMISSION: no "Not applicable" | All fields | Field value is "Not applicable", "None", empty string, or empty array instead of being omitted |
+| Limitations 3-5 bullets | Limitations section | More than 5 bullets, or related points not merged |
+| QUALIFY SUPERLATIVES | evaluation_highlights, key_results | Best-case results ("up to +15%") without specifying which model/benchmark |
+| model_details (not model_architecture) | Technical_details field name | Uses old field name `model_architecture` instead of `model_details` |
+| Compute: skip for non-training | Technical_details.compute | Contains "No training performed" or "Not applicable" instead of being omitted |
+| Remove trivial modules | system_pipeline.modules | Includes obvious modules like "finish", "readChunk", "checkBudget", "Submit" |
+
 ## Example Commands
 
 ### Direct Mode
@@ -204,13 +231,13 @@ The `prompt_optimization/` folder has 3 subfolders for diff/comparison purposes:
 
 | Criterion | Weight | Description | Questions to Ask |
 |-----------|--------|-------------|------------------|
-| **accessibility** | 22% | Can someone new to the field understand the core idea? | Is the main contribution explained in plain terms? Could a general ML researcher follow the key points? Are there unexplained assumptions about domain knowledge? |
+| **accessibility** | 22% | Can someone new to the field understand the core idea? | Is the main contribution explained in plain terms? Could a general ML researcher follow the key points? Are there unexplained assumptions about domain knowledge? **USER_INSTRUCTION: Is `one_sentence_thesis` concise (no metric numbers)? No forward-references like "detailed in Technical_details below"?** |
 | **jargon_handling** | 18% | Are technical terms and acronyms explained or defined? | Are acronyms defined on first use (e.g., DPO, MAPPO, RAG)? Are domain-specific terms explained? Is there excessive jargon that could be simplified? |
-| **motivation_clarity** | 18% | Is it clear WHY this problem matters (real-world impact)? | Does 'why_it_matters' explain real-world implications? Would a reader understand the practical significance? Is the problem statement relatable beyond the research community? |
-| **logical_flow** | 12% | Does the summary tell a coherent story? | Does the summary flow logically from problem to solution to results? Are the connections between sections clear? Is there a clear narrative arc? |
+| **motivation_clarity** | 18% | Is it clear WHY this problem matters (real-world impact)? | Does 'why_it_matters' explain real-world implications? Would a reader understand the practical significance? Is the problem statement relatable beyond the research community? **USER_INSTRUCTION: Does `why_it_matters` contain ONLY motivation (not solution)? BAD patterns: "To address this, the paper proposes X", "To close this gap, the paper trains Y"** |
+| **logical_flow** | 12% | Does the summary tell a coherent story? | Does the summary flow logically from problem to solution to results? Are the connections between sections clear? Is there a clear narrative arc? **USER_INSTRUCTION: No forward refs like "detailed in Technical_details below"?** |
 | **architecture_figure** | 12% | Is the architecture figure appropriate and helpful for understanding? | Does the architecture_figure description help visualize the system? Is the figure description accessible to newcomers? Does it complement the text explanation or just repeat it? Would a beginner understand the system better with this figure? |
 | **consistency** | 13% | Are claims grounded in the paper (no hallucination)? | Do the evaluation highlights match typical paper claims? Are there any claims that seem fabricated or exaggerated? Is the breakthrough_assessment justified by the evidence? |
-| **completeness** | 5% | Are the essential elements present (less strict for beginners)? | Are the core sections filled in? Is there enough context to understand the contribution? |
+| **completeness** | 5% | Are the essential elements present (less strict for beginners)? | Are the core sections filled in? Is there enough context to understand the contribution? **USER_INSTRUCTION: Are bullets ~30 words? No table/figure numbers in evaluation_highlights? Do result_group_narratives avoid "The following... results"? Are uncited comparisons labeled with `[not cited in paper]`?** |
 
 ### Beginner Analysis Prompt Template
 
@@ -277,20 +304,30 @@ Respond with a JSON object:
       "suggestions": [...]
     }
   },
-  "top_issues": [
-    "The most critical issue overall",
-    "Second most critical issue",
-    "Third most critical issue"
-  ],
-  "suggested_improvements": [
-    "Most impactful improvement suggestion",
-    "Second suggestion",
-    "Third suggestion"
-  ]
-}
+    "top_issues": [
+      "The most critical issue overall",
+      "Second most critical issue",
+      "Third most critical issue"
+    ],
+    "suggested_improvements": [
+      "Most impactful improvement suggestion",
+      "Second suggestion",
+      "Third suggestion"
+    ],
+    "user_instruction_violations": [
+      "one_sentence_thesis contains metric number '95%'",
+      "why_it_matters includes solution text: 'To address this, the paper proposes...'",
+      "evaluation_highlights bullet exceeds 35 words",
+      "result_group_narrative starts with 'The following...'",
+      "comparison_to_sota references uncited method without '[not cited in paper]' label",
+      "Forward reference found: 'detailed in Technical_details below'"
+    ]
+  }
 ```
 
-Be specific and actionable in your feedback. Focus on what would help a newcomer understand this paper.
+**IMPORTANT:** Always check for `user_instruction_violations` per the checklist above.
+
+Be technically rigorous in your feedback. Focus on what would help an expert quickly assess this paper's contributions and validity.
 ~~~
 
 ---
@@ -303,12 +340,12 @@ Be specific and actionable in your feedback. Focus on what would help a newcomer
 
 | Criterion | Weight | Description | Questions to Ask |
 |-----------|--------|-------------|------------------|
-| **technical_precision** | 22% | Are methods and formulations described accurately and precisely? | Are the technical details correct and complete? Is the methodology described with sufficient precision? Are mathematical formulations and algorithms accurately captured? Are implementation details (models, hyperparameters) precise? |
+| **technical_precision** | 22% | Are methods and formulations described accurately and precisely? | Are the technical details correct and complete? Is the methodology described with sufficient precision? Are mathematical formulations and algorithms accurately captured? Are implementation details (models, hyperparameters) precise? **USER_INSTRUCTION: Does `constraint_assumption` differ from limitations (OVERLAP CHECK)? Are obvious modules removed? Does `novel_architectural_elements` exclude modeling/benchmark/evaluation-methodology innovations? Uses `model_details` (not `model_architecture`)?** |
 | **novelty_assessment** | 18% | Is it clear what's new vs. prior work? | Does 'why_this_is_new' clearly differentiate from prior work? Are the key innovations explicitly stated? Is the relationship to existing methods clear? Would an expert understand the delta over SOTA? |
-| **evaluation_rigor** | 18% | Are results properly contextualized (vs SOTA, baselines)? | Are evaluation metrics appropriate for the task? Are baselines properly described and compared? Is there context for understanding the magnitude of improvements? Are benchmark choices reasonable and representative? |
+| **evaluation_rigor** | 18% | Are results properly contextualized (vs SOTA, baselines)? | Are evaluation metrics appropriate for the task? Are baselines properly described and compared? Is there context for understanding the magnitude of improvements? Are benchmark choices reasonable and representative? **USER_INSTRUCTION: Do key_results NOT start with "The following..."? Are superlatives qualified (specify which model/benchmark for best-case results)?** |
 | **experiment_figures** | 12% | Are experimental result figures appropriate and helpful? | Do the major_experiment_figures highlight key results effectively? Are the most important experimental comparisons captured? Do figure descriptions convey the significance of results? Would an expert find these figures useful for quick assessment? |
 | **consistency** | 12% | Are claims grounded in the paper (no hallucination)? | Do evaluation numbers seem plausible for this domain? Is the breakthrough_assessment consistent with the evidence? Are there any claims that appear fabricated or exaggerated? Do the technical details match typical paper conventions? |
-| **completeness** | 10% | Are key technical details included? | Are all major components of the method described? Are important ablations or analysis mentioned? Are limitations acknowledged? Is the system_pipeline complete? |
+| **completeness** | 10% | Are key technical details included? | Are all major components of the method described? Are important ablations or analysis mentioned? Are limitations acknowledged? Is the system_pipeline complete? **USER_INSTRUCTION: Are fields with "Not applicable"/"None"/empty values omitted entirely (FIELD OMISSION)? Are limitations simplified to 3-5 bullets with related points merged? Is compute skipped for non-training papers?** |
 | **reproducibility** | 8% | Is there enough info to understand or replicate the approach? | Are model architectures and sizes specified? Are training details (data, compute) mentioned? Are key hyperparameters documented? Would an expert know what's needed to reproduce? |
 
 ### Expert Analysis Prompt Template
@@ -392,6 +429,15 @@ Respond with a JSON object:
   "missing_technical_details": [
     "Important detail that should be included",
     "Another missing element"
+  ],
+  "user_instruction_violations": [
+    "constraint_assumption overlaps with limitations (OVERLAP CHECK failed)",
+    "Module list includes obvious modules like 'finish', 'Submit'",
+    "novel_architectural_elements includes benchmark contribution (not architecture)",
+    "Field 'compute' has 'Not applicable' instead of being omitted",
+    "Superlative 'up to +15%' not qualified with specific model/benchmark",
+    "Limitations has 8 bullets (target: 3-5, merge related points)",
+    "Uses 'model_architecture' instead of 'model_details'"
   ]
 }
 ```
@@ -608,13 +654,15 @@ Calculate weighted scores and output structured analysis:
       ...
     },
     "top_issues": ["Critical issue 1 with context", "..."],
-    "suggested_improvements": ["Detailed improvement with specific wording", "..."]
+    "suggested_improvements": ["Detailed improvement with specific wording", "..."],
+    "user_instruction_violations": ["Specific violation 1", "..."]
   },
   "expert_analysis": {
     "criteria_scores": {...},
     "top_issues": [...],
     "suggested_improvements": [...],
-    "missing_technical_details": ["Specific detail 1", "..."]
+    "missing_technical_details": ["Specific detail 1", "..."],
+    "user_instruction_violations": ["Specific violation 1", "..."]
   }
 }
 ```
@@ -680,13 +728,15 @@ Output file format:
   "beginner_analysis": {
     "criteria_scores": {...},
     "top_issues": [...],
-    "suggested_improvements": [...]
+    "suggested_improvements": [...],
+    "user_instruction_violations": [...]
   },
   "expert_analysis": {
     "criteria_scores": {...},
     "top_issues": [...],
     "suggested_improvements": [...],
-    "missing_technical_details": [...]
+    "missing_technical_details": [...],
+    "user_instruction_violations": [...]
   }
 }
 ```

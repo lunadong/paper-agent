@@ -482,7 +482,7 @@ def get_paper_by_id(paper_id):
     cursor = execute_with_retry(
         """
         SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
-               summary_generated_at, summary_basics, summary_core,
+               primary_topic, summary_generated_at, summary_basics, summary_core,
                summary_techniques, summary_experiments, summary_figures
         FROM papers WHERE id = %s
         """,
