@@ -121,9 +121,11 @@ prompt_optimization/paper_summaries/paper_{paper_id}.json
 
 **Note:** This replaces any existing file with the same name. No versioning or renaming.
 
+**After completing this step, proceed to Step 6 to ask the user about database population.**
+
 ---
 
-### Step 6: Populate Database (Optional)
+### Step 6: Populate Database
 
 > 🛑 **STOP: MANDATORY USER CONFIRMATION REQUIRED**
 >
