@@ -66,10 +66,9 @@ def format_paper_description(paper: dict) -> str:
 
     # Then add summaries if available
     summary_basics = paper.get("summary_basics") or ""
+    summary_core = paper.get("summary_core") or ""
     summary_techniques = paper.get("summary_techniques") or ""
-
-    if summary_basics:
-    summary_methods = paper.get("summary_methods_evidence") or ""
+    summary_experiments = paper.get("summary_experiments") or ""
 
     if summary_basics:
         lines.append("## Basics")
@@ -79,9 +78,13 @@ def format_paper_description(paper: dict) -> str:
         lines.append("## Core Contributions")
         lines.append(summary_core)
         lines.append("")
-    if summary_methods:
-        lines.append("## Methods & Evidence")
-        lines.append(summary_methods)
+    if summary_techniques:
+        lines.append("## Techniques")
+        lines.append(summary_techniques)
+        lines.append("")
+    if summary_experiments:
+        lines.append("## Experiments")
+        lines.append(summary_experiments)
         lines.append("")
 
     return "\n".join(lines)

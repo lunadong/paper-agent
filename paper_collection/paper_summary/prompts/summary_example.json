@@ -81,8 +81,7 @@
     "problem_definition": {
       "formal_setting": "Open-domain question answering over document collections, including multi-hop and ambiguous questions",
       "inputs": "Natural language question q",
-      "outputs": "Predicted answer Ans_predict",
-      "constraints_assumptions": "K=10 candidate documents per question, open-domain QA setting with Wikipedia passages"
+      "outputs": "Predicted answer Ans_predict"
     },
     "prerequisite_knowledge": {
       "prerequisites": [

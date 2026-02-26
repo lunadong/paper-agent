@@ -450,7 +450,7 @@ class TestPaperDetailFlow:
         summary = data["summary"]
         assert "basics" in summary
         assert "core" in summary
-        assert "methods" in summary
+        assert "techniques" in summary
 
         # Verify summary content
         assert summary["basics"]["arxiv_id"] == "2401.12345"

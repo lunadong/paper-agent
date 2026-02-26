@@ -512,11 +512,9 @@ def generate_summary_for_paper(
             print("\n========== Stage 3: Topic Classification ==========")
             stages_run.append("stage3_topics")
 
-            if use_abstract_fallback:
-                stage_model = get_lightweight_model()
-                print(f"  Using lightweight model: {stage_model}")
-            else:
-                stage_model = model_name
+            # Always use lightweight model for topic classification
+            stage_model = get_lightweight_model()
+            print(f"  Using model: {stage_model}")
 
             topic_result = classify_paper_topics(
                 pdf_url, stage_model, api_key, pdf_text=pdf_text

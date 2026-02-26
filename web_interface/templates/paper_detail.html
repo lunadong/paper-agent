@@ -757,6 +757,12 @@
                 </ul>
             </div>
             {% endif %}
+            {% if core.core_problem.concrete_example %}
+            <div class="concrete-example" style="margin-top: 12px; padding: 12px; background: #f8fafc; border-left: 3px solid #3b82f6; border-radius: 4px;">
+                <strong style="color: #1e40af;">Concrete Example:</strong>
+                <span style="color: #334155;">{{ core.core_problem.concrete_example }}</span>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 

@@ -72,9 +72,7 @@
       "inputs": "",
       "_inputs_guidance": "What the system receives: e.g., 'Natural language question q'",
       "outputs": "",
-      "_outputs_guidance": "What the system produces: e.g., 'Predicted answer Ans_predict'",
-      "constraints_assumptions": "",
-      "_constraints_guidance": "Focus ONLY on assumptions critical to the problem FORMULATION (if these don't hold, the mathematical formulation breaks). Do NOT include scope restrictions like languages, datasets, domains, frozen components, or evaluation settings—those belong in Limitations. OVERLAP CHECK (3 steps): (1) List every item here. (2) List every Limitation. (3) If ANY item appears in both, remove from here unless it is truly a formulation assumption. Common items that should go in Limitations, NOT here: 'fixed/frozen retriever', 'English only', 'single-turn evaluation', 'specific retrieval method (BM25/Contriever)'."
+      "_outputs_guidance": "What the system produces: e.g., 'Predicted answer Ans_predict'"
     },
 
     "prerequisite_knowledge": {
@@ -158,7 +156,7 @@
     },
 
     "Limitations": [],
-      "_limitations_guidance": "A flat list of 3-5 concise limitation bullets. Merge related points into single bullets rather than listing each concern separately. Include both paper-acknowledged and reviewer-identified limitations. Do NOT overlap with constraints_assumptions. If constraints_assumptions mentions a frozen/fixed component, do NOT re-state it here as a limitation."
+      "_limitations_guidance": "A flat list of 3-5 concise limitation bullets. Merge related points into single bullets rather than listing each concern separately. Include both paper-acknowledged and reviewer-identified limitations."
   },
 
   "Experiments": {

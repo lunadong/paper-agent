@@ -70,7 +70,9 @@ class TestCaptionDataclass:
         mock_rect.x1 = 200.0
 
         # Execute: Import and create Caption
-        from paper_collection.paper_summary.extract_figures import Caption
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            Caption,
+        )
 
         caption = Caption(
             fig_num=1,
@@ -96,7 +98,9 @@ class TestCaptionDataclass:
         mock_rect.x0 = 0.0
         mock_rect.x1 = 100.0
 
-        from paper_collection.paper_summary.extract_figures import Caption
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            Caption,
+        )
 
         caption = Caption(
             fig_num=1,
@@ -118,7 +122,9 @@ class TestCaptionDataclass:
         mock_rect.x0 = 100.0
         mock_rect.x1 = 300.0
 
-        from paper_collection.paper_summary.extract_figures import Caption
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            Caption,
+        )
 
         caption = Caption(
             fig_num=1,
@@ -195,7 +201,7 @@ class TestGetColumnBounds:
         mock_rect.x0 = 50.0
         mock_rect.x1 = 550.0
 
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             Caption,
             get_column_bounds,
         )
@@ -227,7 +233,7 @@ class TestGetColumnBounds:
         mock_rect.x0 = 50.0  # Left side of page
         mock_rect.x1 = 250.0
 
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             Caption,
             get_column_bounds,
         )
@@ -260,7 +266,7 @@ class TestGetColumnBounds:
         mock_rect.x0 = 350.0  # Right side of page
         mock_rect.x1 = 550.0
 
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             Caption,
             get_column_bounds,
         )
@@ -293,7 +299,7 @@ class TestGetColumnBounds:
         mock_rect.x0 = 50.0
         mock_rect.x1 = 550.0
 
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             Caption,
             get_column_bounds,
         )
@@ -322,7 +328,7 @@ class TestExtractPaperIdFromUrl:
 
     def test_extract_arxiv_id(self) -> None:
         """Test extracting arXiv ID from URL."""
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             extract_paper_id_from_url,
         )
 
@@ -334,7 +340,7 @@ class TestExtractPaperIdFromUrl:
 
     def test_extract_arxiv_abs_id(self) -> None:
         """Test extracting arXiv ID from abs URL."""
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             extract_paper_id_from_url,
         )
 
@@ -346,7 +352,7 @@ class TestExtractPaperIdFromUrl:
 
     def test_extract_filename_from_url(self) -> None:
         """Test extracting filename from non-arXiv URL."""
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             extract_paper_id_from_url,
         )
 
@@ -358,7 +364,7 @@ class TestExtractPaperIdFromUrl:
 
     def test_extract_hash_fallback(self) -> None:
         """Test hash fallback for URLs without clear identifier."""
-        from paper_collection.paper_summary.extract_figures import (
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
             extract_paper_id_from_url,
         )
 
@@ -374,7 +380,9 @@ class TestFiguresDir:
 
     def test_figures_dir_path(self) -> None:
         """Test that FIGURES_DIR points to expected location."""
-        from paper_collection.paper_summary.extract_figures import FIGURES_DIR
+        from paper_collection.paper_summary.util.figure_extraction_from_pdf import (
+            FIGURES_DIR,
+        )
 
         # Assert: Should be under tmp/figures
         assert FIGURES_DIR.name == "figures"
@@ -386,16 +394,16 @@ class TestPymupdfAvailability:
 
     def test_pymupdf_availability_flag_exists(self) -> None:
         """Test that PYMUPDF_AVAILABLE flag is defined."""
-        from paper_collection.paper_summary import extract_figures
+        from paper_collection.paper_summary.util import figure_extraction_from_pdf
 
         # Assert: Flag should exist and be boolean
-        assert hasattr(extract_figures, "PYMUPDF_AVAILABLE")
-        assert isinstance(extract_figures.PYMUPDF_AVAILABLE, bool)
+        assert hasattr(figure_extraction_from_pdf, "PYMUPDF_AVAILABLE")
+        assert isinstance(figure_extraction_from_pdf.PYMUPDF_AVAILABLE, bool)
 
     def test_pillow_availability_flag_exists(self) -> None:
         """Test that PILLOW_AVAILABLE flag is defined."""
-        from paper_collection.paper_summary import extract_figures
+        from paper_collection.paper_summary.util import figure_extraction_from_pdf
 
         # Assert: Flag should exist and be boolean
-        assert hasattr(extract_figures, "PILLOW_AVAILABLE")
-        assert isinstance(extract_figures.PILLOW_AVAILABLE, bool)
+        assert hasattr(figure_extraction_from_pdf, "PILLOW_AVAILABLE")
+        assert isinstance(figure_extraction_from_pdf.PILLOW_AVAILABLE, bool)

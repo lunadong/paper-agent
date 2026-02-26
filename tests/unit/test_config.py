@@ -29,7 +29,143 @@ from config import (
     GeminiConfig,
     GmailConfig,
     load_config_from_file,
+    parse_email_date,
 )
+
+
+class TestParseEmailDate:
+    """Tests for parse_email_date function."""
+
+    def test_empty_string_returns_unchanged(self) -> None:
+        """Empty string input returns empty string."""
+        # Setup: Empty string
+        date_str = ""
+
+        # Execute: Parse the empty string
+        result = parse_email_date(date_str)
+
+        # Assert: Should return unchanged
+        assert result == "", "Empty string should return empty string"
+
+    def test_none_returns_unchanged(self) -> None:
+        """None input returns None."""
+        # Setup: None value
+        date_str = None
+
+        # Execute: Parse None
+        result = parse_email_date(date_str)
+
+        # Assert: Should return None
+        assert result is None, "None should return None"
+
+    def test_na_returns_unchanged(self) -> None:
+        """N/A input returns N/A unchanged."""
+        # Setup: N/A string
+        date_str = "N/A"
+
+        # Execute: Parse N/A
+        result = parse_email_date(date_str)
+
+        # Assert: Should return unchanged
+        assert result == "N/A", "N/A should return unchanged"
+
+    def test_already_yyyy_mm_dd_returns_unchanged(self) -> None:
+        """Date already in YYYY-MM-DD format returns unchanged."""
+        # Setup: Date in YYYY-MM-DD format
+        date_str = "2023-12-14"
+
+        # Execute: Parse the date
+        result = parse_email_date(date_str)
+
+        # Assert: Should return unchanged
+        assert result == "2023-12-14", "YYYY-MM-DD format should return unchanged"
+
+    def test_m_d_yyyy_format_single_digits(self) -> None:
+        """M/D/YYYY format with single digit month and day is parsed correctly."""
+        # Setup: Date in M/D/YYYY format
+        date_str = "2/3/2026"
+
+        # Execute: Parse the date
+        result = parse_email_date(date_str)
+
+        # Assert: Should be converted to YYYY-MM-DD
+        assert result == "2026-02-03", "2/3/2026 should become 2026-02-03"
+
+    def test_m_d_yyyy_format_double_digits(self) -> None:
+        """M/D/YYYY format with double digit month and day is parsed correctly."""
+        # Setup: Date in M/D/YYYY format with double digits
+        date_str = "12/14/2023"
+
+        # Execute: Parse the date
+        result = parse_email_date(date_str)
+
+        # Assert: Should be converted to YYYY-MM-DD
+        assert result == "2023-12-14", "12/14/2023 should become 2023-12-14"
+
+    def test_email_format_with_timezone(self) -> None:
+        """Email format 'Thu, 14 Dec 2023 15:27:28 -0800' is parsed correctly."""
+        # Setup: Email date format
+        date_str = "Thu, 14 Dec 2023 15:27:28 -0800"
+
+        # Execute: Parse the date
+        result = parse_email_date(date_str)
+
+        # Assert: Should be converted to YYYY-MM-DD
+        assert result == "2023-12-14", "Email format should be parsed to 2023-12-14"
+
+    def test_email_format_different_months(self) -> None:
+        """Email format works for different months."""
+        # Setup: Test various months
+        test_cases = [
+            ("Mon, 1 Jan 2024 10:00:00 +0000", "2024-01-01"),
+            ("Tue, 15 Feb 2024 12:30:00 -0500", "2024-02-15"),
+            ("Wed, 20 Mar 2024 08:00:00 +0100", "2024-03-20"),
+            ("Thu, 5 Apr 2024 14:00:00 -0700", "2024-04-05"),
+            ("Fri, 10 May 2024 09:15:00 +0000", "2024-05-10"),
+            ("Sat, 22 Jun 2024 16:45:00 -0400", "2024-06-22"),
+            ("Sun, 4 Jul 2024 11:00:00 +0000", "2024-07-04"),
+            ("Mon, 19 Aug 2024 13:30:00 -0600", "2024-08-19"),
+            ("Tue, 30 Sep 2024 07:00:00 +0200", "2024-09-30"),
+            ("Wed, 31 Oct 2024 23:59:00 -0700", "2024-10-31"),
+            ("Thu, 28 Nov 2024 12:00:00 +0000", "2024-11-28"),
+            ("Fri, 25 Dec 2024 00:00:00 -0800", "2024-12-25"),
+        ]
+
+        # Execute & Assert: Check each month
+        for date_str, expected in test_cases:
+            result = parse_email_date(date_str)
+            assert result == expected, f"{date_str} should become {expected}"
+
+    def test_unparseable_format_returns_unchanged(self) -> None:
+        """Unparseable date format returns unchanged."""
+        # Setup: Various unparseable formats
+        unparseable = [
+            "not a date",
+            "December 14, 2023",
+            "14-12-2023",
+            "2023/12/14",
+        ]
+
+        # Execute & Assert: Each should return unchanged
+        for date_str in unparseable:
+            result = parse_email_date(date_str)
+            assert result == date_str, f"{date_str} should return unchanged"
+
+    def test_case_insensitive_month_names(self) -> None:
+        """Month names in email format are case-insensitive."""
+        # Setup: Different case month names
+        test_cases = [
+            ("14 DEC 2023", "2023-12-14"),
+            ("14 dec 2023", "2023-12-14"),
+            ("14 Dec 2023", "2023-12-14"),
+        ]
+
+        # Execute & Assert: All should parse correctly
+        for date_str, expected in test_cases:
+            result = parse_email_date(date_str)
+            assert result == expected, (
+                f"{date_str} should become {expected} (case-insensitive)"
+            )
 
 
 class TestFindConfigFile:

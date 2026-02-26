@@ -159,21 +159,6 @@ Core Section Style
 Technical_details Style
 ========================
 23) Formal notation, losses, algorithms belong ONLY here (not in Core).
-    - constraints_assumptions: Only assumptions critical to the formulation (if broken, formulation fails).
-      Scope restrictions (language, dataset, domain) → Limitations instead.
-      OVERLAP CHECK (MANDATORY): After drafting, perform this 3-step check:
-        Step 1: List every item in constraints_assumptions.
-        Step 2: List every item in Limitations.
-        Step 3: For each constraint, check if ANY Limitation says the same thing differently.
-          If overlap found → keep in the more appropriate section ONLY:
-            • If it's a formulation assumption → constraints_assumptions
-            • If it's a scope/coverage gap → Limitations
-          COMMON OVERLAPS to watch for:
-            • "Fixed/frozen retriever" as constraint vs. "retriever not jointly optimized" as limitation
-            • "Single-turn evaluation" as constraint vs. "not tested on multi-turn" as limitation
-            • "BM25 retrieval" as constraint vs. "only tested with BM25" as limitation
-            • "English only" as constraint vs. "not tested on other languages" as limitation
-          In these cases, keep in Limitations (they are scope gaps, not formulation assumptions).
     - Limitations: 3-5 concise bullets (flat list). Merge related points.
 
 ========================

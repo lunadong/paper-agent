@@ -15,6 +15,7 @@ Usage:
 
 import argparse
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
@@ -33,6 +34,67 @@ CONFIG_LOCATIONS = [
     os.path.join(PROJECT_ROOT, "config.yml"),
     os.path.join(os.path.expanduser("~"), ".paper_agent", "config.yaml"),
 ]
+
+# Month name to number mapping for date parsing
+MONTH_MAP = {
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+}
+
+
+def parse_email_date(date_str: str) -> str:
+    """
+    Parse various date formats to YYYY-MM-DD (sortable format).
+
+    Handles:
+    - "Thu, 14 Dec 2023 15:27:28 -0800" → "2023-12-14"
+    - "2/3/2026" or "12/14/2023" (M/D/YYYY) → "2026-02-03"
+    - Already "2023-12-14" → unchanged
+
+    Args:
+        date_str: Date string in various formats
+
+    Returns:
+        Date string in YYYY-MM-DD format, or original string if parsing fails
+    """
+    if not date_str or date_str == "N/A":
+        return date_str
+
+    # Already in YYYY-MM-DD format?
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+        return date_str
+
+    # Try M/D/YYYY format (e.g., "2/3/2026" or "12/14/2023")
+    match = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{4})$", date_str)
+    if match:
+        month = int(match.group(1))
+        day = int(match.group(2))
+        year = match.group(3)
+        return f"{year}-{month:02d}-{day:02d}"
+
+    # Try email format: "Thu, 14 Dec 2023 15:27:28 -0800"
+    match = re.search(r"(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})", date_str)
+    if match:
+        day = int(match.group(1))
+        month_name = match.group(2).lower()
+        year = match.group(3)
+
+        month = MONTH_MAP.get(month_name)
+        if month:
+            return f"{year}-{month:02d}-{day:02d}"
+
+    # Return original if can't parse
+    return date_str
 
 
 @dataclass

@@ -11,10 +11,12 @@ interface with AI-powered summarization.
 - **Semantic Search**: Vector similarity search using OpenAI embeddings
 - **Topic Tagging**: Automatic topic classification (exact + semantic match)
 - **Primary Topic**: Identify the main research area for each paper
-- **AI Summarization**: Two-stage summarization using Gemini API
-  - Stage 1: Topic classification from PDF/abstract
+- **AI Summarization**: Three-stage summarization using Gemini API
+  - Stage 1: Basic paper info extraction from PDF
   - Stage 2: Detailed structured summary with evaluation highlights
+  - Stage 3: Topic classification (uses lightweight model for cost efficiency)
 - **Figure Extraction**: Automatic extraction of architecture diagrams and key figures from PDFs
+- **Prompt Optimization**: Iterative prompt improvement workflow with expert/beginner analysis
 - **Web Interface**: Browse, search, and view paper summaries with collapsible sections
 - **Daily Updates**: Automated collection with parallel processing and email notifications
 - **Scheduled Tasks**: macOS launchd integration for daily automated updates
@@ -143,7 +145,7 @@ Visit: http://localhost:5001
 
 ## Project Structure
 
-```
+```text
 paper-agent/
 |-- config.yaml.example      # Configuration template
 |-- requirements.txt         # Python dependencies
@@ -159,9 +161,8 @@ paper-agent/
 |   |
 |   |-- paper_summary/       # AI-powered paper summarization
 |   |   |-- __init__.py           # Package exports
-|   |   |-- summary_generation.py # Two-stage summary generation (~930 lines)
+|   |   |-- summary_generation.py # Three-stage summary generation
 |   |   |-- prompt_manager.py     # Prompt template loading and topics
-|   |   |-- extract_figures.py    # Figure extraction from PDFs
 |   |   |
 |   |   |-- util/                 # Utility modules
 |   |   |   |-- __init__.py       # Utility package exports
@@ -169,12 +170,18 @@ paper-agent/
 |   |   |   |-- pdf_processing.py # PDF download, cache, text extraction
 |   |   |   +-- llm_client.py     # Gemini API client with retry logic
 |   |   |
-|   |   +-- prompts/              # Prompt templates
-|   |       |-- prompt.txt           # Main summary prompt
-|   |       |-- prompt_topic.txt     # Topic classification prompt
-|   |       |-- background_*.txt     # Topic-specific backgrounds
-|   |       |-- summary_template.json
-|   |       +-- summary_example.json
+|   |   |-- prompts/              # Prompt templates
+|   |   |   |-- prompt.txt           # Main summary prompt
+|   |   |   |-- prompt_topic.txt     # Topic classification prompt
+|   |   |   |-- background_*.txt     # Topic-specific backgrounds
+|   |   |   |-- summary_template.json
+|   |   |   +-- summary_example.json
+|   |   |
+|   |   +-- prompt_optimization/  # Prompt improvement workflow
+|   |       |-- analyzer_base.py     # Base analyzer class
+|   |       |-- paper_summaries/     # Example paper outputs
+|   |       |-- analysis_critics/    # Expert/beginner analysis
+|   |       +-- revised_prompts/     # Iteratively improved prompts
 |   |
 |   +-- paper_metadata/      # Paper parsing utilities
 |       |-- paper_parser.py  # Parse Google Scholar HTML
@@ -193,6 +200,12 @@ paper-agent/
     |   +-- paper_detail.html # Paper detail with summary
     +-- static/js/
         +-- papers.js        # Frontend JavaScript
+
+|-- tests/                   # Test suite
+|   |-- conftest.py          # Pytest fixtures
+|   |-- unit/                # Unit tests
+|   |-- integration/         # Integration tests
+|   +-- e2e/                 # End-to-end tests
 ```
 
 ## Usage

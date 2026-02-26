@@ -31,7 +31,7 @@ sys.path.insert(0, SCRIPT_DIR)
 sys.path.insert(0, PAPER_METADATA_DIR)
 sys.path.insert(0, PAPER_SUMMARY_DIR)
 
-from config import add_config_args, init_config
+from config import add_config_args, init_config, parse_email_date
 from gmail_client import (
     get_gmail_service,
     get_message,
@@ -48,42 +48,6 @@ def log(message):
     """Print message with timestamp."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{timestamp}] {message}")
-
-
-def parse_email_date(date_str):
-    """Parse email date to YYYY-MM-DD format."""
-    import re
-
-    if not date_str or date_str == "N/A":
-        return date_str
-
-    # Already in YYYY-MM-DD format
-    if re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
-        return date_str
-
-    # Try email format: "Thu, 14 Dec 2023 15:27:28 -0800"
-    month_map = {
-        "jan": 1,
-        "feb": 2,
-        "mar": 3,
-        "apr": 4,
-        "may": 5,
-        "jun": 6,
-        "jul": 7,
-        "aug": 8,
-        "sep": 9,
-        "oct": 10,
-        "nov": 11,
-        "dec": 12,
-    }
-    match = re.search(r"(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})", date_str)
-    if match:
-        day = int(match.group(1))
-        month = month_map.get(match.group(2).lower(), 1)
-        year = match.group(3)
-        return f"{year}-{month:02d}-{day:02d}"
-
-    return date_str
 
 
 def parse_args():
