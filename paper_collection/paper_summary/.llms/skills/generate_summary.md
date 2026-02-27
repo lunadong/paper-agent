@@ -66,7 +66,7 @@ Get the paper PDF URL either:
 ```python
 # If paper_id is provided, fetch from database first:
 import sys
-sys.path.insert(0, '/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection')
+sys.path.insert(0, 'paper_collection')
 from paper_db import PaperDB
 
 db = PaperDB()
@@ -156,7 +156,7 @@ Use the `paper_db` module to update the summary in the database:
 ```python
 import sys
 import json
-sys.path.insert(0, '/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection')
+sys.path.insert(0, 'paper_collection')
 from paper_db import PaperDB
 
 # Load the generated summary

@@ -433,7 +433,7 @@ class TestExtractFiguresFromHtml:
         assert len(result) == 1
         assert result[0]["figure_num"] == 1
         assert "Test figure caption" in result[0]["caption"]
-        assert result[0]["image_url"] == "https://arxiv.org/html/x1.png"
+        assert result[0]["image_url"] == ("https://arxiv.org/html/2601.06798/x1.png")
         assert result[0]["image_data"] == b"fake image data"
 
     def test_extract_figures_multiple(self) -> None:
@@ -498,7 +498,7 @@ class TestExtractFiguresFromHtml:
 
         assert len(result) == 1
         assert result[0]["image_data"] is None
-        assert result[0]["image_url"] == "https://arxiv.org/html/x1.png"
+        assert result[0]["image_url"] == ("https://arxiv.org/html/2601.06798/x1.png")
 
     def test_extract_figures_skips_data_uris(self) -> None:
         """Test that data URIs (base64 images) are skipped."""

@@ -153,7 +153,7 @@ Steps:
 
 CRITICAL: Do NOT just report failures - you MUST fix them and verify with another test run.
 
-Working directory: /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent"
+Working directory: (project root)"
 ```
 
 ### Step 5: Run Lint and FIX All Issues

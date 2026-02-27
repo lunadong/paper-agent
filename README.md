@@ -12,10 +12,19 @@ interface with AI-powered summarization.
 - **Topic Tagging**: Automatic topic classification (exact + semantic match)
 - **Primary Topic**: Identify the main research area for each paper
 - **AI Summarization**: Three-stage summarization using Gemini API
-  - Stage 1: Basic paper info extraction from PDF
+  - Stage 1: Basic paper info extraction from PDF or HTML
   - Stage 2: Detailed structured summary with evaluation highlights
   - Stage 3: Topic classification (uses lightweight model for cost efficiency)
-- **Figure Extraction**: Automatic extraction of architecture diagrams and key figures from PDFs
+- **Figure Extraction**: Extracts architecture diagrams and key figures
+  - ArXiv HTML (preferred): Clean figures with captions from HTML
+  - PDF extraction: Caption-centric heuristic detection for non-arXiv papers
+- **ArXiv HTML Processing**: Preferred extraction method for arXiv papers
+  - Cleaner text extraction without PDF artifacts
+  - Better figure handling with direct image downloads
+  - Automatic fallback to PDF when HTML unavailable
+- **Topic-Specific Background Knowledge**: Context-aware summarization
+  - Background files for key topics (RAG, Agent, Memory, etc.)
+  - Helps LLM understand domain-specific concepts
 - **Prompt Optimization**: Iterative prompt improvement workflow with expert/beginner analysis
 - **Web Interface**: Browse, search, and view paper summaries with collapsible sections
 - **Daily Updates**: Automated collection with parallel processing and email notifications
@@ -168,14 +177,18 @@ paper-agent/
 |   |   |   |-- __init__.py       # Utility package exports
 |   |   |   |-- checkpoint.py     # Rate limiting & checkpoint management
 |   |   |   |-- pdf_processing.py # PDF download, cache, text extraction
+|   |   |   |-- arxiv_html_processing.py  # ArXiv HTML text & figure extraction
+|   |   |   |-- figure_extraction_from_pdf.py  # PDF figure extraction
 |   |   |   +-- llm_client.py     # Gemini API client with retry logic
 |   |   |
 |   |   |-- prompts/              # Prompt templates
 |   |   |   |-- prompt.txt           # Main summary prompt
 |   |   |   |-- prompt_topic.txt     # Topic classification prompt
-|   |   |   |-- background_*.txt     # Topic-specific backgrounds
+|   |   |   |-- background_*.txt     # Topic backgrounds (rag, agent)
 |   |   |   |-- summary_template.json
 |   |   |   +-- summary_example.json
+|   |   |
+|   |   |-- extract_figures.py       # PDF figure extraction
 |   |   |
 |   |   +-- prompt_optimization/  # Prompt improvement workflow
 |   |       |-- analyzer_base.py     # Base analyzer class
@@ -240,6 +253,8 @@ Processing Options:
   --checkpoint FILE Checkpoint file for resumable processing
   --resume          Resume from checkpoint
   --overwrite       Overwrite existing summaries
+  --prefer-html     Prefer arXiv HTML over PDF for text extraction (default)
+  --no-html         Disable HTML extraction, use PDF only
 
 Output Options:
   --save-db         Save results to database
@@ -364,11 +379,11 @@ The system supports automated daily updates via macOS launchd:
    <plist version="1.0">
    <dict>
        <key>Label</key>
-       <string>com.lunadong.paper-update</string>
+       <string>com.username.paper-update</string>
        <key>ProgramArguments</key>
        <array>
            <string>/usr/bin/python3</string>
-           <string>/Users/lunadong/paper-agent-cron/daily_update.py</string>
+           <string>~/paper-agent-cron/daily_update.py</string>
            <string>--days</string>
            <string>2</string>
        </array>
@@ -384,14 +399,14 @@ The system supports automated daily updates via macOS launchd:
        <key>StandardErrorPath</key>
        <string>/tmp/paper-update-error.log</string>
        <key>WorkingDirectory</key>
-       <string>/Users/lunadong/paper-agent-cron</string>
+       <string>~/paper-agent-cron</string>
    </dict>
    </plist>
    ```
 
 3. Load the agent:
    ```bash
-   launchctl load ~/Library/LaunchAgents/com.lunadong.paper-update.plist
+   launchctl load ~/Library/LaunchAgents/com.username.paper-update.plist
    ```
 
 4. Monitor logs:

@@ -23,7 +23,7 @@ Revise paper summary prompts and examples based on analysis feedback to improve 
 **If any file is missing, copy from source:**
 ```bash
 # Check and copy missing files
-cd /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/paper_summary
+cd paper_collection/paper_summary
 
 # Copy prompt.txt if missing
 [ ! -f prompt_optimization/revised_prompts/prompt.txt ] && cp prompts/prompt.txt prompt_optimization/revised_prompts/

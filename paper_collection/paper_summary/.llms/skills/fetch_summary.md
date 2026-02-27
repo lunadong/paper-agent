@@ -54,7 +54,7 @@ If no local file exists, fetch from the database using Python:
 
 ```python
 import sys
-sys.path.insert(0, '/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection')
+sys.path.insert(0, 'paper_collection')
 
 from paper_db import PaperDB
 
