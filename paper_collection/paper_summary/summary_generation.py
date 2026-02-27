@@ -94,7 +94,8 @@ def _validate_topics(result: dict) -> dict:
     If primary_topic is not in the list, set it to None.
     Filter out invalid topics from the topic list.
     """
-    topics = result.get("topics", [])
+    # LLM returns "topic" (singular) but we normalize to "topics" (plural)
+    topics = result.get("topic", result.get("topics", []))
     primary_topic = result.get("primary_topic")
 
     # Filter topics to only include allowed ones
@@ -182,7 +183,7 @@ def classify_paper_topics(
                 result = json.loads(json_str)
                 # Validate topics are in the allowed list
                 result = _validate_topics(result)
-                print(f"  Topics: {result.get('topic', [])}")
+                print(f"  Topics: {result.get('topics', [])}")
                 print(f"  Primary topic: {result.get('primary_topic', 'N/A')}")
                 return result
             else:
@@ -589,7 +590,7 @@ def generate_summary_for_paper(
             )
             topics = topic_result.get("topics", [])
             primary_topic = topic_result.get("primary_topic")
-            print(f"  Topics: {topics}, Primary: {primary_topic}")
+            # Note: topics already printed by classify_paper_topics
 
             # Only update DB if we got valid results (don't overwrite with empty)
             if save_db and (topics or primary_topic):
