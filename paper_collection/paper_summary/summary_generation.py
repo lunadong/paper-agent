@@ -591,11 +591,17 @@ def generate_summary_for_paper(
             primary_topic = topic_result.get("primary_topic")
             print(f"  Topics: {topics}, Primary: {primary_topic}")
 
-            if save_db:
+            # Only update DB if we got valid results (don't overwrite with empty)
+            if save_db and (topics or primary_topic):
                 db.update_paper(
                     paper_id,
                     topics=", ".join(topics) if topics else None,
                     primary_topic=primary_topic,
+                )
+            elif save_db:
+                print(
+                    "  Warning: Empty topic result, "
+                    "skipping DB update to preserve existing data"
                 )
         else:
             topics_str = paper.get("topics", "")
@@ -651,8 +657,14 @@ def generate_summary_for_paper(
                     json.dump(summary, f, indent=2)
                 print(f"  Summary saved to: {summary_path}")
 
-            if save_db:
+            # Only update DB if we got valid summary (don't overwrite with empty)
+            if save_db and summary:
                 db.update_paper_summary(paper_id, summary)
+            elif save_db:
+                print(
+                    "  Warning: Empty summary result, "
+                    "skipping DB update to preserve existing data"
+                )
         elif use_abstract_fallback and run_summary:
             print("\n========== Stage 4: Summary Generation (SKIPPED) ==========")
             print("  Cannot generate summary from abstract alone")
