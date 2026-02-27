@@ -23,9 +23,11 @@ interface with AI-powered summarization.
   - Better figure handling with direct image downloads
   - Automatic fallback to PDF when HTML unavailable
 - **Topic-Specific Background Knowledge**: Context-aware summarization
-  - Background files for key topics (RAG, Agent, Memory, etc.)
-  - Helps LLM understand domain-specific concepts
-- **Prompt Optimization**: Iterative prompt improvement workflow with expert/beginner analysis
+    - Background files for key topics (RAG, Agent, Memory, P13N, Factuality, Benchmark)
+    - Helps LLM understand domain-specific concepts
+- **Prompt Optimization**: Iterative prompt improvement workflow
+    - Expert and beginner perspective analysis
+    - Devmate skills for automated prompt revision
 - **Web Interface**: Browse, search, and view paper summaries with collapsible sections
 - **Daily Updates**: Automated collection with parallel processing and email notifications
 - **Scheduled Tasks**: macOS launchd integration for daily automated updates
@@ -176,7 +178,8 @@ paper-agent/
 |   |   |-- util/                 # Utility modules
 |   |   |   |-- __init__.py       # Utility package exports
 |   |   |   |-- checkpoint.py     # Rate limiting & checkpoint management
-|   |   |   |-- pdf_processing.py # PDF download, cache, text extraction
+|   |   |   |-- pdf_download.py   # PDF download with retry logic
+|   |   |   |-- pdf_processing.py # PDF cache and text extraction
 |   |   |   |-- arxiv_html_processing.py  # ArXiv HTML text & figure extraction
 |   |   |   |-- figure_extraction_from_pdf.py  # PDF figure extraction
 |   |   |   +-- llm_client.py     # Gemini API client with retry logic
@@ -184,9 +187,18 @@ paper-agent/
 |   |   |-- prompts/              # Prompt templates
 |   |   |   |-- prompt.txt           # Main summary prompt
 |   |   |   |-- prompt_topic.txt     # Topic classification prompt
-|   |   |   |-- background_*.txt     # Topic backgrounds (rag, agent)
+|   |   |   |-- background_*.txt     # Topic backgrounds (rag, agent, memory,
+|   |   |   |                        #   p13n, factuality, benchmark)
 |   |   |   |-- summary_template.json
 |   |   |   +-- summary_example.json
+|   |   |
+|   |   |-- .llms/skills/         # Devmate prompt optimization skills
+|   |   |   |-- analyze_summary.md   # Analyze summaries for quality issues
+|   |   |   |-- fetch_summary.md     # Fetch summaries from DB or files
+|   |   |   |-- generate_summary.md  # Generate structured JSON summaries
+|   |   |   |-- optimize_prompts.md  # Run single optimization pass
+|   |   |   |-- revise_prompts.md    # Revise prompts based on analysis
+|   |   |   +-- user_instructions.md # User constraints for revision
 |   |   |
 |   |   |-- extract_figures.py       # PDF figure extraction
 |   |   |

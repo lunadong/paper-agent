@@ -347,6 +347,53 @@ class CheckpointManager:
             "abstract_only_total": len(abstract_only),
         }
 
+    def categorize_errors(self) -> dict:
+        """
+        Categorize errors into high-level categories for the summary table.
+
+        Returns:
+            Dict with counts for each category:
+            - db_connection: Database connection errors (DNS, network issues)
+            - rate_limit: LLM API rate limiting (429)
+            - corrupt_pdf: Malformed PDF files (EOF errors)
+            - api_error: Server-side API errors (500, 504)
+            - timeout: Network timeouts
+            - other: Miscellaneous errors
+        """
+        errors = self.data.get("errors", {})
+
+        # Define category patterns
+        categories = {
+            "db_connection": [
+                "sqlite3.OperationalError",
+                "unable to resolve",
+                "DNS",
+                "database",
+            ],
+            "rate_limit": ["429", "RESOURCE_EXHAUSTED", "rate limit", "quota"],
+            "corrupt_pdf": ["EOF", "EOF marker", "corrupt", "malformed"],
+            "api_error": ["500", "504", "API call failed", "Gateway"],
+            "timeout": ["timeout", "timed out", "TimeoutError"],
+        }
+
+        counts = {k: 0 for k in categories}
+        counts["other"] = 0
+
+        for _, msg in errors.items():
+            if msg is None:
+                msg = ""
+            msg_lower = msg.lower()
+            categorized = False
+            for cat, patterns in categories.items():
+                if any(p.lower() in msg_lower for p in patterns):
+                    counts[cat] += 1
+                    categorized = True
+                    break
+            if not categorized:
+                counts["other"] += 1
+
+        return counts
+
     def print_stats(self):
         """Print formatted error statistics table."""
         summary = self.get_summary()

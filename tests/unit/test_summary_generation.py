@@ -9,7 +9,6 @@ from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 
-
 # Module paths for patching
 _SG_MODULE = "paper_collection.paper_summary.summary_generation"
 

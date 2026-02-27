@@ -14,6 +14,8 @@ from paper_collection.paper_metadata.arxiv_fetcher import (
     extract_date,
     extract_paper_info,
     fetch_arxiv_html,
+    get_arxiv_pdf_url,
+    search_arxiv_by_title,
 )
 
 
@@ -268,6 +270,119 @@ class TestFetchArxivHtml:
 
         # Execute
         result = fetch_arxiv_html(url)
+
+        # Assert
+        assert result is None
+
+
+class TestGetArxivPdfUrl:
+    """Tests for get_arxiv_pdf_url function."""
+
+    def test_get_arxiv_pdf_url(self):
+        """Generate correct PDF URL from arXiv ID."""
+        # Setup
+        arxiv_id = "2601.12345"
+
+        # Execute
+        result = get_arxiv_pdf_url(arxiv_id)
+
+        # Assert
+        assert result == "https://arxiv.org/pdf/2601.12345.pdf"
+
+    def test_get_arxiv_pdf_url_with_version(self):
+        """Generate PDF URL without version suffix."""
+        # Setup
+        arxiv_id = "2401.67890"
+
+        # Execute
+        result = get_arxiv_pdf_url(arxiv_id)
+
+        # Assert
+        assert result == "https://arxiv.org/pdf/2401.67890.pdf"
+
+
+class TestSearchArxivByTitle:
+    """Tests for search_arxiv_by_title function."""
+
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.requests.get")
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.time.sleep")
+    def test_search_arxiv_by_title_found(self, _mock_sleep, mock_get):
+        """Find paper on arXiv by title."""
+        # Setup
+        mock_response = MagicMock()
+        mock_response.text = """<?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom">
+          <entry>
+            <id>http://arxiv.org/abs/2601.12345v1</id>
+            <title>Test Paper Title: A Study on Machine Learning</title>
+          </entry>
+        </feed>
+        """
+        mock_response.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response
+
+        # Execute
+        result = search_arxiv_by_title("Test Paper Title: A Study on Machine Learning")
+
+        # Assert
+        assert result == "2601.12345"
+        mock_get.assert_called_once()
+
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.requests.get")
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.time.sleep")
+    def test_search_arxiv_by_title_not_found(self, _mock_sleep, mock_get):
+        """Return None when paper is not on arXiv."""
+        # Setup
+        mock_response = MagicMock()
+        mock_response.text = """<?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom">
+        </feed>
+        """
+        mock_response.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response
+
+        # Execute
+        result = search_arxiv_by_title("Nonexistent Paper That Does Not Exist")
+
+        # Assert
+        assert result is None
+
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.requests.get")
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.time.sleep")
+    def test_search_arxiv_by_title_fuzzy_match(self, _mock_sleep, mock_get):
+        """Find paper with slightly different title (fuzzy match)."""
+        # Setup - title must match at least 80% of search words
+        mock_response = MagicMock()
+        mock_response.text = """<?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom">
+          <entry>
+            <id>http://arxiv.org/abs/2601.99999v2</id>
+            <title>Improving RAG Systems with Multi Agent Learning Techniques</title>
+          </entry>
+        </feed>
+        """
+        mock_response.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response
+
+        # Execute - search with title that shares most words
+        result = search_arxiv_by_title(
+            "Improving RAG Systems with Multi Agent Learning"
+        )
+
+        # Assert
+        assert result == "2601.99999"
+
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.requests.get")
+    @patch("paper_collection.paper_metadata.arxiv_fetcher.time.sleep")
+    def test_search_arxiv_by_title_request_failure(self, _mock_sleep, mock_get):
+        """Return None on request failure."""
+        # Setup
+        import requests
+
+        mock_get.side_effect = requests.RequestException("Connection failed")
+
+        # Execute
+        result = search_arxiv_by_title("Some Paper Title")
 
         # Assert
         assert result is None

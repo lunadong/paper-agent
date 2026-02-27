@@ -21,8 +21,71 @@ Usage:
 
 import argparse
 import json
+import threading
 from pathlib import Path
 from typing import Optional
+
+# Thread-safe logging: a lock to ensure atomic printing
+_print_lock = threading.Lock()
+
+# Thread-local storage for log buffering
+_thread_local = threading.local()
+
+
+class LogBuffer:
+    """
+    Buffer for collecting log messages and printing them atomically.
+
+    Usage:
+        with LogBuffer() as log:
+            log("Starting process...")
+            log("  Step 1 complete")
+            log("  Step 2 complete")
+        # All messages are printed together when exiting the context
+    """
+
+    def __init__(self, enabled: bool = True):
+        self.enabled = enabled
+        self.messages = []
+
+    def __enter__(self):
+        if self.enabled:
+            _thread_local.log_buffer = self
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.enabled and self.messages:
+            with _print_lock:
+                print("\n".join(self.messages))
+        if hasattr(_thread_local, "log_buffer"):
+            del _thread_local.log_buffer
+        return False
+
+    def __call__(self, message: str):
+        """Add a message to the buffer."""
+        if self.enabled:
+            self.messages.append(message)
+        else:
+            print(message)
+
+
+def get_log_buffer():
+    """Get the current thread's log buffer, or None if not buffering."""
+    return getattr(_thread_local, "log_buffer", None)
+
+
+def log(message: str):
+    """
+    Log a message. If inside a LogBuffer context, buffers the message.
+    Otherwise, prints immediately with thread-safe locking.
+    """
+    buffer = get_log_buffer()
+    if buffer:
+        buffer(message)
+    else:
+        with _print_lock:
+            print(message)
+
 
 # Handle both direct execution and package import
 try:
@@ -360,7 +423,7 @@ def generate_summary_for_paper(
         if "arxiv.org" in pdf_url and not pdf_url.endswith(".pdf"):
             pdf_url += ".pdf"
 
-        print(f"Processing paper ID {paper_id}: {title}...")
+        log(f"Processing paper ID {paper_id}: {title}...")
 
         # =================================================================
         # Setup output directory if specified
@@ -373,7 +436,7 @@ def generate_summary_for_paper(
             dir_name = f"arxiv_{arxiv_id}" if arxiv_id else f"paper_{paper_id}"
             paper_output_dir = Path(output_dir) / dir_name
             paper_output_dir.mkdir(parents=True, exist_ok=True)
-            print(f"  Output directory: {paper_output_dir}")
+            log(f"  Output directory: {paper_output_dir}")
 
         # =================================================================
         # Determine which stages to run
@@ -400,35 +463,55 @@ def generate_summary_for_paper(
         need_pdf = run_figures or run_topics or run_summary
         need_text = run_topics or run_summary
 
-        print(
+        log(
             f"  run_figures={run_figures}, run_topics={run_topics}, "
             f"run_summary={run_summary}"
         )
-        print(f"  need_pdf={need_pdf}, need_text={need_text}")
+        log(f"  need_pdf={need_pdf}, need_text={need_text}")
 
         if not need_pdf:
-            print("Nothing to do - all data already exists")
+            log("Nothing to do - all data already exists")
             result["success"] = True
             return result
 
         # =================================================================
-        # Stage 0: Content Download (HTML for arXiv, PDF otherwise)
+        # Stage 0: Content Download (prioritize arXiv, fall back to external)
+        # Priority: 1) arXiv HTML, 2) arXiv PDF, 3) External PDF, 4) Abstract
         # =================================================================
-        print("\n========== Stage 0: Content Download ==========")
+        log("\n========== Stage 0: Content Download ==========")
         stages_run.append("stage0_content_download")
         pdf_bytes = None
         paper_text = None
         html_figures = []
         use_abstract_fallback = False
         content_source = None  # "html", "pdf", or "abstract"
+        arxiv_id = None
 
-        # Try HTML extraction for arXiv papers first
+        # Step 1: Determine arXiv ID (from URL or by searching)
         if is_arxiv_url(link):
             arxiv_id = get_arxiv_id_from_url(link)
-            print(f"  arXiv paper detected (ID: {arxiv_id}), trying HTML extraction...")
+            log(f"  arXiv URL detected (ID: {arxiv_id})")
+        else:
+            # Search arXiv by title for non-arXiv papers
+            log("  Non-arXiv paper, searching arXiv by title...")
+            try:
+                from paper_metadata.arxiv_fetcher import search_arxiv_by_title
+
+                arxiv_id = search_arxiv_by_title(title)
+                if arxiv_id:
+                    log(f"  Found on arXiv: {arxiv_id}")
+                else:
+                    log("  Not found on arXiv")
+            except Exception as e:
+                log(f"  arXiv search error: {e}")
+
+        # Step 2: Try arXiv HTML extraction (if we have an arXiv ID)
+        if arxiv_id and content_source is None:
+            arxiv_url = f"https://arxiv.org/abs/{arxiv_id}"
+            log("  Trying arXiv HTML extraction...")
             try:
                 html_result = download_arxiv_html_with_figures(
-                    url=link,
+                    url=arxiv_url,
                     paper_id=str(paper_id),
                     extract_figures=run_figures,
                 )
@@ -436,32 +519,45 @@ def generate_summary_for_paper(
                     paper_text = html_result["text"]
                     html_figures = html_result.get("figures", [])
                     content_source = "html"
-                    print(f"  HTML extraction successful: {len(paper_text)} chars")
+                    log(f"  arXiv HTML SUCCESS: {len(paper_text)} chars")
             except Exception as e:
-                print(f"  HTML extraction failed: {e}")
-                print("  Falling back to PDF extraction...")
+                log(f"  arXiv HTML extraction failed: {e}")
 
-        # Fall back to PDF if HTML extraction failed or not arXiv
-        if content_source is None:
+        # Step 3: Fall back to arXiv PDF (if HTML failed but we have arXiv ID)
+        if arxiv_id and content_source is None:
+            log("  Trying arXiv PDF...")
+            try:
+                arxiv_pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+                pdf_bytes = download_pdf_bytes(arxiv_pdf_url)
+                content_source = "pdf"
+                log(f"  arXiv PDF SUCCESS: {len(pdf_bytes)} bytes")
+            except Exception as e:
+                log(f"  arXiv PDF download failed: {e}")
+
+        # Step 4: Fall back to external/original PDF URL
+        if content_source is None and pdf_url:
+            log(f"  Trying external PDF: {pdf_url}")
             try:
                 pdf_bytes = download_pdf_bytes(pdf_url)
                 content_source = "pdf"
-                print(f"  Downloaded {len(pdf_bytes)} bytes from PDF")
+                log(f"  External PDF SUCCESS: {len(pdf_bytes)} bytes")
             except Exception as e:
-                print(f"  PDF download failed: {e}")
-                abstract = paper.get("abstract")
-                if abstract and need_text:
-                    print("  Falling back to abstract for topic classification...")
-                    paper_text = f"Title: {title}\n\nAbstract:\n{abstract}"
-                    use_abstract_fallback = True
-                    content_source = "abstract"
-                elif not need_text and run_figures:
-                    # Only needed figures, but PDF failed
-                    print("  Cannot extract figures without PDF or HTML")
-                    run_figures = False
-                else:
-                    result["error"] = f"Content download failed, no abstract: {e}"
-                    return result
+                log(f"  External PDF download failed: {e}")
+
+        # Step 5: Fall back to abstract only (for topic classification, skip summary)
+        if content_source is None:
+            abstract = paper.get("abstract")
+            if abstract and need_text:
+                log("  Falling back to abstract only (will skip summarization)")
+                paper_text = f"Title: {title}\n\nAbstract:\n{abstract}"
+                use_abstract_fallback = True
+                content_source = "abstract"
+            elif not need_text and run_figures:
+                log("  Cannot extract figures without PDF or HTML")
+                run_figures = False
+            else:
+                result["error"] = "All content sources failed, no abstract available"
+                return result
 
         # =================================================================
         # Stage 1: Figure Extraction
@@ -469,9 +565,9 @@ def generate_summary_for_paper(
         if run_figures:
             if html_figures:
                 # Use figures already extracted from HTML
-                print("\n========== Stage 1: Figure Extraction (HTML) ==========")
+                log("\n========== Stage 1: Figure Extraction (HTML) ==========")
                 stages_run.append("stage1_figures_html")
-                print(f"  Using {len(html_figures)} figures from HTML extraction")
+                log(f"  Using {len(html_figures)} figures from HTML extraction")
 
                 # Save figures locally if output_dir specified
                 if paper_output_dir:
@@ -486,7 +582,7 @@ def generate_summary_for_paper(
                             with open(fig_path, "wb") as f:
                                 f.write(fig_data)
                             saved_count += 1
-                    print(f"  Saved {saved_count} figures to {figures_dir}")
+                    log(f"  Saved {saved_count} figures to {figures_dir}")
 
                 if save_db:
                     try:
@@ -495,12 +591,12 @@ def generate_summary_for_paper(
                             figures=html_figures,
                             store_image_data=True,
                         )
-                        print(f"  Stored {len(image_ids)} figures in DB")
+                        log(f"  Stored {len(image_ids)} figures in DB")
                     except Exception as e:
-                        print(f"  Error storing HTML figures: {e}")
+                        log(f"  Error storing HTML figures: {e}")
             elif pdf_bytes:
                 # Fall back to PDF figure extraction
-                print("\n========== Stage 1: Figure Extraction (PDF) ==========")
+                log("\n========== Stage 1: Figure Extraction (PDF) ==========")
                 stages_run.append("stage1_figures_pdf")
                 try:
                     try:
@@ -514,7 +610,7 @@ def generate_summary_for_paper(
                             paper_id=str(paper_id),
                         )
                         if figures:
-                            print(f"  Extracted {len(figures)} figures")
+                            log(f"  Extracted {len(figures)} figures")
 
                             # Save figures locally if output_dir specified
                             if paper_output_dir:
@@ -531,7 +627,7 @@ def generate_summary_for_paper(
                                         with open(fig_path, "wb") as f:
                                             f.write(fig_data)
                                         saved_count += 1
-                                print(f"  Saved {saved_count} figures to {figures_dir}")
+                                log(f"  Saved {saved_count} figures to {figures_dir}")
 
                             if save_db:
                                 image_ids = store_figures_in_db(
@@ -539,51 +635,51 @@ def generate_summary_for_paper(
                                     figures=figures,
                                     store_image_data=True,
                                 )
-                                print(f"  Stored {len(image_ids)} figures in DB")
+                                log(f"  Stored {len(image_ids)} figures in DB")
                         else:
-                            print("  No figures found in PDF")
+                            log("  No figures found in PDF")
                     else:
-                        print("  PyMuPDF not available, skipping")
+                        log("  PyMuPDF not available, skipping")
                 except Exception as e:
-                    print(f"  Figure extraction error: {e}")
+                    log(f"  Figure extraction error: {e}")
             else:
-                print("\n========== Stage 1: Figure Extraction (SKIPPED) ==========")
-                print("  No content source available for figures")
+                log("\n========== Stage 1: Figure Extraction (SKIPPED) ==========")
+                log("  No content source available for figures")
         else:
-            print("\n========== Stage 1: Figure Extraction (SKIPPED) ==========")
-            print("  Figures already exist or not requested")
+            log("\n========== Stage 1: Figure Extraction (SKIPPED) ==========")
+            log("  Figures already exist or not requested")
 
         # =================================================================
         # Stage 2: Text Extraction
         # =================================================================
         if need_text and content_source == "html":
-            print("\n========== Stage 2: Text Extraction (HTML) ==========")
+            log("\n========== Stage 2: Text Extraction (HTML) ==========")
             stages_run.append("stage2_text_html")
-            print(f"  Already extracted {len(paper_text)} characters from HTML")
+            log(f"  Already extracted {len(paper_text)} characters from HTML")
         elif need_text and pdf_bytes and not use_abstract_fallback:
-            print("\n========== Stage 2: Text Extraction (PDF) ==========")
+            log("\n========== Stage 2: Text Extraction (PDF) ==========")
             stages_run.append("stage2_text_pdf")
             paper_text = extract_text_from_pdf_bytes(pdf_bytes)
-            print(f"  Extracted {len(paper_text)} characters")
+            log(f"  Extracted {len(paper_text)} characters")
         elif need_text and use_abstract_fallback:
-            print("\n========== Stage 2: Text Extraction (ABSTRACT) ==========")
+            log("\n========== Stage 2: Text Extraction (ABSTRACT) ==========")
             stages_run.append("stage2_text_abstract")
             text_len = len(paper_text) if paper_text else 0
-            print(f"  Using abstract fallback ({text_len} chars)")
+            log(f"  Using abstract fallback ({text_len} chars)")
         elif not need_text:
-            print("\n========== Stage 2: Text Extraction (SKIPPED) ==========")
-            print("  Not needed (only figures requested)")
+            log("\n========== Stage 2: Text Extraction (SKIPPED) ==========")
+            log("  Not needed (only figures requested)")
 
         # =================================================================
         # Stage 3: Topic Classification
         # =================================================================
         if run_topics:
-            print("\n========== Stage 3: Topic Classification ==========")
+            log("\n========== Stage 3: Topic Classification ==========")
             stages_run.append("stage3_topics")
 
             # Always use lightweight model for topic classification
             stage_model = get_lightweight_model()
-            print(f"  Using model: {stage_model}")
+            log(f"  Using model: {stage_model}")
 
             topic_result = classify_paper_topics(
                 pdf_url, stage_model, api_key, paper_text=paper_text
@@ -600,7 +696,7 @@ def generate_summary_for_paper(
                     primary_topic=primary_topic,
                 )
             elif save_db:
-                print(
+                log(
                     "  Warning: Empty topic result, "
                     "skipping DB update to preserve existing data"
                 )
@@ -608,14 +704,14 @@ def generate_summary_for_paper(
             topics_str = paper.get("topics", "")
             topics = topics_str.split(", ") if topics_str else []
             primary_topic = paper.get("primary_topic")
-            print("\n========== Stage 3: Topic Classification (SKIPPED) ==========")
-            print(f"  Using existing: {primary_topic}")
+            log("\n========== Stage 3: Topic Classification (SKIPPED) ==========")
+            log(f"  Using existing: {primary_topic}")
 
         # =================================================================
         # Stage 4: Summary Generation
         # =================================================================
         if run_summary and not use_abstract_fallback:
-            print("\n========== Stage 4: Summary Generation ==========")
+            log("\n========== Stage 4: Summary Generation ==========")
             stages_run.append("stage4_summary")
 
             prompt = load_prompt_template(topics=topics, primary_topic=primary_topic)
@@ -638,7 +734,7 @@ def generate_summary_for_paper(
 
                 last_raw_response = summary.get("raw_response", "")[:200]
                 if llm_attempt < max_llm_retries - 1:
-                    print(
+                    log(
                         f"  LLM returned invalid JSON, retrying... "
                         f"({llm_attempt + 1}/{max_llm_retries})"
                     )
@@ -656,37 +752,168 @@ def generate_summary_for_paper(
                 summary_path = paper_output_dir / "summary.json"
                 with open(summary_path, "w") as f:
                     json.dump(summary, f, indent=2)
-                print(f"  Summary saved to: {summary_path}")
+                log(f"  Summary saved to: {summary_path}")
 
             # Only update DB if we got valid summary (don't overwrite with empty)
             if save_db and summary:
                 db.update_paper_summary(paper_id, summary)
             elif save_db:
-                print(
+                log(
                     "  Warning: Empty summary result, "
                     "skipping DB update to preserve existing data"
                 )
         elif use_abstract_fallback and run_summary:
-            print("\n========== Stage 4: Summary Generation (SKIPPED) ==========")
-            print("  Cannot generate summary from abstract alone")
+            log("\n========== Stage 4: Summary Generation (SKIPPED) ==========")
+            log("  Cannot generate summary from abstract alone")
             result["abstract_only"] = True
         else:
-            print("\n========== Stage 4: Summary Generation (SKIPPED) ==========")
-            print("  Summary already exists")
+            log("\n========== Stage 4: Summary Generation (SKIPPED) ==========")
+            log("  Summary already exists")
 
         result["success"] = True
         if use_abstract_fallback:
             result["abstract_only"] = True
-        print(f"\nCompleted stages: {stages_run}")
+        log(f"\nCompleted stages: {stages_run}")
 
     except Exception as e:
         result["error"] = str(e)
-        print(f"  Error: {e}")
+        log(f"  Error: {e}")
     finally:
         if should_close:
             db.close()
 
     return result
+
+
+def print_results_and_expectations_table(checkpoint):
+    """
+    Print a formatted table summarizing last run results and expected outcomes
+    for the next run with arXiv-first logic.
+    """
+    if not checkpoint.enabled:
+        return
+
+    summary = checkpoint.get_summary()
+    total = summary.get("total", 0)
+    if total == 0:
+        return
+
+    # Get error breakdown from checkpoint
+    error_counts = checkpoint.categorize_errors()
+    completed = summary.get("completed", 0)
+    abstract_only = summary.get("abstract_only", 0)
+
+    # Calculate percentages
+    def pct(n):
+        return f"{(n / total * 100):.1f}%" if total > 0 else "0%"
+
+    # Get individual error categories
+    db_errors = error_counts.get("db_connection", 0)
+    rate_limit = error_counts.get("rate_limit", 0)
+    corrupt_pdf = error_counts.get("corrupt_pdf", 0)
+    api_errors = error_counts.get("api_error", 0)
+    timeout = error_counts.get("timeout", 0)
+    other = error_counts.get("other", 0)
+
+    print("\n")
+    print("=" * 100)
+    print("LAST PASS RESULTS & NEXT RUN EXPECTATIONS")
+    print("=" * 100)
+
+    # Header
+    print(
+        f"{'Category':<25} {'Count':>7} {'%':>7}   "
+        f"{'Root Cause':<30} {'Next Run Expectation':<35}"
+    )
+    print("-" * 100)
+
+    # Data rows
+    rows = [
+        (
+            "✅ Completed",
+            completed,
+            pct(completed),
+            "Successfully processed",
+            "Skipped (already done)",
+        ),
+        (
+            "📝 Abstract Only",
+            abstract_only,
+            pct(abstract_only),
+            "PDF unavailable, used abstract",
+            "Skipped (already done)",
+        ),
+        (
+            "🔌 DB Connection Error",
+            db_errors,
+            pct(db_errors),
+            "Transient DNS/network failure",
+            "Should succeed (network stable)",
+        ),
+        (
+            "⏱️ Rate Limit (429)",
+            rate_limit,
+            pct(rate_limit),
+            "LLM API rate limiting",
+            "Should succeed (limits reset)",
+        ),
+        (
+            "📄 Corrupt PDF",
+            corrupt_pdf,
+            pct(corrupt_pdf),
+            "Malformed PDF files",
+            "May succeed via arXiv search",
+        ),
+        (
+            "🖥️ API Error (500/504)",
+            api_errors,
+            pct(api_errors),
+            "Server-side LLM API errors",
+            "Should succeed (transient)",
+        ),
+        (
+            "⏳ Timeout",
+            timeout,
+            pct(timeout),
+            "Network timeout",
+            "Should succeed (transient)",
+        ),
+        (
+            "❓ Other Errors",
+            other,
+            pct(other),
+            "Miscellaneous failures",
+            "May need investigation",
+        ),
+    ]
+
+    for category, count, percent, cause, expectation in rows:
+        if count > 0:  # Only show non-zero categories
+            print(
+                f"{category:<25} {count:>7} {percent:>7}   {cause:<30} {expectation:<35}"
+            )
+
+    print("-" * 100)
+
+    # Expected outcomes summary
+    will_skip = completed + abstract_only
+    should_succeed = db_errors + rate_limit + api_errors + timeout
+    may_succeed = corrupt_pdf
+    may_fail = other
+
+    print("\n📊 EXPECTED OUTCOMES SUMMARY:")
+    print(
+        f"  • Will be skipped:        {will_skip:>5}  ({completed} completed + {abstract_only} abstract-only)"
+    )
+    print(
+        f"  • Should succeed:        ~{should_succeed:>5}  (transient errors: DB + rate limit + API)"
+    )
+    print(
+        f"  • May succeed (arXiv):   ~{may_succeed:>5}  (corrupt PDFs → try arXiv first)"
+    )
+    if may_fail > 0:
+        print(f"  • May need review:       ~{may_fail:>5}  (other errors)")
+    print("=" * 100)
 
 
 def main():
@@ -877,7 +1104,7 @@ def main():
         success_count = 0
         failed_count = 0
 
-        def process_paper(paper):
+        def process_paper(paper, use_log_buffer=False):
             """Process a single paper (for parallel execution)."""
             paper_id = paper["id"]
 
@@ -896,14 +1123,16 @@ def main():
             checkpoint.mark_in_progress(paper_id)
 
             try:
-                result = generate_summary_for_paper(
-                    paper_id=paper_id,
-                    model_name=args.model,
-                    api_key=args.api_key,
-                    prompt_file=args.prompt_file,
-                    save_db=args.save_db,
-                    overwrite=args.overwrite,
-                )
+                # Use LogBuffer to collect and print logs atomically in parallel mode
+                with LogBuffer(enabled=use_log_buffer):
+                    result = generate_summary_for_paper(
+                        paper_id=paper_id,
+                        model_name=args.model,
+                        api_key=args.api_key,
+                        prompt_file=args.prompt_file,
+                        save_db=args.save_db,
+                        overwrite=args.overwrite,
+                    )
                 # Add paper info for internal tracking
                 result["_paper_id"] = paper_id
                 result["_title"] = paper.get("title", "")
@@ -936,7 +1165,8 @@ def main():
             # Parallel processing with checkpointing
             with ThreadPoolExecutor(max_workers=args.workers) as executor:
                 futures = {
-                    executor.submit(process_paper, p): p for p in papers_to_process
+                    executor.submit(process_paper, p, True): p
+                    for p in papers_to_process
                 }
                 for future in as_completed(futures):
                     if is_shutdown_requested():
@@ -990,6 +1220,9 @@ def main():
                 )
             # Print detailed error statistics
             checkpoint.print_stats()
+
+            # Print the results & expectations table
+            print_results_and_expectations_table(checkpoint)
         else:
             print(
                 f"Processed: {success_count} success, {failed_count} failed (this session)"

@@ -7,16 +7,10 @@ Extracted from summary_generation.py for modularity.
 """
 
 import io
-import time
 from pathlib import Path
 from typing import Optional
 
-try:
-    import requests
-except ImportError:
-    print("Error: requests package not installed.")
-    print("Install it with: pip install requests")
-    raise
+from .pdf_download import download_pdf_bytes
 
 try:
     import PyPDF2
@@ -30,9 +24,20 @@ except ImportError:
 # PDF text extraction limits
 MAX_PDF_CHARS = 63000
 
-# Retry configuration
-RETRY_BASE_DELAY = 2
-RETRY_MAX_DELAY = 30
+# Re-export download_pdf_bytes for backward compatibility
+__all__ = [
+    "download_pdf_bytes",
+    "download_pdf_text",
+    "download_pdf_with_figures",
+    "extract_text_from_pdf_bytes",
+    "extract_and_store_figures",
+    "PDFCache",
+    "get_pdf_cache",
+    "set_pdf_cache",
+    "store_figures_in_db",
+    "PDF_SUPPORT",
+    "MAX_PDF_CHARS",
+]
 
 
 # ==============================================================================
@@ -128,71 +133,8 @@ def set_pdf_cache(cache: PDFCache):
 
 
 # ==============================================================================
-# PDF Download and Text Extraction Functions
+# PDF Text Extraction Functions
 # ==============================================================================
-def download_pdf_bytes(
-    pdf_url: str,
-    max_retries: int = 3,
-) -> bytes:
-    """
-    Download a PDF from URL and return raw bytes.
-
-    Args:
-        pdf_url: URL to the PDF file.
-        max_retries: Maximum retry attempts for download failures.
-
-    Returns:
-        PDF bytes.
-
-    Raises:
-        Exception: If download fails after all retries.
-    """
-    print(f"Downloading PDF from: {pdf_url}")
-
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/pdf,*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-
-    last_error = None
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(pdf_url, headers=headers, timeout=60)
-            if response.status_code == 200:
-                return response.content
-            elif response.status_code in {429, 503}:
-                wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
-                print(f"  HTTP {response.status_code}, retrying in {wait_time}s...")
-                time.sleep(wait_time)
-                last_error = Exception(f"HTTP {response.status_code}")
-            else:
-                raise Exception(f"Failed to download PDF: HTTP {response.status_code}")
-        except requests.exceptions.Timeout:
-            wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
-            print(
-                f"  Timeout, retrying in {wait_time}s... ({attempt + 1}/{max_retries})"
-            )
-            time.sleep(wait_time)
-            last_error = Exception("Download timeout")
-        except requests.exceptions.ConnectionError as e:
-            wait_time = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
-            print(
-                f"  Connection error, retrying in {wait_time}s... "
-                f"({attempt + 1}/{max_retries})"
-            )
-            time.sleep(wait_time)
-            last_error = e
-
-    if last_error:
-        raise last_error
-    raise Exception("Failed to download PDF after retries")
-
-
 def extract_text_from_pdf_bytes(
     pdf_bytes: bytes,
     max_chars: int = MAX_PDF_CHARS,

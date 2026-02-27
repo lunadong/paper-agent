@@ -102,6 +102,84 @@ def extract_arxiv_id(url):
     return None
 
 
+def get_arxiv_pdf_url(arxiv_id: str) -> str:
+    """Convert arXiv ID to PDF download URL."""
+    return f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+
+
+def search_arxiv_by_title(title: str):
+    """
+    Search arXiv for a paper by title.
+
+    Args:
+        title: Paper title to search for
+
+    Returns:
+        arXiv ID (e.g., "2601.12345") if found, None otherwise
+    """
+    global _last_request_time
+    import urllib.parse
+    import xml.etree.ElementTree as ET
+
+    # Clean the title for search
+    clean_title = re.sub(r"[^\w\s]", " ", title)  # Remove punctuation
+    clean_title = re.sub(r"\s+", " ", clean_title).strip()  # Normalize whitespace
+
+    # URL encode the title
+    encoded_title = urllib.parse.quote(clean_title)
+
+    # Build arXiv API URL
+    api_url = f"http://export.arxiv.org/api/query?search_query=ti:{encoded_title}&max_results=5"
+
+    # Rate limiting
+    elapsed = time.time() - _last_request_time
+    if elapsed < ARXIV_REQUEST_DELAY:
+        time.sleep(ARXIV_REQUEST_DELAY - elapsed)
+
+    try:
+        response = requests.get(api_url, timeout=30)
+        _last_request_time = time.time()
+        response.raise_for_status()
+
+        # Parse XML response
+        root = ET.fromstring(response.text)
+
+        # Define namespace
+        ns = {"atom": "http://www.w3.org/2005/Atom"}
+
+        # Search for matching entries
+        for entry in root.findall("atom:entry", ns):
+            entry_title_elem = entry.find("atom:title", ns)
+            entry_id_elem = entry.find("atom:id", ns)
+
+            if entry_title_elem is not None and entry_id_elem is not None:
+                entry_title = entry_title_elem.text
+                entry_id = entry_id_elem.text
+
+                if entry_title and entry_id:
+                    # Clean entry title for comparison
+                    entry_title_clean = re.sub(r"\s+", " ", entry_title).strip().lower()
+                    title_clean = clean_title.lower()
+
+                    # Check for fuzzy match (80% of words match)
+                    title_words = set(title_clean.split())
+                    entry_words = set(entry_title_clean.split())
+
+                    if len(title_words) > 0:
+                        overlap = len(title_words & entry_words) / len(title_words)
+                        if overlap >= 0.8:
+                            # Extract arXiv ID from URL like "http://arxiv.org/abs/2601.12345v1"
+                            match = re.search(r"arxiv\.org/abs/(\d+\.\d+)", entry_id)
+                            if match:
+                                return match.group(1)
+
+        return None
+
+    except Exception as e:
+        print(f"  arXiv search failed: {e}")
+        return None
+
+
 def extract_date(html_content):
     """
     Extract the submission date from arXiv HTML.
