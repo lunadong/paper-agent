@@ -256,7 +256,6 @@ def find_all_captions(doc, max_pages: int = 10) -> list[Caption]:
 
             # Try patterns in order of preference (colon first, then period)
             caption_rect = None
-            pattern_used = None
 
             for pattern in [
                 f"Figure {fig_num}:",
@@ -269,7 +268,6 @@ def find_all_captions(doc, max_pages: int = 10) -> list[Caption]:
                     # Validate this is a real caption (at start of line)
                     if is_caption_at_line_start(page, rect, pattern):
                         caption_rect = rect
-                        pattern_used = pattern
                         break
                 if caption_rect:
                     break

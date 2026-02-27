@@ -8,8 +8,8 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
-from unittest.mock import MagicMock, patch
+from typing import Any, Dict, List
+from unittest.mock import MagicMock
 
 import pytest
 
