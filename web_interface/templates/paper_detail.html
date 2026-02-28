@@ -936,6 +936,14 @@
                     {% if training.trainable_parameters and training.trainable_parameters != 'N/A' and training.trainable_parameters != 'Not applicable' and 'Not applicable' not in training.trainable_parameters %}
                     <div><strong>Trainable Parameters:</strong> {{ training.trainable_parameters }}</div>
                     {% endif %}
+                    {% if training.training_data_construction and training.training_data_construction | length > 0 %}
+                    <div style="margin-top: 8px;"><strong>Training Data:</strong></div>
+                    <ul style="margin: 4px 0;">
+                        {% for data_item in training.training_data_construction %}
+                        <li>{{ data_item }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
                     {% if training.key_hyperparameters and training.key_hyperparameters is mapping %}
                     <div style="margin-top: 8px;"><strong>Key Hyperparameters:</strong></div>
                     {% set hp_items = training.key_hyperparameters.items() | list %}
