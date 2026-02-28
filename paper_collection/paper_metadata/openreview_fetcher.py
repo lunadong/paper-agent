@@ -13,6 +13,7 @@ Usage:
 import argparse
 import re
 import time
+from typing import Optional
 
 import requests
 
@@ -23,7 +24,7 @@ RETRY_DELAY = 5
 _last_request_time = 0
 
 
-def extract_openreview_id(url: str) -> str | None:
+def extract_openreview_id(url: str) -> Optional[str]:
     """
     Extract OpenReview paper ID from various URL formats.
 
@@ -57,7 +58,7 @@ def is_openreview_paper(url: str) -> bool:
     )
 
 
-def fetch_openreview_html(forum_id: str) -> str | None:
+def fetch_openreview_html(forum_id: str) -> Optional[str]:
     """
     Fetch HTML content from an OpenReview forum page.
 
@@ -92,7 +93,7 @@ def fetch_openreview_html(forum_id: str) -> str | None:
     return None
 
 
-def fetch_openreview_api(forum_id: str) -> dict | None:
+def fetch_openreview_api(forum_id: str) -> Optional[dict]:
     """
     Fetch paper metadata from OpenReview API.
 
@@ -160,7 +161,7 @@ def extract_authors_from_html(html_content: str) -> list[str]:
     return authors
 
 
-def extract_abstract_from_html(html_content: str) -> str | None:
+def extract_abstract_from_html(html_content: str) -> Optional[str]:
     """
     Extract abstract from OpenReview HTML page.
 
@@ -183,7 +184,7 @@ def extract_abstract_from_html(html_content: str) -> str | None:
     return None
 
 
-def extract_title_from_html(html_content: str) -> str | None:
+def extract_title_from_html(html_content: str) -> Optional[str]:
     """
     Extract title from OpenReview HTML page.
 

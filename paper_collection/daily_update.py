@@ -20,7 +20,8 @@ Configuration:
 import argparse
 import os
 import sys
-from concurrent.futures import as_completed, ThreadPoolExecutor
+import gc
+from concurrent.futures import as_completed, ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from datetime import datetime, timedelta
 
 # Script directories
@@ -39,9 +40,12 @@ from gmail_client import (
     get_raw_html,
     list_messages,
 )
-from paper_db import PaperDB
+from paper_db import PaperDB, close_connection_pool
 from paper_parser import parse_scholar_papers
 from summary_generation import generate_summary_for_paper
+
+# Timeout for individual paper processing (5 minutes)
+PAPER_PROCESSING_TIMEOUT = 300
 
 
 def log(message):
@@ -245,7 +249,25 @@ def main():
                         executor.submit(process_paper, p): p for p in papers_to_process
                     }
                     for future in as_completed(futures):
-                        result = future.result()
+                        try:
+                            result = future.result(timeout=PAPER_PROCESSING_TIMEOUT)
+                        except FuturesTimeoutError:
+                            paper = futures[future]
+                            summary_failed_count += 1
+                            pid = paper["id"]
+                            title = paper.get("title", "")[:50]
+                            log(f"  [TIMEOUT] [{pid}] {title}...")
+                            summary_errors.append(f"[{pid}] Timeout after {PAPER_PROCESSING_TIMEOUT}s")
+                            continue
+                        except Exception as e:
+                            paper = futures[future]
+                            summary_failed_count += 1
+                            pid = paper["id"]
+                            title = paper.get("title", "")[:50]
+                            log(f"  [ERROR] [{pid}] {title}... Error: {e}")
+                            summary_errors.append(f"[{pid}] {str(e)}")
+                            continue
+
                         if result["success"]:
                             summary_success_count += 1
                             pid = result["_paper_id"]
@@ -258,6 +280,9 @@ def main():
                             err = result.get("error", "Unknown")
                             log(f"  [FAIL] [{pid}] {title}... Error: {err}")
                             summary_errors.append(f"[{pid}] {err}")
+
+                        # Force garbage collection after each paper to free memory
+                        gc.collect()
             else:
                 # Sequential processing
                 for paper in papers_to_process:
@@ -274,6 +299,9 @@ def main():
                         err = result.get("error", "Unknown")
                         log(f"  [FAIL] [{pid}] {title}... Error: {err}")
                         summary_errors.append(f"[{pid}] {err}")
+
+                    # Force garbage collection after each paper to free memory
+                    gc.collect()
 
             log(
                 f"Generated summaries: {summary_success_count} success, {summary_failed_count} failed"
@@ -358,6 +386,10 @@ This is an automated message from daily_update.py
     log("=" * 60)
     log("DAILY UPDATE COMPLETE")
     log("=" * 60)
+
+    # Clean up connection pool to prevent memory leaks
+    close_connection_pool()
+    gc.collect()
 
 
 if __name__ == "__main__":

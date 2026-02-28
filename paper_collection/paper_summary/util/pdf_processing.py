@@ -311,6 +311,7 @@ def store_figures_in_db(
     paper_db_id: int,
     figures: list[dict],
     store_image_data: bool = True,
+    db=None,
 ) -> list[int]:
     """
     Store extracted figures in the paper_images database table.
@@ -320,6 +321,7 @@ def store_figures_in_db(
         figures: List of figure dicts from extract_figures_from_pdf_bytes().
             Each dict should have: filename, figure_num, page, caption, path
         store_image_data: Whether to store image binary data in DB.
+        db: Optional existing PaperDB connection to reuse.
 
     Returns:
         List of created image IDs in the database.
@@ -336,7 +338,9 @@ def store_figures_in_db(
         return []
 
     image_ids = []
-    db = PaperDB()
+    should_close = db is None
+    if db is None:
+        db = PaperDB()
 
     try:
         for fig in figures:
@@ -370,8 +374,12 @@ def store_figures_in_db(
                 image_ids.append(image_id)
                 print(f"    Stored {figure_name} (id={image_id})")
 
+            # Clear image data after storing to free memory
+            image_data = None
+
     finally:
-        db.close()
+        if should_close:
+            db.close()
 
     return image_ids
 

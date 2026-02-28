@@ -791,6 +791,11 @@ def generate_summary_for_paper(
         result["error"] = str(e)
         log(f"  Error: {e}")
     finally:
+        # Clean up large objects to prevent memory leaks
+        pdf_bytes = None
+        paper_text = None
+        html_figures = None
+
         if should_close:
             db.close()
 

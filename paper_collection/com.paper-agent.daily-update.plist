@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Unique identifier for this job -->
+    <key>Label</key>
+    <string>com.paper-agent.daily-update</string>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection</string>
+
+    <!-- Command to execute (with memory monitoring) -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/monitor_memory.sh</string>
+    </array>
+
+    <!-- Schedule: Run daily at 8:00 AM -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- CRITICAL: Timeout to prevent runaway processes (30 minutes) -->
+    <key>TimeOut</key>
+    <integer>1800</integer>
+
+    <!-- Throttle interval: minimum seconds between launches -->
+    <key>ThrottleInterval</key>
+    <integer>3600</integer>
+
+    <!-- Log output for debugging -->
+    <key>StandardOutPath</key>
+    <string>/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/tmp/daily_update.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/tmp/daily_update_error.log</string>
+
+    <!-- Process environment -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Run at load if missed scheduled time -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Keep alive settings - do NOT restart on failure -->
+    <key>KeepAlive</key>
+    <false/>
+
+    <!-- Nice value (lower priority to not impact system) -->
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>
