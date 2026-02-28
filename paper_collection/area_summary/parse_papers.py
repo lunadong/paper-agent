@@ -254,7 +254,7 @@ def extract_metadata(papers: list[dict]) -> dict:
                 except (ValueError, TypeError):
                     pass
 
-    metadata["years"] = sorted(list(metadata["years"]))
+    metadata["years"] = sorted(metadata["years"])
     if metadata["breakthrough_scores"]:
         metadata["avg_breakthrough_score"] = round(
             sum(metadata["breakthrough_scores"]) / len(metadata["breakthrough_scores"]),

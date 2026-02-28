@@ -659,8 +659,20 @@ def generate_summary_for_paper(
         elif need_text and pdf_bytes and not use_abstract_fallback:
             log("\n========== Stage 2: Text Extraction (PDF) ==========")
             stages_run.append("stage2_text_pdf")
-            paper_text = extract_text_from_pdf_bytes(pdf_bytes)
-            log(f"  Extracted {len(paper_text)} characters")
+            try:
+                paper_text = extract_text_from_pdf_bytes(pdf_bytes)
+                log(f"  Extracted {len(paper_text)} characters")
+            except Exception as pdf_error:
+                log(f"  PDF parsing failed: {pdf_error}")
+                result["pdf_error"] = str(pdf_error)
+                abstract = paper.get("abstract")
+                if abstract:
+                    log("  Falling back to abstract only")
+                    paper_text = f"Title: {title}\n\nAbstract:\n{abstract}"
+                    use_abstract_fallback = True
+                    stages_run.append("stage2_text_abstract_fallback")
+                else:
+                    raise Exception(f"PDF parsing failed and no abstract: {pdf_error}")
         elif need_text and use_abstract_fallback:
             log("\n========== Stage 2: Text Extraction (ABSTRACT) ==========")
             stages_run.append("stage2_text_abstract")
@@ -785,135 +797,177 @@ def generate_summary_for_paper(
     return result
 
 
-def print_results_and_expectations_table(checkpoint):
+def _categorize_errors_from_dict(errors: dict) -> dict:
+    """
+    Categorize errors from an errors dictionary.
+
+    Args:
+        errors: Dictionary mapping paper_id to error message
+
+    Returns:
+        Dictionary with error category counts
+    """
+    categories = {
+        "db_connection": 0,
+        "rate_limit": 0,
+        "corrupt_pdf": 0,
+        "json_parse": 0,
+        "api_error": 0,
+        "timeout": 0,
+        "other": 0,
+    }
+
+    for error in errors.values():
+        error_lower = str(error).lower()
+        if (
+            "connection" in error_lower
+            or "database" in error_lower
+            or "dns" in error_lower
+        ):
+            categories["db_connection"] += 1
+        elif "rate" in error_lower or "429" in error_lower or "quota" in error_lower:
+            categories["rate_limit"] += 1
+        elif (
+            "eof marker" in error_lower
+            or "corrupt" in error_lower
+            or "invalid pdf" in error_lower
+        ):
+            categories["corrupt_pdf"] += 1
+        elif (
+            "could not parse summary json" in error_lower
+            or "could not find json" in error_lower
+            or "invalid json" in error_lower
+        ):
+            categories["json_parse"] += 1
+        elif (
+            "500" in error_lower
+            or "502" in error_lower
+            or "503" in error_lower
+            or "504" in error_lower
+        ):
+            categories["api_error"] += 1
+        elif "timeout" in error_lower or "timed out" in error_lower:
+            categories["timeout"] += 1
+        else:
+            categories["other"] += 1
+
+    return categories
+
+
+def print_results_and_expectations_table(checkpoint, checkpoint_file=None):
     """
     Print a formatted table summarizing last run results and expected outcomes
     for the next run with arXiv-first logic.
+
+    Args:
+        checkpoint: CheckpointManager instance
+        checkpoint_file: Path to checkpoint file (used to load data if checkpoint not enabled)
     """
-    if not checkpoint.enabled:
+    # Try to get data from checkpoint manager first
+    if checkpoint.enabled:
+        summary = checkpoint.get_summary()
+        error_counts = checkpoint.categorize_errors()
+    elif checkpoint_file:
+        # Load from checkpoint file if checkpoint wasn't enabled for this run
+        import json
+        import os
+
+        if os.path.exists(checkpoint_file):
+            try:
+                with open(checkpoint_file, "r") as f:
+                    data = json.load(f)
+                summary = {
+                    "total": data.get("total_papers", 0),
+                    "completed": len(data.get("completed_ids", [])),
+                    "failed": len(data.get("failed_ids", [])),
+                    "abstract_only": len(data.get("abstract_only", {})),
+                    "remaining": 0,
+                }
+                # Categorize errors from the errors dict
+                errors = data.get("errors", {})
+                error_counts = _categorize_errors_from_dict(errors)
+            except Exception as e:
+                print(f"  Warning: Could not load checkpoint file: {e}")
+                return
+        else:
+            return
+    else:
         return
 
-    summary = checkpoint.get_summary()
     total = summary.get("total", 0)
     if total == 0:
         return
 
-    # Get error breakdown from checkpoint
-    error_counts = checkpoint.categorize_errors()
+    # Get counts
     completed = summary.get("completed", 0)
     abstract_only = summary.get("abstract_only", 0)
-
-    # Calculate percentages
-    def pct(n):
-        return f"{(n / total * 100):.1f}%" if total > 0 else "0%"
 
     # Get individual error categories
     db_errors = error_counts.get("db_connection", 0)
     rate_limit = error_counts.get("rate_limit", 0)
     corrupt_pdf = error_counts.get("corrupt_pdf", 0)
+    json_parse = error_counts.get("json_parse", 0)
     api_errors = error_counts.get("api_error", 0)
     timeout = error_counts.get("timeout", 0)
     other = error_counts.get("other", 0)
+    total_errors = (
+        db_errors + rate_limit + corrupt_pdf + json_parse + api_errors + timeout + other
+    )
+
+    # Calculate percentages
+    def pct(n):
+        return f"{(n / total * 100):.1f}%" if total > 0 else "0%"
 
     print("\n")
-    print("=" * 100)
-    print("LAST PASS RESULTS & NEXT RUN EXPECTATIONS")
-    print("=" * 100)
+    print("=" * 80)
+    print("PROGRESS SUMMARY")
+    print("=" * 80)
 
-    # Header
+    # Summary section - numbers that add up to total
+    done_count = completed + abstract_only
+    print(f"\nTotal Papers: {total}")
+    print(f"  [OK] Completed (full PDF):     {completed:>5}  ({pct(completed)})")
     print(
-        f"{'Category':<25} {'Count':>7} {'%':>7}   "
-        f"{'Root Cause':<30} {'Next Run Expectation':<35}"
+        f"  [OK] Abstract Only:            {abstract_only:>5}  ({pct(abstract_only)})"
     )
-    print("-" * 100)
+    print("  ----------------------------------")
+    print(f"  Successfully Processed:        {done_count:>5}  ({pct(done_count)})")
+    print(f"  Pending/Errors:                {total_errors:>5}  ({pct(total_errors)})")
+    print("  ----------------------------------")
+    print(f"  TOTAL:                         {total:>5}  (100.0%)")
 
-    # Data rows
-    rows = [
-        (
-            "✅ Completed",
-            completed,
-            pct(completed),
-            "Successfully processed",
-            "Skipped (already done)",
-        ),
-        (
-            "📝 Abstract Only",
-            abstract_only,
-            pct(abstract_only),
-            "PDF unavailable, used abstract",
-            "Skipped (already done)",
-        ),
-        (
-            "🔌 DB Connection Error",
-            db_errors,
-            pct(db_errors),
-            "Transient DNS/network failure",
-            "Should succeed (network stable)",
-        ),
-        (
-            "⏱️ Rate Limit (429)",
-            rate_limit,
-            pct(rate_limit),
-            "LLM API rate limiting",
-            "Should succeed (limits reset)",
-        ),
-        (
-            "📄 Corrupt PDF",
-            corrupt_pdf,
-            pct(corrupt_pdf),
-            "Malformed PDF files",
-            "May succeed via arXiv search",
-        ),
-        (
-            "🖥️ API Error (500/504)",
-            api_errors,
-            pct(api_errors),
-            "Server-side LLM API errors",
-            "Should succeed (transient)",
-        ),
-        (
-            "⏳ Timeout",
-            timeout,
-            pct(timeout),
-            "Network timeout",
-            "Should succeed (transient)",
-        ),
-        (
-            "❓ Other Errors",
-            other,
-            pct(other),
-            "Miscellaneous failures",
-            "May need investigation",
-        ),
-    ]
+    # Error breakdown (only if there are errors)
+    if total_errors > 0:
+        print(f"\nError Breakdown ({total_errors} papers):")
+        error_rows = [
+            ("[DB] Connection Error", db_errors, "Transient DNS/network"),
+            ("[RL] Rate Limit (429)", rate_limit, "LLM API rate limiting"),
+            ("[PDF] Corrupt PDF", corrupt_pdf, "Malformed PDF files"),
+            ("[JSON] Parse Failed", json_parse, "LLM didn't return JSON"),
+            ("[API] Error (500/504)", api_errors, "Server-side API errors"),
+            ("[TO] Timeout", timeout, "Network timeout"),
+            ("[??] Other", other, "Miscellaneous"),
+        ]
+        for category, count, cause in error_rows:
+            if count > 0:
+                print(f"  {category:<22} {count:>5}  ({cause})")
 
-    for category, count, percent, cause, expectation in rows:
-        if count > 0:  # Only show non-zero categories
-            print(
-                f"{category:<25} {count:>7} {percent:>7}   {cause:<30} {expectation:<35}"
-            )
-
-    print("-" * 100)
-
-    # Expected outcomes summary
+    # Next run expectations
     will_skip = completed + abstract_only
     should_succeed = db_errors + rate_limit + api_errors + timeout
-    may_succeed = corrupt_pdf
+    may_succeed = corrupt_pdf + json_parse
     may_fail = other
 
-    print("\n📊 EXPECTED OUTCOMES SUMMARY:")
-    print(
-        f"  • Will be skipped:        {will_skip:>5}  ({completed} completed + {abstract_only} abstract-only)"
-    )
-    print(
-        f"  • Should succeed:        ~{should_succeed:>5}  (transient errors: DB + rate limit + API)"
-    )
-    print(
-        f"  • May succeed (arXiv):   ~{may_succeed:>5}  (corrupt PDFs → try arXiv first)"
-    )
+    print("\nNext --resume Run:")
+    print(f"  Skip:    {will_skip:>5}  (already processed)")
+    print(f"  Process: {total_errors:>5}  (will retry)")
+    if should_succeed > 0:
+        print(f"           -> ~{should_succeed} should succeed (transient errors)")
+    if may_succeed > 0:
+        print(f"           -> ~{may_succeed} may succeed (try arXiv)")
     if may_fail > 0:
-        print(f"  • May need review:       ~{may_fail:>5}  (other errors)")
-    print("=" * 100)
+        print(f"           -> ~{may_fail} may need investigation")
+    print("=" * 80)
 
 
 def main():
@@ -1220,16 +1274,17 @@ def main():
                 )
             # Print detailed error statistics
             checkpoint.print_stats()
-
-            # Print the results & expectations table
-            print_results_and_expectations_table(checkpoint)
         else:
             print(
                 f"Processed: {success_count} success, {failed_count} failed (this session)"
             )
 
+        # Always print the results & expectations table
+        print_results_and_expectations_table(checkpoint, args.checkpoint)
+
         if args.save_db:
-            print("Database updated")
+            db_updated = sum(1 for r in all_results if r.get("success"))
+            print(f"Database updated: {db_updated} papers")
 
         if args.output and all_results:
             # Remove internal tracking fields before writing to JSON
@@ -1240,12 +1295,6 @@ def main():
             with open(args.output, "w") as f:
                 json.dump(output_results, f, indent=2)
             print(f"Results saved to: {args.output}")
-        elif not args.output and all_results:
-            for r in all_results:
-                status = "[OK]" if r["success"] else "[FAIL]"
-                print(f"  {status} [{r['_paper_id']}] {r['_title'][:50]}...")
-                if r.get("error"):
-                    print(f"      Error: {r['error']}")
         return
 
     # Process a single paper by ID

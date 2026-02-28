@@ -22,7 +22,9 @@ except ImportError:
 
 
 # PDF text extraction limits
-MAX_PDF_CHARS = 63000
+# Note: Prompt template is ~50K chars, model context is ~128K tokens (~400K chars)
+# Leaving room for template + response, limit paper text to 50K
+MAX_PDF_CHARS = 50000
 
 # Re-export download_pdf_bytes for backward compatibility
 __all__ = [

@@ -43,7 +43,7 @@ RETRY_BASE_DELAY = 2
 RETRY_MAX_DELAY = 30
 
 # Text extraction limits
-MAX_HTML_CHARS = 63000
+MAX_HTML_CHARS = 50000
 
 
 def is_arxiv_url(url: str) -> bool:

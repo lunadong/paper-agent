@@ -356,6 +356,7 @@ class CheckpointManager:
             - db_connection: Database connection errors (DNS, network issues)
             - rate_limit: LLM API rate limiting (429)
             - corrupt_pdf: Malformed PDF files (EOF errors)
+            - json_parse: LLM didn't return valid JSON
             - api_error: Server-side API errors (500, 504)
             - timeout: Network timeouts
             - other: Miscellaneous errors
@@ -372,6 +373,11 @@ class CheckpointManager:
             ],
             "rate_limit": ["429", "RESOURCE_EXHAUSTED", "rate limit", "quota"],
             "corrupt_pdf": ["EOF", "EOF marker", "corrupt", "malformed"],
+            "json_parse": [
+                "could not parse summary json",
+                "could not find json",
+                "invalid json",
+            ],
             "api_error": ["500", "504", "API call failed", "Gateway"],
             "timeout": ["timeout", "timed out", "TimeoutError"],
         }

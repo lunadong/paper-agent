@@ -2,6 +2,10 @@
 description: Load a background file for a research area and extract a structured topic taxonomy for paper grouping
 oncalls:
   - paper_agent
+input:
+  - area: The research area name (e.g., rag, factuality, agents, memory, p13n, benchmark), or "all" to process every area in parallel
+output:
+  - taxonomy_json: tmp_summary/taxonomy/{area}_taxonomy.json — hierarchical topic taxonomy with categories, sub_topics (each with matching_keywords), and category-level matching_keywords (one file per area)
 ---
 
 # Extract Topic Taxonomy
@@ -18,6 +22,10 @@ Load `background_{area}.txt` and extract a hierarchical topic taxonomy with matc
 "Load background and extract topics for factuality"
 
 "Extract taxonomy for memory"
+
+"Extract topic taxonomies for all areas"
+
+"Generate taxonomies for all background files"
 ```
 
 ## Prerequisites
@@ -27,6 +35,88 @@ Load `background_{area}.txt` and extract a hierarchical topic taxonomy with matc
 
 ## Instructions
 
+### Mode Selection
+
+If the user specifies `area = "all"` (or says "all areas", "every area", "all background files"), follow **Batch Mode** below. Otherwise, follow the **Single Area Mode** starting at Step 1.
+
+---
+
+### Batch Mode: All Areas (Parallel Sub-agents)
+
+When the user requests taxonomies for all areas:
+
+#### Batch Step 1: Discover Available Areas
+
+```python
+import os
+
+AREAS_DIR = "/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/paper_summary/prompts"
+
+areas = sorted([f.replace("background_", "").replace(".txt", "")
+                for f in os.listdir(AREAS_DIR) if f.startswith("background_")])
+print(f"Found {len(areas)} areas: {areas}")
+```
+
+#### Batch Step 2: Launch Parallel Sub-agents
+
+Launch **one sub-agent per area** using the `task` tool, all in a **single message** so they run in parallel.
+
+For each area, use:
+
+```
+task(
+    config={"subagent_name": "general-purpose"},
+    title="Extract Taxonomy: {area}",
+    prompt="""
+    Load and execute the skill at:
+    /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/area_summary/.llms/skills/extract_topic_taxonomy.md
+
+    Extract the topic taxonomy for area: {area}
+
+    1. Read the background file at:
+       /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/paper_summary/prompts/background_{area}.txt
+
+    2. Follow the skill instructions (Steps 1-5) for single-area mode.
+
+    3. If a papers file exists at:
+       /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/area_summary/tmp_summary/{area}_papers.txt
+       then grep the actual sub_topic and primary_focus values from it to calibrate matching_keywords.
+       Otherwise, generate matching_keywords from the background text + inferred synonyms.
+
+    4. IMPORTANT: Generate matching_keywords at BOTH levels:
+       - Each sub_topic must have its own matching_keywords (3-8 terms specific to that sub-topic)
+       - Each category must have its own matching_keywords (5-15 terms covering the category broadly, including sub-topic terms rolled up)
+
+    5. Save the taxonomy JSON to:
+       /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/area_summary/tmp_summary/taxonomy/{area}_taxonomy.json
+
+    6. Return a summary: area name, number of categories, number of sub-topics, number of category keywords, number of sub-topic keywords.
+    """
+)
+```
+
+**CRITICAL**: All `task` calls MUST be in the same message to enable parallel execution.
+
+#### Batch Step 3: Aggregate Results
+
+After all sub-agents complete, print a combined summary table:
+
+```
+=== Taxonomy Extraction Complete ===
+| Area        | Categories | Sub-topics | Keywords | Output File                      |
+|-------------|-----------|------------|----------|----------------------------------|
+| agents      | 6         | 10         | 72       | tmp_summary/taxonomy/agents_taxonomy.json |
+| benchmark   | 3         | 11         | 45       | tmp_summary/taxonomy/benchmark_taxonomy.json |
+| factuality  | 2         | 7          | 50       | tmp_summary/taxonomy/factuality_taxonomy.json |
+| memory      | 2         | 6          | 38       | tmp_summary/taxonomy/memory_taxonomy.json |
+| p13n        | 3         | 7          | 42       | tmp_summary/taxonomy/p13n_taxonomy.json   |
+| rag         | 4         | 14         | 80       | tmp_summary/taxonomy/rag_taxonomy.json    |
+```
+
+---
+
+### Single Area Mode
+
 ### Step 1: Validate Area Name
 
 Check that the user-provided area name maps to an existing background file.
@@ -35,7 +125,7 @@ Check that the user-provided area name maps to an existing background file.
 import os
 
 AREAS_DIR = "/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/paper_summary/prompts"
-OUTPUT_DIR = "/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/area_summary/tmp_summary"
+OUTPUT_DIR = "/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/area_summary/tmp_summary/taxonomy"
 
 area = "<user_provided_area>"  # e.g., "rag"
 bg_path = os.path.join(AREAS_DIR, f"background_{area}.txt")
@@ -88,7 +178,10 @@ Generate a JSON object with this exact structure:
         {
           "id": "snake_case_sub_id",
           "name": "Sub-topic Name",
-          "description": "Brief description from the background text."
+          "description": "Brief description from the background text.",
+          "matching_keywords": [
+            "sub_keyword1", "sub_keyword2", "sub_keyword3"
+          ]
         }
       ],
       "matching_keywords": [
@@ -108,13 +201,24 @@ Generate a JSON object with this exact structure:
 | `categories[].id` | Snake_case identifier (e.g., `modularized_rag`, `knowledge_internalization`) |
 | `categories[].name` | Human-readable name (e.g., "Modularized RAG Pipeline") |
 | `categories[].description` | 1-2 sentence description from the background text |
-| `categories[].sub_topics[]` | Child topics with `id`, `name`, `description` |
-| `categories[].matching_keywords` | 5-15 terms for auto-matching papers to this category |
+| `categories[].sub_topics[]` | Child topics with `id`, `name`, `description`, `matching_keywords` |
+| `categories[].sub_topics[].matching_keywords` | 3-8 terms specific to this sub-topic for fine-grained paper matching |
+| `categories[].matching_keywords` | 5-15 terms for auto-matching papers to this category (broad, includes rolled-up sub-topic terms) |
 
 #### Matching Keywords Guidelines
 
-For each category, generate **5-15 matching keywords** that include:
+Keywords are generated at **two levels**:
 
+#### Sub-topic Level (3-8 keywords each)
+
+For each sub-topic, generate **3-8 matching keywords** that are:
+1. **Specific** to this sub-topic (not the parent category broadly)
+2. **Exact terms** from the background text description of this sub-topic
+3. **Synonyms and method names** commonly associated with this sub-topic
+
+#### Category Level (5-15 keywords each)
+
+For each category, generate **5-15 matching keywords** that include:
 1. **Exact terms** from the background text (e.g., "Query rewriting", "knowledge graph")
 2. **Synonyms and variations** likely to appear in paper metadata (e.g., "query reformulation", "KG")
 3. **Method names** commonly associated with this topic (e.g., "GraphRAG", "ReAct")
@@ -150,7 +254,7 @@ Categories: {N}
   2. {category_name} ({M} sub-topics, {K} keywords)
   ...
 Total sub-topics: {total}
-Output: tmp_summary/{area}_taxonomy.json
+Output: tmp_summary/taxonomy/{area}_taxonomy.json
 ```
 
 ## Reference: Expected Taxonomies

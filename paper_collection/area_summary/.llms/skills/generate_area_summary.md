@@ -2,6 +2,12 @@
 description: Generate a comprehensive HTML area summary report from parsed paper data with topic grouping and cross-topic analysis
 oncalls:
   - paper_agent
+input:
+  - area: The research area name (e.g., rag, factuality, agents, memory, p13n, benchmark)
+  - papers_file: Path to {area}_papers.txt or pre-parsed JSON with paper summaries
+  - taxonomy_json: Path to tmp_summary/taxonomy/{area}_taxonomy.json from extract_topic_taxonomy skill (optional — will run extraction if missing)
+output:
+  - area_summary_html: tmp_summary/{area}_area_summary.html — self-contained HTML report with topic-grouped progress summaries
 ---
 
 # Generate Area Summary
