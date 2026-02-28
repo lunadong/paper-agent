@@ -73,3 +73,6 @@ migrations/
 
 # Prompt optimization (experimental, large files)
 paper_collection/paper_summary/prompt_optimization/
+
+# Area summary temporary files
+paper_collection/area_summary/tmp_summary/

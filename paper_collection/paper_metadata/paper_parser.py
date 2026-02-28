@@ -23,6 +23,10 @@ from arxiv_fetcher import (
     fetch_arxiv_html,
 )
 from gmail_client import strip_html
+from openreview_fetcher import (
+    extract_paper_info as extract_openreview_paper_info,
+    is_openreview_paper,
+)
 
 
 def extract_year_from_venue(venue):
@@ -181,13 +185,15 @@ def extract_acm_url_from_link(link):
 def enrich_paper_with_arxiv(paper):
     """
     Enrich a paper dict with arXiv data if it's an arXiv paper.
+    For OpenReview/ICLR papers, fetches author and abstract data.
     For ACM papers, cleans up the link (pdf -> abs).
     For other papers, cleans up the Google Scholar redirect link.
 
     Updates:
     - link: Replaces with clean abstract URL
-    - snippet: Replaces with full abstract (arXiv only)
+    - snippet: Replaces with full abstract (arXiv/OpenReview only)
     - venue: Updates to "arXiv, M/YYYY" format (arXiv only)
+    - authors: Updates from OpenReview if available
 
     Args:
         paper: Paper dictionary with title, authors, venue, snippet, link
@@ -218,6 +224,30 @@ def enrich_paper_with_arxiv(paper):
             paper["snippet"] = arxiv_info["abstract"]
 
         paper["venue"] = update_arxiv_venue(paper["venue"], arxiv_info["date"])
+
+        return paper
+
+    # Check for OpenReview/ICLR papers
+    if is_openreview_paper(paper["link"]):
+        actual_url = extract_url_from_scholar_link(paper["link"])
+        openreview_info = extract_openreview_paper_info(actual_url)
+
+        # Update link to cleaned URL
+        paper["link"] = actual_url
+
+        # Update authors if we got better data from OpenReview
+        if openreview_info.get("authors") and (
+            not paper.get("authors") or len(paper.get("authors", "")) < 5
+        ):
+            paper["authors"] = ", ".join(openreview_info["authors"])
+
+        # Update abstract if we got a full abstract
+        if openreview_info.get("abstract"):
+            paper["snippet"] = openreview_info["abstract"]
+
+        # Update venue if available
+        if openreview_info.get("venue") and not paper.get("venue"):
+            paper["venue"] = openreview_info["venue"]
 
         return paper
 

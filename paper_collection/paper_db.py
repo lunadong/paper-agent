@@ -865,6 +865,8 @@ class PaperDB:
         - summary_experiments: JSON for "Experiments" section
         - summary_figures: JSON for "Figures" section
 
+        Also updates paper title from summary_basics if the current title is empty.
+
         Args:
             paper_id: The paper's database ID
             summary: Summary dictionary (from generate_paper_summary)
@@ -893,7 +895,52 @@ class PaperDB:
         cursor = self._get_cursor()
         cursor.execute(query, values)
         self.conn.commit()
-        return cursor.rowcount > 0
+        updated = cursor.rowcount > 0
+
+        if updated:
+            self._backfill_from_summary_basics(paper_id, summary.get("Basics", {}))
+
+        return updated
+
+    def _backfill_from_summary_basics(self, paper_id: int, basics: dict) -> None:
+        """
+        Backfill paper metadata (title, authors) from summary_basics if empty.
+
+        This handles cases where paper collection didn't get complete metadata
+        (e.g., ICLR/OpenReview papers parsed from Google Scholar alerts).
+
+        Args:
+            paper_id: The paper's database ID
+            basics: The Basics section from the summary
+        """
+        if not basics:
+            return
+
+        paper = self.get_paper_by_id(paper_id)
+        if not paper:
+            return
+
+        updates = {}
+
+        if not paper.get("title") or len(paper.get("title", "").strip()) == 0:
+            title_from_summary = basics.get("title")
+            if title_from_summary and isinstance(title_from_summary, str):
+                updates["title"] = title_from_summary.strip()
+
+        if not paper.get("authors") or len(paper.get("authors", "").strip()) == 0:
+            authors_from_summary = basics.get("authors")
+            if authors_from_summary:
+                if isinstance(authors_from_summary, list):
+                    valid_authors = [
+                        a for a in authors_from_summary if a and isinstance(a, str)
+                    ]
+                    if valid_authors:
+                        updates["authors"] = ", ".join(valid_authors)
+                elif isinstance(authors_from_summary, str):
+                    updates["authors"] = authors_from_summary.strip()
+
+        if updates:
+            self.update_paper(paper_id, **updates)
 
     def remove_topic(self, paper_id: int, topic_to_remove: str) -> bool:
         """
