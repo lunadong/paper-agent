@@ -659,6 +659,327 @@ class TestDownloadArxivHtmlWithFigures:
         assert "Could not extract arXiv ID" in str(exc_info.value)
 
 
+class TestExtractAuthorsInfo:
+    """Tests for _extract_authors_info function."""
+
+    def test_extract_from_ltx_affiliation_institution(self) -> None:
+        """Test extraction from standard ltx_affiliation_institution spans."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">John Doe</span>
+                    <span class="ltx_affiliation_institution">MIT</span>
+                </span>
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">Jane Smith</span>
+                    <span class="ltx_affiliation_institution">Stanford University</span>
+                </span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "Authors:" in result
+        assert "John Doe" in result
+        assert "Jane Smith" in result
+        assert "Institutions:" in result
+        assert "MIT" in result
+        assert "Stanford University" in result
+
+    def test_extract_from_ltx_role_affiliation(self) -> None:
+        """Test extraction from ltx_role_affiliation spans (fallback)."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">Alice Brown</span>
+                    <span class="ltx_role_affiliation">Harvard University</span>
+                </span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "Authors:" in result
+        assert "Alice Brown" in result
+        assert "Institutions:" in result
+        assert "Harvard University" in result
+
+    def test_extract_from_ltx_author_notes_prose(self) -> None:
+        """Test extraction from ltx_author_notes with prose format."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">Bob Wilson</span>
+                    <span class="ltx_author_notes">
+                        Bob Wilson is with the Computer Science Department,
+                        Carnegie Mellon University, Pittsburgh, USA.
+                    </span>
+                </span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "Authors:" in result
+        assert "Bob Wilson" in result
+        assert "Institutions:" in result
+        # The regex captures text after "is with" containing institution keywords
+        assert "Computer Science Department" in result
+
+    def test_extract_from_text_after_sup_tags(self) -> None:
+        """Test extraction of plain text after <sup> tags."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">
+                        <span class="ltx_text ltx_font_bold">Alice Chen<sup>1</sup></span>,
+                        <span class="ltx_text ltx_font_bold">Bob Lee<sup>2</sup></span>
+                        <br/>
+                        <sup>1</sup>Tsinghua University
+                        <br/>
+                        <sup>2</sup>Peking University
+                    </span>
+                </span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "Authors:" in result
+        assert "Institutions:" in result
+        assert "Tsinghua University" in result
+        assert "Peking University" in result
+
+    def test_extract_authors_from_ltx_font_bold(self) -> None:
+        """Test extraction of authors from ltx_font_bold spans."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">
+                        <span class="ltx_text ltx_font_bold">David Kim</span>,
+                        <span class="ltx_text ltx_font_bold">Emily Park</span>
+                    </span>
+                    <span class="ltx_affiliation_institution">Google Research</span>
+                </span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "Authors:" in result
+        assert "David Kim" in result
+        assert "Emily Park" in result
+        assert "Institutions:" in result
+        assert "Google Research" in result
+
+    def test_extract_tech_company_institutions(self) -> None:
+        """Test extraction recognizes tech company names as institutions."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">
+                        <span class="ltx_text ltx_font_bold">Researcher One<sup>1</sup></span>
+                        <br/>
+                        <sup>1</sup>OpenAI
+                    </span>
+                </span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "Institutions:" in result
+        assert "OpenAI" in result
+
+    def test_deduplicates_authors(self) -> None:
+        """Test that duplicate authors are removed."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_personname">John Doe</span>
+                <span class="ltx_personname">John Doe</span>
+                <span class="ltx_personname">Jane Smith</span>
+                <span class="ltx_affiliation_institution">MIT</span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        # Count occurrences - should only appear once
+        assert result.count("John Doe") == 1
+
+    def test_deduplicates_institutions(self) -> None:
+        """Test that duplicate institutions are removed."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_personname">John Doe</span>
+                <span class="ltx_affiliation_institution">MIT</span>
+                <span class="ltx_affiliation_institution">MIT</span>
+                <span class="ltx_affiliation_institution">Stanford</span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        # Count occurrences - MIT should only appear once
+        assert result.count("MIT") == 1
+
+    def test_returns_empty_string_when_no_authors_div(self) -> None:
+        """Test that empty string is returned when no ltx_authors div exists."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_content">
+                <p>No authors section here.</p>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert result == ""
+
+    def test_cleans_superscript_numbers_from_authors(self) -> None:
+        """Test that superscript numbers are removed from author names."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_personname">John Doe123</span>
+                <span class="ltx_affiliation_institution">MIT</span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "John Doe" in result
+        assert "123" not in result
+
+    def test_extract_multiple_institutions_from_notes(self) -> None:
+        """Test extraction of multiple institutions from author notes."""
+        from bs4 import BeautifulSoup
+
+        from paper_collection.paper_summary.util.arxiv_html_processing import (
+            _extract_authors_info,
+        )
+
+        html_content = """
+        <article class="ltx_document">
+            <div class="ltx_authors">
+                <span class="ltx_creator ltx_role_author">
+                    <span class="ltx_personname">Multi Author</span>
+                    <span class="ltx_author_notes">
+                        Alice is with Tongji University.
+                        Bob is with Stanford University.
+                    </span>
+                </span>
+            </div>
+        </article>
+        """
+        soup = BeautifulSoup(html_content, "html.parser")
+        article = soup.find("article", class_="ltx_document")
+
+        result = _extract_authors_info(article)
+
+        assert "Institutions:" in result
+        # Should find both universities
+        assert "Tongji University" in result or "Stanford University" in result
+
+
 class TestModuleConstants:
     """Tests for module constants and flags."""
 

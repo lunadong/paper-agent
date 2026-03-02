@@ -191,6 +191,186 @@ def download_html(
     raise Exception("Failed to download HTML after retries")
 
 
+def _extract_authors_info(article) -> str:
+    """
+    Extract author and institution information from the ltx_authors div.
+
+    Args:
+        article: BeautifulSoup article element.
+
+    Returns:
+        Formatted string with authors and institutions, or empty string if not found.
+    """
+    from bs4 import NavigableString
+
+    authors_div = article.find("div", class_="ltx_authors")
+    if not authors_div:
+        return ""
+
+    parts = []
+
+    # Institution keywords for pattern matching
+    inst_keywords = [
+        "University",
+        "Institute",
+        "College",
+        "Laboratory",
+        "Lab",
+        "School",
+        "Center",
+        "Centre",
+        "Department",
+        "Research",
+        "Academy",
+        "Corporation",
+        "Inc.",
+        "Ltd.",
+        "Company",
+        "Technologies",
+        "Microsoft",
+        "Google",
+        "Amazon",
+        "Meta",
+        "Facebook",
+        "Baidu",
+        "Alibaba",
+        "Tencent",
+        "OpenAI",
+        "DeepMind",
+        "NVIDIA",
+    ]
+
+    # Extract author names from ltx_font_bold spans (common pattern)
+    authors = []
+    for bold_span in authors_div.find_all("span", class_="ltx_font_bold"):
+        text = bold_span.get_text(strip=True)
+        # Remove superscript numbers
+        clean_name = re.sub(r"[0-9∗†‡§]+", "", text).strip()
+        clean_name = re.sub(r"\s+", " ", clean_name)
+        if clean_name and len(clean_name) > 1:
+            authors.append(clean_name)
+
+    # Fallback: try ltx_personname spans
+    if not authors:
+        for person in authors_div.find_all("span", class_="ltx_personname"):
+            # Get only direct text content, excluding nested elements
+            name_parts = []
+            for content in person.children:
+                if isinstance(content, NavigableString):
+                    text = str(content).strip()
+                    if text:
+                        name_parts.append(text)
+                else:
+                    if content.name == "br":
+                        break  # Stop at first <br>, institution usually follows
+                    elif content.name == "sup":
+                        continue  # Skip superscript affiliation markers
+                    else:
+                        name_parts.append(content.get_text(strip=True))
+
+            name_text = " ".join(name_parts).strip()
+            name_text = re.sub(r",\s*$", "", name_text)
+            name_text = re.sub(r"\s+", " ", name_text)
+
+            if name_text:
+                authors.append(name_text)
+
+    # Extract institutions - Method 1: ltx_affiliation_institution spans
+    institutions = []
+    for inst in authors_div.find_all("span", class_="ltx_affiliation_institution"):
+        inst_text = inst.get_text(strip=True)
+        if inst_text:
+            institutions.append(inst_text)
+
+    # Method 2: ltx_role_affiliation
+    if not institutions:
+        for affil in authors_div.find_all("span", class_="ltx_role_affiliation"):
+            affil_text = affil.get_text(strip=True)
+            if affil_text:
+                institutions.append(affil_text)
+
+    # Method 3: ltx_author_notes (prose format like "is with the [Institution]")
+    if not institutions:
+        for notes in authors_div.find_all("span", class_="ltx_author_notes"):
+            notes_text = notes.get_text(strip=True)
+            # Look for patterns like "is with the [Institution]"
+            matches = re.findall(
+                r"(?:is|are) with (?:the )?([^,.(]+(?:University|Institute|College|"
+                r"Laboratory|Center|Centre|School|Department|Inc\.|Ltd\.|Corporation|"
+                r"Research)[^,.()]*)",
+                notes_text,
+                re.IGNORECASE,
+            )
+            for match in matches:
+                inst_text = match.strip()
+                inst_text = re.sub(r"\s+", " ", inst_text)
+                if inst_text and len(inst_text) > 5:
+                    institutions.append(inst_text)
+
+    # Method 4: Plain text after <sup> tags in ltx_personname
+    if not institutions:
+        for person in authors_div.find_all("span", class_="ltx_personname"):
+            found_sup = False
+            for content in person.children:
+                if not isinstance(content, NavigableString):
+                    if content.name in ("sup", "br"):
+                        found_sup = True
+                    continue
+                if found_sup:
+                    text = str(content).strip()
+                    if text and any(kw in text for kw in inst_keywords):
+                        inst_text = re.split(r"[@{}]", text)[0].strip()
+                        inst_text = re.sub(r"^[0-9,\s]+|[0-9,\s]+$", "", inst_text)
+                        inst_text = re.sub(r"\s+", " ", inst_text)
+                        if inst_text and len(inst_text) > 3:
+                            institutions.append(inst_text)
+
+    # Method 5: For papers where institution is embedded after <br> in personname
+    if not institutions:
+        for person in authors_div.find_all("span", class_="ltx_personname"):
+            found_br = False
+            for content in person.children:
+                if not isinstance(content, NavigableString) and content.name == "br":
+                    found_br = True
+                    continue
+                if found_br and isinstance(content, NavigableString):
+                    text = str(content).strip()
+                    if text and any(kw in text for kw in inst_keywords):
+                        inst_text = re.split(r"[@{}]", text)[0].strip()
+                        inst_text = re.sub(r"\s+", " ", inst_text)
+                        if inst_text and inst_text not in institutions:
+                            institutions.append(inst_text)
+
+    # Build the formatted output
+    if authors:
+        unique_authors = []
+        seen = set()
+        for a in authors:
+            clean_author = re.sub(r"[¹²³⁴⁵⁶⁷⁸⁹⁰\d∗†‡§]+", "", a).strip()
+            clean_author = re.sub(r"\s+", " ", clean_author)
+            if clean_author and clean_author.lower() not in seen:
+                seen.add(clean_author.lower())
+                unique_authors.append(clean_author)
+        if unique_authors:
+            parts.append(f"Authors: {', '.join(unique_authors)}")
+
+    if institutions:
+        unique_insts = []
+        seen = set()
+        for inst in institutions:
+            clean_inst = re.sub(r"[¹²³⁴⁵⁶⁷⁸⁹⁰\d]+", "", inst).strip()
+            clean_inst = re.sub(r"^[,\s]+|[,\s]+$", "", clean_inst)
+            if clean_inst and clean_inst.lower() not in seen:
+                seen.add(clean_inst.lower())
+                unique_insts.append(clean_inst)
+        if unique_insts:
+            parts.append(f"Institutions: {', '.join(unique_insts)}")
+
+    if parts:
+        return "\n".join(parts) + "\n"
+    return ""
+
+
 def extract_text_from_html(
     html_content: str,
     max_chars: int = MAX_HTML_CHARS,
@@ -228,8 +408,18 @@ def extract_text_from_html(
     text_parts = []
     total_chars = 0
 
+    # Extract author/institution info from ltx_authors div and prepend
+    authors_info = _extract_authors_info(article)
+    if authors_info:
+        text_parts.append(authors_info)
+        total_chars += len(authors_info)
+
     # Process sections
     for section in article.find_all(["section", "div"], class_=re.compile(r"ltx_")):
+        # Skip the authors div since we already processed it
+        if "ltx_authors" in section.get("class", []):
+            continue
+
         # Get section title if available
         title = section.find(["h1", "h2", "h3", "h4"], class_="ltx_title")
         if title:

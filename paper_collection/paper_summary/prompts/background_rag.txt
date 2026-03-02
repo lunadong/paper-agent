@@ -13,5 +13,5 @@ There are mainly three types of RAG pipelines. We only consider texts for now.
 
 3. Agentic RAG pipeline: Iteratively decide whether to retrieve, and how to augment retrieval results to decode. They can all be interleaved at the decoding phase.
 
-Specialized topics:
+Specialized themes:
 - "complex question", where the RAG answers a complex question that requires aggregating multiple pieces of information to answer the question. We may also need to issue multiple searches to answer such questions.
