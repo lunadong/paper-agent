@@ -1,6 +1,6 @@
 RAG refers to providing grounded information by retrieving from external sources, including web sources, knowledge graphs, and documents. The retrieved information is then used to answer questions or generate responses that are relevant to the user's query.
 
-There are mainly three types of RAG pipelines. We only consider texts for now.
+There are mainly three DISJOINT types of RAG pipelines. We only consider texts for now.
 1. Modularized RAG pipeline. It contains 4 modulars:
    1) RAG triggering: There are various ways to decide whether to trigger the RAG pipeline. Naive ways are trigger-for-all, or trigger-for-real-time-questions
    2) Query rewriting: Generate the web search query, or query for particular data sources like KG and docs
@@ -11,7 +11,7 @@ There are mainly three types of RAG pipelines. We only consider texts for now.
 
 2. Graph-based RAG pipeline: construct a (knowledge) graph from the corpus, and leverage the graph to enable reasoning
 
-3. Agentic RAG pipeline: Iteratively decide whether to retrieve, and how to augment retrieval results to decode. They can all be interleaved at the decoding phase.
+3. Agentic RAG pipeline: Replace static modularized pipelines with autonomous agents that at decoding time interleave decisions of when and what to retrieve and how to leverage the retrieval results.
 
 Specialized themes:
 - "complex question", where the RAG answers a complex question that requires aggregating multiple pieces of information to answer the question. We may also need to issue multiple searches to answer such questions.

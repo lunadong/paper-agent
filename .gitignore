@@ -69,10 +69,13 @@ plan/
 REFACTOR_PLAN.md
 
 # Database migrations (handled separately)
-migrations/
+paper_collection/migrations/
 
 # Prompt optimization (experimental, large files)
 paper_collection/paper_summary/prompt_optimization/
 
 # Area summary temporary files
-paper_collection/area_summary/tmp_summary/
+area_summary/tmp_summary/
+
+# Area summary prompt optimization (experimental, large files)
+area_summary/prompt_optimization/

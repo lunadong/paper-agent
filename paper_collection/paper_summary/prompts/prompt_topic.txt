@@ -14,10 +14,26 @@ Hard Requirements
 
 3) Select exactly ONE primary_topic from the list above - the main research area that best describes this paper's core contribution. THIS MUST BE A SINGLE STRING, NOT AN ARRAY.
 
-4) A few priorities of the topics:
-   - If a paper talks about memory management, make it "memory" instead of "Agent", "P13N", etc.
-   - Don't mark a paper "Benchmark" unless the paper does not have any other relevant topics
-   - Don't mark a paper "ResponsiveAI" unless the paper does not have any other relevant topics
+4) Primary Topic Selection Rules (in priority order):
+
+   a) Memory takes precedence: If a paper focuses on memory management, use "Memory" instead of "Agent", "P13N", etc.
+
+   b) Modality-specific topics take precedence over problem-type topics:
+      - MM (Multi-Modal) papers: If a paper is about vision-language models (VLMs), use "MM" as primary_topic, even if it also addresses Factuality (e.g., VLM hallucination), QA (e.g., VQA), or Benchmark
+      - Speech papers: If a paper is primarily about speech/audio processing, use "Speech" as primary_topic
+
+   c) Technique-specific topics take precedence over generic topics:
+      - RAG over QA: If a paper uses retrieval-augmented generation for QA, use "RAG" as primary_topic
+      - RAG over KG: If a paper combines knowledge graphs with retrieval for QA (KBQA), use "RAG" as primary_topic
+      - Agent over QA: If a paper uses agentic approaches for QA tasks, use "Agent" as primary_topic
+      - Recommendation over QA: If a paper applies QA techniques to recommendation, use "Recommendation" as primary_topic
+
+   d) Factuality over QA: If a paper focuses on confidence calibration, hallucination detection, or factual consistency in QA systems, use "Factuality" as primary_topic
+
+   e) Low-priority topics (use only when no other specific topic applies):
+      - Don't use "Benchmark" as primary_topic unless the paper's sole contribution is a benchmark/dataset with no other relevant topic
+      - Don't use "ResponsiveAI" as primary_topic unless the paper's sole focus is privacy/safety/fairness with no other relevant topic
+      - Don't use "QA" as primary_topic if a more specific topic (RAG, Agent, Factuality, MM, Recommendation) applies
 
 5) Output ONLY valid JSON with the exact structure shown below
 
