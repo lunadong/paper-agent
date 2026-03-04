@@ -298,11 +298,6 @@ def extract_paper_info(url: str) -> dict:
     return result
 
 
-def get_openreview_forum_url(paper_id: str) -> str:
-    """Convert paper ID to OpenReview forum URL."""
-    return f"https://openreview.net/forum?id={paper_id}"
-
-
 def main():
     """Main function to test OpenReview fetching and extraction."""
     parser = argparse.ArgumentParser(

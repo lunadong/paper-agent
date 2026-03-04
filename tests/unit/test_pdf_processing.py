@@ -5,14 +5,12 @@ Unit tests for the PDF processing module.
 Tests paper_collection/paper_summary/util/pdf_processing.py
 """
 
-import sys
-from pathlib import Path
-
-# Add project paths to avoid import issues with __init__.py
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "paper_summary" / "util"))
-
-from pdf_processing import get_pdf_cache, MAX_PDF_CHARS, PDFCache, set_pdf_cache
+from paper_collection.paper_summary.util.pdf_processing import (
+    get_pdf_cache,
+    MAX_PDF_CHARS,
+    PDFCache,
+    set_pdf_cache,
+)
 
 
 class TestPDFCacheInit:
@@ -150,9 +148,9 @@ class TestMaxPdfChars:
     """Tests for MAX_PDF_CHARS constant."""
 
     def test_max_pdf_chars_constant(self):
-        """MAX_PDF_CHARS is 63000."""
+        """MAX_PDF_CHARS is 50000."""
         # Assert
-        assert MAX_PDF_CHARS == 63000
+        assert MAX_PDF_CHARS == 50000
 
     def test_max_pdf_chars_is_int(self):
         """MAX_PDF_CHARS is an integer."""

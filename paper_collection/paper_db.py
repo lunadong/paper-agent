@@ -566,35 +566,6 @@ class PaperDB:
 
         return results
 
-    def find_similar_papers(self, paper_id: int, limit: int = 5) -> list[dict]:
-        """
-        Find papers similar to a given paper.
-
-        Args:
-            paper_id: The paper's database ID
-            limit: Maximum number of results
-
-        Returns:
-            List of similar paper dictionaries with similarity scores
-        """
-        cursor = self._get_cursor()
-
-        cursor.execute(
-            """
-            SELECT p.*, 1 - (p.embedding <=> source.embedding) as similarity
-            FROM papers p, papers source
-            WHERE source.id = %s
-              AND p.id != %s
-              AND p.embedding IS NOT NULL
-              AND source.embedding IS NOT NULL
-            ORDER BY p.embedding <=> source.embedding
-            LIMIT %s
-        """,
-            (paper_id, paper_id, limit),
-        )
-
-        return [dict(row) for row in cursor.fetchall()]
-
     def get_embedding_stats(self) -> dict:
         """
         Get statistics about embeddings in the database.
