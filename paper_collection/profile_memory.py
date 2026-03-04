@@ -69,7 +69,9 @@ def log_memory_snapshot(log_file, label: str, snapshot=None):
     log_file.write(f"[{timestamp}] {label}\n")
     log_file.write(f"{'=' * 60}\n")
     log_file.write(f"RSS: {stats['rss_mb']:.2f} MB\n")
-    log_file.write(f"Traced: {stats['traced_current_mb']:.2f} MB (peak: {stats['traced_peak_mb']:.2f} MB)\n")
+    log_file.write(
+        f"Traced: {stats['traced_current_mb']:.2f} MB (peak: {stats['traced_peak_mb']:.2f} MB)\n"
+    )
     log_file.write(f"GC counts: {stats['gc_counts']}\n")
 
     if snapshot:
@@ -173,6 +175,7 @@ def run_with_profiling():
         except Exception as e:
             log_file.write(f"\nERROR: {e}\n")
             import traceback
+
             log_file.write(traceback.format_exc())
             raise
 

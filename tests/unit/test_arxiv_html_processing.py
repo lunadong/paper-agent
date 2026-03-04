@@ -665,7 +665,6 @@ class TestExtractAuthorsInfo:
     def test_extract_from_ltx_affiliation_institution(self) -> None:
         """Test extraction from standard ltx_affiliation_institution spans."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -699,7 +698,6 @@ class TestExtractAuthorsInfo:
     def test_extract_from_ltx_role_affiliation(self) -> None:
         """Test extraction from ltx_role_affiliation spans (fallback)."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -727,7 +725,6 @@ class TestExtractAuthorsInfo:
     def test_extract_from_ltx_author_notes_prose(self) -> None:
         """Test extraction from ltx_author_notes with prose format."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -759,7 +756,6 @@ class TestExtractAuthorsInfo:
     def test_extract_from_text_after_sup_tags(self) -> None:
         """Test extraction of plain text after <sup> tags."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -793,7 +789,6 @@ class TestExtractAuthorsInfo:
     def test_extract_authors_from_ltx_font_bold(self) -> None:
         """Test extraction of authors from ltx_font_bold spans."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -825,7 +820,6 @@ class TestExtractAuthorsInfo:
     def test_extract_tech_company_institutions(self) -> None:
         """Test extraction recognizes tech company names as institutions."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -854,7 +848,6 @@ class TestExtractAuthorsInfo:
     def test_deduplicates_authors(self) -> None:
         """Test that duplicate authors are removed."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -880,7 +873,6 @@ class TestExtractAuthorsInfo:
     def test_deduplicates_institutions(self) -> None:
         """Test that duplicate institutions are removed."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -906,7 +898,6 @@ class TestExtractAuthorsInfo:
     def test_returns_empty_string_when_no_authors_div(self) -> None:
         """Test that empty string is returned when no ltx_authors div exists."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -928,7 +919,6 @@ class TestExtractAuthorsInfo:
     def test_cleans_superscript_numbers_from_authors(self) -> None:
         """Test that superscript numbers are removed from author names."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )
@@ -952,7 +942,6 @@ class TestExtractAuthorsInfo:
     def test_extract_multiple_institutions_from_notes(self) -> None:
         """Test extraction of multiple institutions from author notes."""
         from bs4 import BeautifulSoup
-
         from paper_collection.paper_summary.util.arxiv_html_processing import (
             _extract_authors_info,
         )

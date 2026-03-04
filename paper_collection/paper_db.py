@@ -19,7 +19,7 @@ Usage:
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import psycopg2
 from psycopg2 import pool
@@ -46,11 +46,16 @@ class ConnectionPool:
     Thread-safe singleton that manages a pool of database connections.
     """
 
-    _instance = None
-    _pool = None
-    _lock = None
+    _instance: Optional["ConnectionPool"] = None
+    _pool: Optional[pool.ThreadedConnectionPool] = None
+    _lock: Optional[threading.Lock] = None
 
-    def __new__(cls, db_url: str = None, min_conn: int = 1, max_conn: int = 10):
+    def __new__(
+        cls,
+        db_url: Optional[str] = None,
+        min_conn: int = 1,
+        max_conn: int = 10,
+    ):
         """Create or return singleton instance (thread-safe)."""
         if cls._instance is None:
             with _connection_pool_lock:
@@ -70,6 +75,8 @@ class ConnectionPool:
             min_conn: Minimum connections to keep open
             max_conn: Maximum connections allowed
         """
+        if self._lock is None:
+            raise RuntimeError("Connection pool lock not initialized")
         with self._lock:
             if self._pool is None:
                 self._pool = pool.ThreadedConnectionPool(
@@ -91,6 +98,8 @@ class ConnectionPool:
 
     def close_all(self):
         """Close all connections in the pool."""
+        if self._lock is None:
+            return
         with self._lock:
             if self._pool:
                 self._pool.closeall()
@@ -103,7 +112,7 @@ class ConnectionPool:
 
 
 # Global connection pool instance
-_connection_pool: ConnectionPool = None
+_connection_pool: Optional[ConnectionPool] = None
 
 
 def get_connection_pool() -> ConnectionPool:
@@ -183,7 +192,7 @@ def get_openai_api_key() -> str:
     return config.get("openai", {}).get("api_key", "")
 
 
-def generate_openai_embedding(text: str, api_key: str = None) -> list:
+def generate_openai_embedding(text: str, api_key: Optional[str] = None) -> list:
     """Generate embedding using OpenAI API (text-embedding-3-small, 512 dims)."""
     import json
     import urllib.request
@@ -221,7 +230,7 @@ class PaperDB:
 
     _embedding_model = None  # Class-level cache for embedding model
 
-    def __init__(self, db_url: str = None):
+    def __init__(self, db_url: Optional[str] = None):
         """
         Initialize the paper database.
 
@@ -515,8 +524,8 @@ class PaperDB:
         self,
         query: str,
         limit: int = 10,
-        threshold: float = None,
-        topics_filter: str = None,
+        threshold: Optional[float] = None,
+        topics_filter: Optional[str] = None,
     ) -> list[dict]:
         """
         Search papers using vector similarity.
@@ -575,12 +584,14 @@ class PaperDB:
         """
         cursor = self._get_cursor()
         cursor.execute("SELECT COUNT(*) as total FROM papers")
-        total = cursor.fetchone()["total"]
+        row = cursor.fetchone()
+        total = row["total"] if row else 0
 
         cursor.execute(
             "SELECT COUNT(*) as with_embedding FROM papers WHERE embedding IS NOT NULL"
         )
-        with_embedding = cursor.fetchone()["with_embedding"]
+        row = cursor.fetchone()
+        with_embedding = row["with_embedding"] if row else 0
 
         return {
             "total_papers": total,
@@ -611,7 +622,7 @@ class PaperDB:
         if order_dir_upper not in ("ASC", "DESC"):
             order_dir_upper = "DESC"
 
-        valid_order_queries = {
+        valid_order_queries: dict[tuple[str, str], str] = {
             ("created_at", "ASC"): "SELECT * FROM papers ORDER BY created_at ASC",
             ("created_at", "DESC"): "SELECT * FROM papers ORDER BY created_at DESC",
             ("recomm_date", "ASC"): "SELECT * FROM papers ORDER BY recomm_date ASC",
@@ -656,7 +667,7 @@ class PaperDB:
             order_dir_upper = "DESC"
 
         # Use a whitelist approach for safety
-        valid_order_queries = {
+        valid_order_queries: dict[tuple[str, str], str] = {
             (
                 "created_at",
                 "ASC",
@@ -733,7 +744,8 @@ class PaperDB:
         """Get total number of papers in the database."""
         cursor = self._get_cursor()
         cursor.execute("SELECT COUNT(*) as count FROM papers")
-        return cursor.fetchone()["count"]
+        row = cursor.fetchone()
+        return row["count"] if row else 0
 
     def get_paper_by_id(self, paper_id: int) -> Optional[dict]:
         """
@@ -858,7 +870,7 @@ class PaperDB:
         }
 
         set_clauses = [f"{field} = %s" for field in update_values.keys()]
-        values = list(update_values.values())
+        values: list[Union[str, int]] = list(update_values.values())
         values.append(paper_id)
 
         query = f"UPDATE papers SET {', '.join(set_clauses)} WHERE id = %s"
@@ -938,7 +950,7 @@ class PaperDB:
         new_topics_str = ", ".join(new_topics) if new_topics else None
         return self.update_paper(paper_id, topics=new_topics_str)
 
-    def get_papers_without_summary(self, topic: str = None) -> list[dict]:
+    def get_papers_without_summary(self, topic: Optional[str] = None) -> list[dict]:
         """
         Get papers that don't have a generated summary yet.
 
@@ -989,7 +1001,8 @@ class PaperDB:
         """
         cursor = self._get_cursor()
         cursor.execute("SELECT COUNT(*) as count FROM papers")
-        return cursor.fetchone()["count"]
+        row = cursor.fetchone()
+        return row["count"] if row else 0
 
     def close(self):
         """Close the database connection."""

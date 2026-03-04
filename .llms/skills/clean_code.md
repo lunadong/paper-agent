@@ -160,23 +160,46 @@ Working directory: (project root)"
 
 After parallel tasks complete, run linting and FIX all issues:
 
-1. **Run the linter with auto-fix**:
-   ```bash
-   arc lint -a {folder_path or '.'}
+**CRITICAL**: Run `arc lint` from the **fbsource root directory**, not from the project directory.
+This is required for Black formatting to be properly detected and fixed. Running from the project
+directory will miss Black formatting errors that will appear during code review.
+
+1. **Determine the fbsource-relative path**:
+   ```
+   # If project is at /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent
+   # The fbsource root is /Users/lunadong/fbsource
+   # The relative path for arc lint is: fbcode/assistant/research/paper-agent/{folder_path or '.'}
    ```
 
-2. **For any issues NOT auto-fixed, FIX them manually**:
+2. **Run the linter with auto-fix FROM FBSOURCE ROOT**:
+   ```bash
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/{folder_path or '.'}
+   ```
+
+   Example commands:
+   ```bash
+   # Clean entire project
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/
+
+   # Clean specific folder
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/paper_collection/
+
+   # Clean specific files
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/paper_collection/paper_db.py
+   ```
+
+3. **For any issues NOT auto-fixed, FIX them manually**:
    - Read the lint error message
    - Use `str_replace_edit` to fix each issue
    - Common fixes: line length, unused imports, formatting
 
-3. **Re-run lint to verify all issues are fixed**:
+4. **Re-run lint to verify all issues are fixed**:
    ```bash
-   arc lint -a {folder_path or '.'}
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/{folder_path or '.'}
    ```
    - If issues remain, fix them and re-run until clean
 
-4. **Final validation**:
+5. **Final validation**:
    - Use `validate_changes` to check for any remaining errors
    - If validation shows errors caused by your changes, FIX them
    - Re-run `validate_changes` until no errors from your changes remain
@@ -209,7 +232,12 @@ task(
 )
 
 # Step 5: After parallel tasks complete
-# - Run arc lint -a to auto-fix
+# CRITICAL: Run arc lint from fbsource root, not from project directory!
+# This is required for Black formatting to be properly detected.
+execute_command(
+    command="cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/",
+    summary="Run arc lint from fbsource root for proper Black detection"
+)
 # - Manually fix any remaining lint issues
 # - Re-run lint until clean
 # - Run validate_changes to confirm no errors

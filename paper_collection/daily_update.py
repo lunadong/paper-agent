@@ -18,10 +18,14 @@ Configuration:
 """
 
 import argparse
+import gc
 import os
 import sys
-import gc
-from concurrent.futures import as_completed, ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from concurrent.futures import (
+    as_completed,
+    ThreadPoolExecutor,
+    TimeoutError as FuturesTimeoutError,
+)
 from datetime import datetime, timedelta
 
 # Script directories
@@ -40,7 +44,7 @@ from gmail_client import (
     get_raw_html,
     list_messages,
 )
-from paper_db import PaperDB, close_connection_pool
+from paper_db import close_connection_pool, PaperDB
 from paper_parser import parse_scholar_papers
 from summary_generation import generate_summary_for_paper
 
@@ -257,7 +261,9 @@ def main():
                             pid = paper["id"]
                             title = paper.get("title", "")[:50]
                             log(f"  [TIMEOUT] [{pid}] {title}...")
-                            summary_errors.append(f"[{pid}] Timeout after {PAPER_PROCESSING_TIMEOUT}s")
+                            summary_errors.append(
+                                f"[{pid}] Timeout after {PAPER_PROCESSING_TIMEOUT}s"
+                            )
                             continue
                         except Exception as e:
                             paper = futures[future]
@@ -328,7 +334,7 @@ def main():
 
         # Determine email subject based on success/failure status
         if summary_failed_count > 0 and summary_success_count == 0:
-            subject = f"[Paper Update] ⚠️ {total_saved} papers added, {summary_failed_count} summary failures"
+            subject = f"[Paper Update] WARNING: {total_saved} papers added, {summary_failed_count} summary failures"
         elif summary_failed_count > 0:
             subject = f"[Paper Update] {total_saved} papers added ({summary_failed_count} summary failures)"
         elif total_saved == 0:
