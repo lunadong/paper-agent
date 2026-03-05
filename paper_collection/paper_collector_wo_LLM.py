@@ -34,7 +34,7 @@ from gmail_client import (
     strip_html,
 )
 from paper_db import PaperDB
-from paper_parser import parse_scholar_papers
+from paper_parser_from_emails import parse_scholar_papers
 
 # Default query for fetching emails
 DEFAULT_QUERY = "from:scholaralerts-noreply@google.com"
@@ -115,11 +115,148 @@ def build_query(base_query, after=None, before=None):
     return " ".join(query_parts)
 
 
+def _build_date_range_display(args) -> str:
+    """Build a human-readable date range description."""
+    if args.after and args.before:
+        return f" from {args.after} to {args.before}"
+    elif args.after:
+        return f" after {args.after}"
+    elif args.before:
+        return f" before {args.before}"
+    return ""
+
+
+def _print_debug_content(args, html_content: str) -> None:
+    """Print debug content if requested."""
+    if args.debug:
+        print("\n" + "=" * 60)
+        print("DEBUG: Raw text after HTML stripping:")
+        print("=" * 60)
+        text = strip_html(html_content)
+        print(text)
+        print("=" * 60 + "\n")
+
+    if args.debug_html:
+        print("\n" + "=" * 60)
+        print("DEBUG: Raw HTML content:")
+        print("=" * 60)
+        print(html_content[:5000])
+        print("=" * 60 + "\n")
+
+
+def _process_email_papers(papers, seen_titles, headers):
+    """Filter duplicates and add email metadata to papers."""
+    email_papers = []
+    for paper in papers:
+        title_lower = paper["title"].lower()
+        if title_lower in seen_titles:
+            continue
+        seen_titles.add(title_lower)
+        paper["email_date"] = headers.get("date", "N/A")
+        paper["email_subject"] = headers.get("subject", "N/A")
+        email_papers.append(paper)
+    return email_papers
+
+
+def _save_papers_to_db(db, email_papers):
+    """Save papers to database and return counts."""
+    saved = 0
+    skipped = 0
+    for paper in email_papers:
+        paper_id = db.add_paper(
+            title=paper["title"],
+            authors=paper.get("authors", ""),
+            venue=paper.get("venue", ""),
+            year=paper.get("year", ""),
+            abstract=paper.get("snippet", ""),
+            link=paper.get("link", ""),
+            recomm_date=parse_email_date(paper.get("email_date", "")),
+            tags="",
+        )
+        if paper_id:
+            saved += 1
+        else:
+            skipped += 1
+    return saved, skipped
+
+
+def _print_paper_details(all_papers) -> None:
+    """Print detailed information about all papers."""
+    print("\n" + "=" * 60)
+    for i, paper in enumerate(all_papers, 1):
+        print(f"\n[{i}] {paper['title']}")
+        if paper["authors"]:
+            print(f"    Authors: {paper['authors']}")
+        if paper["venue"]:
+            print(f"    Venue: {paper['venue']}")
+        if paper["year"]:
+            print(f"    Year: {paper['year']}")
+        if paper["snippet"]:
+            print(f"    Abstract: {paper['snippet']}")
+        if paper["link"]:
+            print(f"    Link: {paper['link']}")
+        print(f"    From alert: {paper['email_subject']} ({paper['email_date']})")
+        print("-" * 60)
+
+
+def _tag_topics_if_needed(total_saved, args) -> None:
+    """Tag topics for new papers if applicable."""
+    if total_saved > 0 and not args.skip_tags:
+        print("\n" + "=" * 60)
+        print("Tagging papers with topics...")
+        print("=" * 60)
+        from topic_tagger import tag_new_papers
+
+        tag_new_papers()
+    elif args.skip_tags:
+        print("\nSkipping topic tagging (--skip-tags)")
+    else:
+        print("\nNo new papers - skipping topic tagging")
+
+
+def _process_single_email(service, msg, args, seen_titles):
+    """Process a single email and return papers."""
+    full_msg = get_message(service, msg["id"])
+    if not full_msg:
+        return []
+
+    headers = get_message_headers(full_msg)
+    html_content = get_raw_html(full_msg)
+
+    _print_debug_content(args, html_content)
+
+    papers = parse_scholar_papers(html_content, debug_titles=args.debug_titles)
+    return _process_email_papers(papers, seen_titles, headers)
+
+
+def _log_email_progress(
+    email_idx, total_emails, num_papers, db, total_saved, total_skipped
+):
+    """Log progress for processing an email."""
+    progress = f"[{email_idx}/{total_emails}]"
+    papers_info = f"{num_papers} new papers"
+    if db:
+        save_info = f"(total saved: {total_saved}, skipped: {total_skipped})"
+        print(f"{progress} Processed email: {papers_info} {save_info}")
+    else:
+        print(f"{progress} Processed email: {papers_info}")
+
+
+def _finalize_collection(db, total_saved, total_skipped, args):
+    """Close database and tag topics if needed."""
+    if not db:
+        return
+
+    db.close()
+    print(f"Total saved to database: {total_saved}")
+    if total_skipped > 0:
+        print(f"Total duplicates skipped: {total_skipped}")
+    _tag_topics_if_needed(total_saved, args)
+
+
 def main():
     """Main function for fetching and displaying Google Scholar papers."""
     args = parse_args()
-
-    # Build query with date filters if provided
     query = build_query(args.query, args.after, args.before)
 
     print("Connecting to Gmail API...")
@@ -128,16 +265,7 @@ def main():
         service = get_gmail_service()
         print("Successfully connected!\n")
 
-        # Build description for output
-        date_range = ""
-        if args.after or args.before:
-            if args.after and args.before:
-                date_range = f" from {args.after} to {args.before}"
-            elif args.after:
-                date_range = f" after {args.after}"
-            else:
-                date_range = f" before {args.before}"
-
+        date_range = _build_date_range_display(args)
         print("=" * 60)
         print(f"Google Scholar Alerts (up to {args.num_emails}{date_range}):")
         print("=" * 60)
@@ -145,131 +273,42 @@ def main():
 
         if not messages:
             print("No emails found from Google Scholar Alerts.")
-        else:
-            print(f"Found {len(messages)} email(s)\n")
+            return
 
-            # Initialize database connection for incremental saving
-            db = None
-            if args.save_db:
-                db = PaperDB()
-                print("Connected to PostgreSQL database")
+        print(f"Found {len(messages)} email(s)\n")
 
-            all_papers = []
-            seen_titles = set()  # Track seen titles across all emails for deduplication
-            total_saved = 0
-            total_skipped = 0
-            total_emails = len(messages)
+        db = PaperDB() if args.save_db else None
+        if db:
+            print("Connected to PostgreSQL database")
 
-            for email_idx, msg in enumerate(messages, 1):
-                full_msg = get_message(service, msg["id"])
-                if full_msg:
-                    headers = get_message_headers(full_msg)
-                    html_content = get_raw_html(full_msg)
+        all_papers = []
+        seen_titles = set()
+        total_saved = 0
+        total_skipped = 0
 
-                    if args.debug:
-                        print("\n" + "=" * 60)
-                        print("DEBUG: Raw text after HTML stripping:")
-                        print("=" * 60)
-                        text = strip_html(html_content)
-                        print(text)
-                        print("=" * 60 + "\n")
+        for email_idx, msg in enumerate(messages, 1):
+            email_papers = _process_single_email(service, msg, args, seen_titles)
+            all_papers.extend(email_papers)
 
-                    if args.debug_html:
-                        print("\n" + "=" * 60)
-                        print("DEBUG: Raw HTML content:")
-                        print("=" * 60)
-                        print(html_content[:5000])  # First 5000 chars
-                        print("=" * 60 + "\n")
+            if db and email_papers:
+                saved, skipped = _save_papers_to_db(db, email_papers)
+                total_saved += saved
+                total_skipped += skipped
 
-                    papers = parse_scholar_papers(
-                        html_content, debug_titles=args.debug_titles
-                    )
+            _log_email_progress(
+                email_idx,
+                len(messages),
+                len(email_papers),
+                db,
+                total_saved,
+                total_skipped,
+            )
 
-                    email_papers = []
-                    for paper in papers:
-                        # Deduplicate across all emails using lowercase title
-                        title_lower = paper["title"].lower()
-                        if title_lower in seen_titles:
-                            continue
-                        seen_titles.add(title_lower)
+        print(f"\nTotal papers found: {len(all_papers)}")
+        _finalize_collection(db, total_saved, total_skipped, args)
 
-                        paper["email_date"] = headers.get("date", "N/A")
-                        paper["email_subject"] = headers.get("subject", "N/A")
-                        email_papers.append(paper)
-                        all_papers.append(paper)
-
-                    # Incremental save: save papers from this email immediately
-                    if db and email_papers:
-                        for paper in email_papers:
-                            paper_id = db.add_paper(
-                                title=paper["title"],
-                                authors=paper.get("authors", ""),
-                                venue=paper.get("venue", ""),
-                                year=paper.get("year", ""),
-                                abstract=paper.get("snippet", ""),
-                                link=paper.get("link", ""),
-                                recomm_date=parse_email_date(
-                                    paper.get("email_date", "")
-                                ),
-                                tags="",
-                            )
-                            if paper_id:
-                                total_saved += 1
-                            else:
-                                total_skipped += 1
-
-                    # Progress tracking
-                    progress = f"[{email_idx}/{total_emails}]"
-                    papers_info = f"{len(email_papers)} new papers"
-                    if db:
-                        save_info = (
-                            f"(total saved: {total_saved}, skipped: {total_skipped})"
-                        )
-                        print(f"{progress} Processed email: {papers_info} {save_info}")
-                    else:
-                        print(f"{progress} Processed email: {papers_info}")
-
-            print(f"\nTotal papers found: {len(all_papers)}")
-
-            # Close database connection
-            if db:
-                db.close()
-                print(f"Total saved to database: {total_saved}")
-                if total_skipped > 0:
-                    print(f"Total duplicates skipped: {total_skipped}")
-
-                # Tag topics (unless skipped)
-                if total_saved > 0 and not args.skip_tags:
-                    print("\n" + "=" * 60)
-                    print("Tagging papers with topics...")
-                    print("=" * 60)
-                    from topic_tagger import tag_new_papers
-
-                    tag_new_papers()
-                elif args.skip_tags:
-                    print("\nSkipping topic tagging (--skip-tags)")
-                else:
-                    print("\nNo new papers - skipping topic tagging")
-
-            # Print papers if requested
-            if args.print_papers:
-                print("\n" + "=" * 60)
-                for i, paper in enumerate(all_papers, 1):
-                    print(f"\n[{i}] {paper['title']}")
-                    if paper["authors"]:
-                        print(f"    Authors: {paper['authors']}")
-                    if paper["venue"]:
-                        print(f"    Venue: {paper['venue']}")
-                    if paper["year"]:
-                        print(f"    Year: {paper['year']}")
-                    if paper["snippet"]:
-                        print(f"    Abstract: {paper['snippet']}")
-                    if paper["link"]:
-                        print(f"    Link: {paper['link']}")
-                    print(
-                        f"    From alert: {paper['email_subject']} ({paper['email_date']})"
-                    )
-                    print("-" * 60)
+        if args.print_papers:
+            _print_paper_details(all_papers)
 
     except FileNotFoundError as e:
         print(f"Error: {e}")

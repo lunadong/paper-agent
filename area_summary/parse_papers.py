@@ -54,6 +54,43 @@ def parse_json_block(text: str) -> dict | None:
         return None
 
 
+# Section header mappings
+_SECTION_HEADERS = {
+    "## Abstract": "abstract",
+    "## Basics": "basics",
+    "## Core Contributions": "core",
+    "## Methods & Evidence": "methods",
+}
+
+
+def _check_section_header(line_stripped):
+    """Check if line is a section header and return section name or None."""
+    return _SECTION_HEADERS.get(line_stripped)
+
+
+def _parse_paper_metadata(line_stripped, result):
+    """
+    Parse paper metadata lines (paper number, title, venue).
+
+    Returns True if line was consumed as metadata, False otherwise.
+    """
+    paper_match = re.match(r"\[Paper\s+(\d+)/(\d+)\]", line_stripped)
+    if paper_match:
+        result["paper_num"] = int(paper_match.group(1))
+        result["total_papers"] = int(paper_match.group(2))
+        return True
+
+    if line_stripped.startswith("# ") and not line_stripped.startswith("## "):
+        result["title"] = line_stripped[2:].strip()
+        return True
+
+    if line_stripped.startswith("**") and line_stripped.endswith("**"):
+        result["venue_info"] = line_stripped.strip("*").strip()
+        return True
+
+    return False
+
+
 def parse_paper_block(block: str) -> dict | None:
     """
     Parse a single paper block into a structured dictionary.
@@ -89,45 +126,14 @@ def parse_paper_block(block: str) -> dict | None:
     for line in lines:
         line_stripped = line.strip()
 
-        paper_match = re.match(r"\[Paper\s+(\d+)/(\d+)\]", line_stripped)
-        if paper_match:
-            result["paper_num"] = int(paper_match.group(1))
-            result["total_papers"] = int(paper_match.group(2))
+        if _parse_paper_metadata(line_stripped, result):
             continue
 
-        if line_stripped.startswith("# ") and not line_stripped.startswith("## "):
-            result["title"] = line_stripped[2:].strip()
-            continue
-
-        if line_stripped.startswith("**") and line_stripped.endswith("**"):
-            result["venue_info"] = line_stripped.strip("*").strip()
-            continue
-
-        if line_stripped == "## Abstract":
+        new_section = _check_section_header(line_stripped)
+        if new_section:
             if current_section and section_content:
                 _store_section(result, current_section, section_content)
-            current_section = "abstract"
-            section_content = []
-            continue
-
-        if line_stripped == "## Basics":
-            if current_section and section_content:
-                _store_section(result, current_section, section_content)
-            current_section = "basics"
-            section_content = []
-            continue
-
-        if line_stripped == "## Core Contributions":
-            if current_section and section_content:
-                _store_section(result, current_section, section_content)
-            current_section = "core"
-            section_content = []
-            continue
-
-        if line_stripped == "## Methods & Evidence":
-            if current_section and section_content:
-                _store_section(result, current_section, section_content)
-            current_section = "methods"
+            current_section = new_section
             section_content = []
             continue
 

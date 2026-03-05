@@ -260,7 +260,8 @@ def translate_simple_filter(filter_str: str) -> str:
     return " ".join(translated_parts)
 
 
-def main():
+def _create_argument_parser():
+    """Create and return the argument parser for export_papers CLI."""
     parser = argparse.ArgumentParser(
         description="Export papers with flexible filtering to JSON/text files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -309,25 +310,91 @@ Examples:
         action="store_true",
         help="List all available topics with paper counts",
     )
+    return parser
+
+
+def _handle_list_topics():
+    """Handle the --list-topics mode."""
+    print("Available topics in database:\n")
+    topics = get_all_topics()
+    print(f"{'Topic':<35} {'Count':>8}")
+    print("-" * 45)
+    total = 0
+    for row in topics:
+        topic = row["primary_topic"]
+        count = row["count"]
+        total += count
+        print(f"{topic:<35} {count:>8}")
+    print("-" * 45)
+    print(f"{'TOTAL':<35} {total:>8}")
+
+
+def _get_output_base_name(args):
+    """Determine the base filename for output files."""
+    if args.output:
+        base_name = args.output
+        if base_name.endswith(".json") or base_name.endswith(".txt"):
+            if base_name.endswith(".txt"):
+                base_name = base_name[:-4]
+            else:
+                base_name = base_name[:-5]
+        return base_name
+    if args.all:
+        return "all_papers"
+    return sanitize_filename(args.filter) + "_papers"
+
+
+def _export_to_json(papers, output_dir, base_name, filter_display, where_clause):
+    """Export papers to JSON format."""
+    json_file = output_dir / f"{base_name}.json"
+    papers_json = [format_paper_for_json(p) for p in papers]
+
+    output_data = {
+        "filter": filter_display,
+        "where_clause": where_clause,
+        "count": len(papers),
+        "exported_at": datetime.now().isoformat(),
+        "papers": papers_json,
+    }
+
+    with open(json_file, "w") as f:
+        json.dump(output_data, f, indent=2, default=str)
+    print(f"JSON saved to: {json_file}")
+
+
+def _export_to_text(papers, output_dir, base_name, filter_display):
+    """Export papers to text format."""
+    txt_file = output_dir / f"{base_name}.txt"
+
+    output_parts = []
+    output_parts.append(f"# Papers matching: {filter_display}")
+    output_parts.append(f"# Total: {len(papers)} papers")
+    output_parts.append(f"# Exported: {datetime.now().isoformat()}")
+    output_parts.append("=" * 60)
+    output_parts.append("")
+
+    for i, paper in enumerate(papers, 1):
+        output_parts.append(f"[Paper {i}/{len(papers)}]")
+        output_parts.append(format_paper_description(paper))
+        output_parts.append("-" * 60)
+        output_parts.append("")
+
+    output_content = "\n".join(output_parts)
+
+    with open(txt_file, "w") as f:
+        f.write(output_content)
+    print(f"Text saved to: {txt_file}")
+    print(f"Total characters: {len(output_content)}")
+
+
+def main():
+    parser = _create_argument_parser()
     args = parser.parse_args()
 
-    # List topics mode
     if args.list_topics:
-        print("Available topics in database:\n")
-        topics = get_all_topics()
-        print(f"{'Topic':<35} {'Count':>8}")
-        print("-" * 45)
-        total = 0
-        for row in topics:
-            topic = row["primary_topic"]
-            count = row["count"]
-            total += count
-            print(f"{topic:<35} {count:>8}")
-        print("-" * 45)
-        print(f"{'TOTAL':<35} {total:>8}")
+        _handle_list_topics()
         return
 
-    # Require filter or --all
     if not args.filter and not args.all:
         print(
             "Error: --filter or --all is required (or use --list-topics to see available topics)"
@@ -340,9 +407,8 @@ Examples:
         print("  python export_papers.py --list-topics")
         sys.exit(1)
 
-    # Determine WHERE clause
     if args.all:
-        where_clause = "1=1"  # Always true - matches all papers
+        where_clause = "1=1"
         filter_display = "ALL"
         print("Exporting ALL papers...")
     else:
@@ -352,23 +418,11 @@ Examples:
         if where_clause != args.filter:
             print(f"SQL WHERE: {where_clause}")
 
-    # Create output directory if needed
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate output filename
-    if args.output:
-        base_name = args.output
-        # Remove extension if provided
-        if base_name.endswith(".json") or base_name.endswith(".txt"):
-            base_name = base_name[:-4] if base_name.endswith(".txt") else base_name[:-5]
-    else:
-        if args.all:
-            base_name = "all_papers"
-        else:
-            base_name = sanitize_filename(args.filter) + "_papers"
+    base_name = _get_output_base_name(args)
 
-    # Fetch papers
     print("Fetching papers...")
     try:
         papers = get_papers_with_filter(where_clause)
@@ -383,46 +437,11 @@ Examples:
         print("No papers found matching the filter.")
         return
 
-    # Export to JSON
     if args.format in ("json", "both"):
-        json_file = output_dir / f"{base_name}.json"
-        papers_json = [format_paper_for_json(p) for p in papers]
+        _export_to_json(papers, output_dir, base_name, filter_display, where_clause)
 
-        output_data = {
-            "filter": filter_display,
-            "where_clause": where_clause,
-            "count": len(papers),
-            "exported_at": datetime.now().isoformat(),
-            "papers": papers_json,
-        }
-
-        with open(json_file, "w") as f:
-            json.dump(output_data, f, indent=2, default=str)
-        print(f"JSON saved to: {json_file}")
-
-    # Export to text
     if args.format in ("txt", "both"):
-        txt_file = output_dir / f"{base_name}.txt"
-
-        output_parts = []
-        output_parts.append(f"# Papers matching: {filter_display}")
-        output_parts.append(f"# Total: {len(papers)} papers")
-        output_parts.append(f"# Exported: {datetime.now().isoformat()}")
-        output_parts.append("=" * 60)
-        output_parts.append("")
-
-        for i, paper in enumerate(papers, 1):
-            output_parts.append(f"[Paper {i}/{len(papers)}]")
-            output_parts.append(format_paper_description(paper))
-            output_parts.append("-" * 60)
-            output_parts.append("")
-
-        output_content = "\n".join(output_parts)
-
-        with open(txt_file, "w") as f:
-            f.write(output_content)
-        print(f"Text saved to: {txt_file}")
-        print(f"Total characters: {len(output_content)}")
+        _export_to_text(papers, output_dir, base_name, filter_display)
 
 
 if __name__ == "__main__":

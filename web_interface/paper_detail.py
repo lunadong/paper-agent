@@ -7,6 +7,7 @@ Provides routes for viewing detailed paper summaries.
 
 import json
 import re
+from typing import Optional
 
 # Import shared database utilities
 from db import (
@@ -120,7 +121,7 @@ def get_gemini_model():
     return "Gemini"
 
 
-def get_paper_with_summary(paper_id: int) -> dict:
+def get_paper_with_summary(paper_id: int) -> Optional[dict]:
     """
     Get paper with parsed summary data.
 
@@ -128,7 +129,7 @@ def get_paper_with_summary(paper_id: int) -> dict:
         paper_id: The paper's database ID
 
     Returns:
-        Dictionary with paper data and parsed summary sections
+        Dictionary with paper data and parsed summary sections, or None if not found
     """
     paper = get_paper_by_id(paper_id)
     if not paper:
@@ -208,12 +209,18 @@ def api_paper_image(image_id: int):
     if not image_data or not image_data.get("image_data"):
         abort(404)
 
+    # Type narrowing: after abort(404), image_data is guaranteed to be non-None
+    # but Pyright doesn't understand abort() never returns, so we assert
+    assert image_data is not None
+
     # Return image as PNG (assuming all stored images are PNG)
     return Response(
         bytes(image_data["image_data"]),
         mimetype="image/png",
         headers={
             "Cache-Control": "public, max-age=86400",
-            "Content-Disposition": f"inline; filename={image_data.get('figure_name', 'figure')}.png",
+            "Content-Disposition": (
+                f"inline; filename={image_data.get('figure_name', 'figure')}.png"
+            ),
         },
     )

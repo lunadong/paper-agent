@@ -156,13 +156,24 @@ CRITICAL: Do NOT just report failures - you MUST fix them and verify with anothe
 Working directory: (project root)"
 ```
 
-### Step 5: Run Lint and FIX All Issues
+### Step 5: Run Lint and FIX All Issues (Especially BLACK Formatting)
 
 After parallel tasks complete, run linting and FIX all issues:
 
-**CRITICAL**: Run `arc lint` from the **fbsource root directory**, not from the project directory.
-This is required for Black formatting to be properly detected and fixed. Running from the project
-directory will miss Black formatting errors that will appear during code review.
+**⚠️ CRITICAL - BLACK FORMATTING ERRORS ⚠️**
+
+BLACK formatting errors are a common source of persistent lint issues. Here's why they often remain unfixed:
+
+1. **`format_document` tool (VSCode formatter) does NOT reliably fix BLACK errors** - VSCode's formatter may use different settings or rules than what `arc lint` expects. Common issues include:
+   - Slice notation spacing: BLACK requires `block[match.end() :]` not `block[match.end():]`
+   - Function call wrapping rules differ between VSCode and BLACK
+   - Line length handling may differ
+
+2. **Running `arc lint` from the wrong directory** - BLACK errors won't be detected or fixed properly if you run from the project directory instead of fbsource root.
+
+3. **`arc lint -a` may need multiple runs** - Sometimes the auto-fix only partially applies. You MUST re-run until no BLACK errors remain.
+
+**SOLUTION: Always use `arc lint -a` from fbsource root, NOT `format_document`:**
 
 1. **Determine the fbsource-relative path**:
    ```
@@ -188,21 +199,31 @@ directory will miss Black formatting errors that will appear during code review.
    cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/paper_collection/paper_db.py
    ```
 
-3. **For any issues NOT auto-fixed, FIX them manually**:
-   - Read the lint error message
-   - Use `str_replace_edit` to fix each issue
-   - Common fixes: line length, unused imports, formatting
-
-4. **Re-run lint to verify all issues are fixed**:
+3. **⚠️ RE-RUN `arc lint -a` UNTIL NO BLACK ERRORS REMAIN**:
    ```bash
-   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/{folder_path or '.'}
+   # First run - may only partially fix BLACK errors
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/path/to/file.py
+
+   # Second run - check if BLACK errors are gone
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/path/to/file.py
+
+   # Repeat until output shows NO BLACK errors (only AUTODEPS advice is acceptable)
    ```
-   - If issues remain, fix them and re-run until clean
+
+4. **For any issues NOT auto-fixed after multiple runs, FIX them manually**:
+   - Read the lint error message carefully - it shows the exact diff needed
+   - Use `str_replace_edit` to apply the suggested change
+   - Common BLACK fixes:
+     - Add space before `:` in slices: `text[start :]` not `text[start:]`
+     - Function arguments on single line vs multi-line
+     - Line length adjustments
 
 5. **Final validation**:
    - Use `validate_changes` to check for any remaining errors
-   - If validation shows errors caused by your changes, FIX them
+   - If validation still shows BLACK errors, run `arc lint -a` again from fbsource root
    - Re-run `validate_changes` until no errors from your changes remain
+
+**🚫 DO NOT use `format_document` for BLACK errors - it will NOT fix them reliably!**
 
 ## Example Usage
 
@@ -232,14 +253,25 @@ task(
 )
 
 # Step 5: After parallel tasks complete
-# CRITICAL: Run arc lint from fbsource root, not from project directory!
+# ⚠️ CRITICAL: Run arc lint from fbsource root, not from project directory!
 # This is required for Black formatting to be properly detected.
+# ⚠️ DO NOT use format_document - it will NOT fix BLACK errors reliably!
+
+# First run - may only partially fix BLACK errors
 execute_command(
     command="cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/",
     summary="Run arc lint from fbsource root for proper Black detection"
 )
-# - Manually fix any remaining lint issues
-# - Re-run lint until clean
+
+# ⚠️ CRITICAL: Re-run until NO BLACK errors remain!
+# arc lint -a may need multiple runs to fix all BLACK formatting issues
+execute_command(
+    command="cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/",
+    summary="Re-run arc lint to ensure all BLACK errors are fixed"
+)
+
+# - If BLACK errors persist after 2 runs, manually fix using str_replace_edit
+# - Common BLACK fixes: add space before : in slices (e.g., text[start :] not text[start:])
 # - Run validate_changes to confirm no errors
 ```
 

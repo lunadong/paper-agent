@@ -13,7 +13,7 @@ Usage:
     python group_papers.py --area rag
     python group_papers.py --area rag --papers prompt_optimization/area_summaries/rag/papers_parsed.json
     python group_papers.py --area agents --taxonomy prompts/taxonomy/agents_taxonomy.json
-        """,
+"""
 
 import argparse
 import json
@@ -105,6 +105,109 @@ def find_closest_theme(paper: dict, taxonomy: dict) -> str | None:
     return best_theme_id if best_score > 0 else None
 
 
+def _assign_paper_to_category(paper, category_ids, cat_info, groups, taxonomy):
+    """
+    Assign a paper to one disjoint category.
+
+    Returns the assigned category ID or None if assigned to 'other'.
+    """
+    paper_text = get_paper_text(paper)
+
+    for cat_id in category_ids:
+        cat = cat_info[cat_id]
+        if matches_keywords(paper_text, cat.get("matching_keywords", [])):
+            groups[cat_id].append(paper)
+            return cat_id
+
+    closest_cat = find_closest_category(paper, taxonomy)
+    if closest_cat:
+        groups[closest_cat].append(paper)
+        return closest_cat
+
+    groups["other"].append(paper)
+    return None
+
+
+def _assign_paper_to_themes(paper, assigned_category, themes, taxonomy):
+    """
+    Assign a paper to overlapping themes.
+
+    Returns True if any theme was matched directly.
+    """
+    paper_text = get_paper_text(paper)
+    matched_theme = False
+
+    for theme in taxonomy.get("theme", []):
+        if matches_keywords(paper_text, theme.get("matching_keywords", [])):
+            themes[theme["id"]].append(paper)
+            matched_theme = True
+
+    if assigned_category is None and not matched_theme:
+        closest_theme = find_closest_theme(paper, taxonomy)
+        if closest_theme:
+            themes[closest_theme].append(paper)
+
+    return matched_theme
+
+
+def _tag_paper_subtopics(paper, assigned_category, cat_info, sub_topic_tags):
+    """Tag paper with matching sub-topics within its assigned category."""
+    if not assigned_category or assigned_category == "other":
+        return
+
+    paper_id = get_paper_id(paper)
+    paper_text = get_paper_text(paper)
+    cat_subtopics = cat_info[assigned_category].get("sub_topics", [])
+
+    paper_subtopics = []
+    for st in cat_subtopics:
+        if matches_keywords(paper_text, st.get("matching_keywords", [])):
+            paper_subtopics.append(st["id"])
+
+    if paper_subtopics:
+        sub_topic_tags[paper_id] = paper_subtopics
+
+
+def _build_subtopic_paper_lists(groups, cat_info, sub_topic_tags, taxonomy):
+    """Build sub-topic paper lists and category general papers."""
+    sub_topic_papers = {}
+    category_general_papers = {}
+
+    for cat in taxonomy["categories"]:
+        for st in cat.get("sub_topics", []):
+            sub_topic_papers[st["id"]] = []
+
+    for cat_id, cat_papers in groups.items():
+        if cat_id == "other":
+            category_general_papers["other"] = cat_papers
+            continue
+
+        cat = cat_info.get(cat_id)
+        if not cat:
+            category_general_papers[cat_id] = cat_papers
+            continue
+
+        cat_subtopic_ids = {st["id"] for st in cat.get("sub_topics", [])}
+
+        papers_with_subtopics = set()
+        for paper in cat_papers:
+            paper_id = get_paper_id(paper)
+            if paper_id in sub_topic_tags:
+                paper_st_ids = set(sub_topic_tags[paper_id])
+                matching_st_ids = paper_st_ids & cat_subtopic_ids
+                if matching_st_ids:
+                    papers_with_subtopics.add(paper_id)
+                    for st_id in matching_st_ids:
+                        if st_id in sub_topic_papers:
+                            sub_topic_papers[st_id].append(paper)
+
+        category_general_papers[cat_id] = [
+            p for p in cat_papers if get_paper_id(p) not in papers_with_subtopics
+        ]
+
+    return sub_topic_papers, category_general_papers
+
+
 def group_papers_by_topic(papers: list, taxonomy: dict) -> dict:
     """
     Group papers by taxonomy categories, themes, and sub-topics.
@@ -131,7 +234,6 @@ def group_papers_by_topic(papers: list, taxonomy: dict) -> dict:
     """
     cat_info = {c["id"]: c for c in taxonomy["categories"]}
 
-    # Determine category order: categories without sub-topics first (more specific)
     def get_category_sort_key(cat):
         if "priority" in cat:
             return (cat["priority"], 0)
@@ -141,7 +243,6 @@ def group_papers_by_topic(papers: list, taxonomy: dict) -> dict:
     sorted_categories = sorted(taxonomy["categories"], key=get_category_sort_key)
     category_ids = [c["id"] for c in sorted_categories]
 
-    # Initialize groups
     groups = {cat_id: [] for cat_id in category_ids}
     groups["other"] = []
 
@@ -151,95 +252,16 @@ def group_papers_by_topic(papers: list, taxonomy: dict) -> dict:
 
     sub_topic_tags = {}
 
-    # Track papers that didn't match any category or theme directly
-    unmatched_papers = []
-
     for paper in papers:
-        paper_text = get_paper_text(paper)
-        paper_id = get_paper_id(paper)
+        assigned_category = _assign_paper_to_category(
+            paper, category_ids, cat_info, groups, taxonomy
+        )
+        _assign_paper_to_themes(paper, assigned_category, themes, taxonomy)
+        _tag_paper_subtopics(paper, assigned_category, cat_info, sub_topic_tags)
 
-        # STEP 1: Assign to ONE disjoint category
-        assigned_category = None
-        for cat_id in category_ids:
-            cat = cat_info[cat_id]
-            if matches_keywords(paper_text, cat.get("matching_keywords", [])):
-                groups[cat_id].append(paper)
-                assigned_category = cat_id
-                break
-
-        # Fallback: use abstract to find closest category
-        if assigned_category is None:
-            closest_cat = find_closest_category(paper, taxonomy)
-            if closest_cat:
-                groups[closest_cat].append(paper)
-                assigned_category = closest_cat
-            else:
-                groups["other"].append(paper)
-                unmatched_papers.append(paper)
-
-        # STEP 2: Tag with overlapping themes
-        matched_theme = False
-        for theme in taxonomy.get("theme", []):
-            if matches_keywords(paper_text, theme.get("matching_keywords", [])):
-                themes[theme["id"]].append(paper)
-                matched_theme = True
-
-        # Fallback: if paper didn't match category directly AND didn't match any theme,
-        # try to find closest theme using abstract
-        if assigned_category is None and not matched_theme:
-            closest_theme = find_closest_theme(paper, taxonomy)
-            if closest_theme:
-                themes[closest_theme].append(paper)
-
-        # STEP 3: Tag sub-topics within assigned category
-        if assigned_category and assigned_category != "other":
-            cat_subtopics = cat_info[assigned_category].get("sub_topics", [])
-            paper_subtopics = []
-            for st in cat_subtopics:
-                if matches_keywords(paper_text, st.get("matching_keywords", [])):
-                    paper_subtopics.append(st["id"])
-            if paper_subtopics:
-                sub_topic_tags[paper_id] = paper_subtopics
-
-    # Build sub-topic paper lists and category general papers
-    sub_topic_papers = {}
-    category_general_papers = {}
-
-    # Initialize all sub-topic lists
-    for cat in taxonomy["categories"]:
-        for st in cat.get("sub_topics", []):
-            sub_topic_papers[st["id"]] = []
-
-    for cat_id, cat_papers in groups.items():
-        if cat_id == "other":
-            category_general_papers["other"] = cat_papers
-            continue
-
-        cat = cat_info.get(cat_id)
-        if not cat:
-            category_general_papers[cat_id] = cat_papers
-            continue
-
-        # Get this category's sub-topic IDs
-        cat_subtopic_ids = {st["id"] for st in cat.get("sub_topics", [])}
-
-        # Separate papers with sub-topics vs without (within this category)
-        papers_with_subtopics = set()
-        for paper in cat_papers:
-            paper_id = get_paper_id(paper)
-            if paper_id in sub_topic_tags:
-                # Only count if the paper's sub-topics belong to THIS category
-                paper_st_ids = set(sub_topic_tags[paper_id])
-                matching_st_ids = paper_st_ids & cat_subtopic_ids
-                if matching_st_ids:
-                    papers_with_subtopics.add(paper_id)
-                    for st_id in matching_st_ids:
-                        if st_id in sub_topic_papers:
-                            sub_topic_papers[st_id].append(paper)
-
-        category_general_papers[cat_id] = [
-            p for p in cat_papers if get_paper_id(p) not in papers_with_subtopics
-        ]
+    sub_topic_papers, category_general_papers = _build_subtopic_paper_lists(
+        groups, cat_info, sub_topic_tags, taxonomy
+    )
 
     return {
         "groups": groups,
@@ -304,7 +326,7 @@ def format_papers_for_prompt(papers: list) -> str:
 **Key Novelty**: {novelty_main}
 {novelty_points}
 
-**Evaluation Highlights**: {'; '.join(eval_highlights[:3]) if eval_highlights else 'N/A'}
+**Evaluation Highlights**: {"; ".join(eval_highlights[:3]) if eval_highlights else "N/A"}
 
 **Breakthrough Score**: {breakthrough}
 
@@ -338,7 +360,12 @@ def save_grouped_papers(
                 filepath = output_dir / f"subtopic_{st_id}_papers.txt"
                 filepath.write_text(papers_text, encoding="utf-8")
                 files_created.append(
-                    {"type": "sub_topic", "id": st_id, "path": str(filepath), "count": len(st_papers)}
+                    {
+                        "type": "sub_topic",
+                        "id": st_id,
+                        "path": str(filepath),
+                        "count": len(st_papers),
+                    }
                 )
 
     # Save category general papers
@@ -350,7 +377,12 @@ def save_grouped_papers(
             filepath = output_dir / f"category_{cat_id}_general_papers.txt"
             filepath.write_text(papers_text, encoding="utf-8")
             files_created.append(
-                {"type": "category_general", "id": cat_id, "path": str(filepath), "count": len(general_papers)}
+                {
+                    "type": "category_general",
+                    "id": cat_id,
+                    "path": str(filepath),
+                    "count": len(general_papers),
+                }
             )
 
     # Save "other" category
@@ -360,7 +392,12 @@ def save_grouped_papers(
         filepath = output_dir / "category_other_general_papers.txt"
         filepath.write_text(papers_text, encoding="utf-8")
         files_created.append(
-            {"type": "category_general", "id": "other", "path": str(filepath), "count": len(other_papers)}
+            {
+                "type": "category_general",
+                "id": "other",
+                "path": str(filepath),
+                "count": len(other_papers),
+            }
         )
 
     # Save theme papers
@@ -372,7 +409,12 @@ def save_grouped_papers(
             filepath = output_dir / f"theme_{theme_id}_papers.txt"
             filepath.write_text(papers_text, encoding="utf-8")
             files_created.append(
-                {"type": "theme", "id": theme_id, "path": str(filepath), "count": len(theme_papers)}
+                {
+                    "type": "theme",
+                    "id": theme_id,
+                    "path": str(filepath),
+                    "count": len(theme_papers),
+                }
             )
 
     return files_created
@@ -420,7 +462,9 @@ Examples:
     args = parser.parse_args()
 
     area = args.area
-    papers_path = Path(args.papers or f"prompt_optimization/area_summaries/{area}/papers_parsed.json")
+    papers_path = Path(
+        args.papers or f"prompt_optimization/area_summaries/{area}/papers_parsed.json"
+    )
     taxonomy_path = Path(args.taxonomy or f"prompts/taxonomy/{area}_taxonomy.json")
     output_dir = Path(args.output_dir or f"prompt_optimization/area_summaries/{area}")
 
@@ -444,7 +488,8 @@ Examples:
     if not taxonomy_path.exists():
         print(f"Error: Taxonomy file not found: {taxonomy_path}", file=sys.stderr)
         print(
-            "Run extract_topic_taxonomy skill to generate taxonomy JSON", file=sys.stderr
+            "Run extract_topic_taxonomy skill to generate taxonomy JSON",
+            file=sys.stderr,
         )
         sys.exit(1)
 
@@ -457,7 +502,7 @@ Examples:
 
     # Print summary
     print("\n" + "=" * 70, file=sys.stderr)
-    print(f"📊 PAPER GROUPING SUMMARY ({area})", file=sys.stderr)
+    print(f"[SUMMARY] PAPER GROUPING SUMMARY ({area})", file=sys.stderr)
     print("=" * 70, file=sys.stderr)
 
     print("\nCategories (disjoint):", file=sys.stderr)
@@ -488,7 +533,10 @@ Examples:
         files_created = save_grouped_papers(result, taxonomy, output_dir, area)
         print(f"\nCreated {len(files_created)} files in {output_dir}:", file=sys.stderr)
         for f in files_created:
-            print(f"  [{f['type']}] {f['id']}: {f['count']} papers -> {Path(f['path']).name}", file=sys.stderr)
+            print(
+                f"  [{f['type']}] {f['id']}: {f['count']} papers -> {Path(f['path']).name}",
+                file=sys.stderr,
+            )
 
         # Save grouping result as JSON
         result_json = {

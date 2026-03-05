@@ -11,6 +11,7 @@ import time
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -97,7 +98,7 @@ def get_db_connection():
     return _conn
 
 
-def get_cursor():
+def get_cursor() -> RealDictCursor:
     """Get a database cursor with automatic reconnection on SSL drops."""
     global _conn
     max_retries = 2
@@ -123,12 +124,16 @@ def get_cursor():
                 _conn = None
             else:
                 raise
+    # This should never be reached due to the raise in the loop
+    raise RuntimeError("Failed to get database cursor after all retries")
 
 
-def execute_with_retry(query, params=None, max_retries=2):
+def execute_with_retry(
+    query: str, params: Optional[tuple] = None, max_retries: int = 2
+) -> RealDictCursor:
     """Execute a query with automatic retry on connection errors."""
     global _conn
-    last_error = None
+    last_error: Optional[Exception] = None
     for attempt in range(max_retries):
         try:
             cursor = get_cursor()
@@ -151,10 +156,11 @@ def execute_with_retry(query, params=None, max_retries=2):
             _conn = None
             if attempt >= max_retries - 1:
                 raise
-    raise last_error
+    # This should never be reached due to the raise in the loop
+    raise last_error if last_error else RuntimeError("Query execution failed")
 
 
-def generate_openai_embedding(text: str) -> list:
+def generate_openai_embedding(text: str) -> Optional[list]:
     """
     Generate embedding using OpenAI API (text-embedding-3-small, 512 dims).
 
@@ -251,6 +257,75 @@ def search_papers_keyword(query):
     return [dict(row) for row in cursor.fetchall()]
 
 
+def _check_embeddings_available() -> int:
+    """Check if any paper embeddings are available in the database."""
+    cursor = execute_with_retry(
+        "SELECT COUNT(*) as total FROM papers WHERE embedding IS NOT NULL"
+    )
+    result = cursor.fetchone()
+    return result["total"] if result else 0
+
+
+def _execute_vector_search(embedding_str: str, top_k: int) -> list:
+    """Execute the pgvector similarity search query."""
+    cursor = execute_with_retry(
+        """
+        SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
+               1 - (embedding <=> %s::vector) as similarity,
+               CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
+               summary_core->>'topic_relevance' as topic_relevance_json,
+               primary_topic
+        FROM papers
+        WHERE embedding IS NOT NULL
+        ORDER BY embedding <=> %s::vector
+        LIMIT %s
+        """,
+        (embedding_str, embedding_str, top_k),
+    )
+    return list(cursor.fetchall())
+
+
+def _extract_primary_topic(paper: dict) -> None:
+    """Extract primary_topic from summary_core JSON if not already set."""
+    if not paper.get("primary_topic") and paper.get("topic_relevance_json"):
+        try:
+            topic_rel = json.loads(paper["topic_relevance_json"])
+            paper["primary_topic"] = topic_rel.get("primary_topic", "")
+        except (json.JSONDecodeError, TypeError):
+            paper["primary_topic"] = ""
+    paper.pop("topic_relevance_json", None)
+
+
+def _apply_score_threshold(results: list, score_threshold: float) -> list:
+    """Apply score threshold filtering to search results."""
+    if not score_threshold:
+        return results
+
+    filtered = [r for r in results if r.get("similarity", 0) >= score_threshold]
+    # If threshold filters out everything, return top 50 results anyway
+    if not filtered and results:
+        return results[:50]
+    return filtered
+
+
+def _sort_and_clean_results(results: list) -> list:
+    """Sort results by score bucket and date, then remove internal fields."""
+    # Add score field for sorting
+    for paper in results:
+        paper["_score"] = paper.get("similarity", 0)
+
+    # Sort by date within score buckets
+    results.sort(key=lambda p: p.get("recomm_date") or "0000-00-00", reverse=True)
+    results.sort(key=lambda p: get_score_bucket(p["_score"]), reverse=True)
+
+    # Remove internal fields
+    for paper in results:
+        paper.pop("_score", None)
+        paper.pop("similarity", None)
+
+    return results
+
+
 def search_papers_semantic(query, top_k=None, score_threshold=0.1):
     """Search papers using vector similarity (pgvector with OpenAI embeddings).
 
@@ -261,90 +336,34 @@ def search_papers_semantic(query, top_k=None, score_threshold=0.1):
     """
     try:
         # Check if embeddings are available
-        cursor = execute_with_retry(
-            "SELECT COUNT(*) as total FROM papers WHERE embedding IS NOT NULL"
-        )
-        result = cursor.fetchone()
-        embedding_count = result["total"] if result else 0
-
-        if embedding_count == 0:
+        if _check_embeddings_available() == 0:
             print("No embeddings available, falling back to keyword search")
             return search_papers_keyword(query)
 
         # Generate query embedding using OpenAI
         query_embedding = generate_openai_embedding(query)
-
         if query_embedding is None:
             print("OpenAI embedding failed, falling back to keyword search")
             return search_papers_keyword(query)
 
-        # Use pgvector search
+        # Execute vector search
         if top_k is None:
             top_k = 1000
-
-        # Convert embedding list to string format for PostgreSQL vector type
-        # Format: '[0.1, 0.2, 0.3, ...]'
         embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
+        rows = _execute_vector_search(embedding_str, top_k)
 
-        cursor = execute_with_retry(
-            """
-            SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
-                   1 - (embedding <=> %s::vector) as similarity,
-                   CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
-                   summary_core->>'topic_relevance' as topic_relevance_json,
-                   primary_topic
-            FROM papers
-            WHERE embedding IS NOT NULL
-            ORDER BY embedding <=> %s::vector
-            LIMIT %s
-            """,
-            (embedding_str, embedding_str, top_k),
-        )
-
+        # Process results
         results = []
-        for row in cursor.fetchall():
+        for row in rows:
             paper = dict(row)
-            # Extract primary_topic from summary_core if not already set
-            if not paper.get("primary_topic") and paper.get("topic_relevance_json"):
-                try:
-                    topic_rel = json.loads(paper["topic_relevance_json"])
-                    paper["primary_topic"] = topic_rel.get("primary_topic", "")
-                except (json.JSONDecodeError, TypeError):
-                    paper["primary_topic"] = ""
-            paper.pop("topic_relevance_json", None)
+            _extract_primary_topic(paper)
             results.append(paper)
 
-        # Filter by threshold - use a lower threshold for semantic search
-        # to ensure we return results even for less common queries
-        if score_threshold:
-            filtered_results = [
-                r for r in results if r.get("similarity", 0) >= score_threshold
-            ]
-            # If threshold filters out everything, return top results anyway
-            if not filtered_results and results:
-                # Return top 50 results without threshold filtering
-                results = results[:50]
-            else:
-                results = filtered_results
-
-        # Sort by score bucket, then by date
-        for paper in results:
-            paper["_score"] = paper.get("similarity", 0)
-
-        results.sort(key=lambda p: p.get("recomm_date") or "0000-00-00", reverse=True)
-        results.sort(key=lambda p: get_score_bucket(p["_score"]), reverse=True)
-
-        # Remove internal fields before returning
-        for paper in results:
-            if "_score" in paper:
-                del paper["_score"]
-            if "similarity" in paper:
-                del paper["similarity"]
-
-        return results
+        # Apply threshold and sort
+        results = _apply_score_threshold(results, score_threshold)
+        return _sort_and_clean_results(results)
 
     except Exception as e:
-        # If anything fails in semantic search, fall back to keyword search
         import traceback
 
         print(f"Semantic search error: {e}")
@@ -387,7 +406,7 @@ def get_similar_papers(paper_id, limit=5):
     return similar
 
 
-def get_stats():
+def get_stats() -> dict:
     """Get database and embedding statistics."""
     cursor = execute_with_retry(
         """
@@ -398,7 +417,15 @@ def get_stats():
         FROM papers
         """
     )
-    stats = dict(cursor.fetchone())
+    row = cursor.fetchone()
+    if row is None:
+        return {
+            "total_papers": 0,
+            "papers_with_embedding": 0,
+            "papers_without_embedding": 0,
+            "coverage_percent": 0,
+        }
+    stats = dict(row)
     stats["coverage_percent"] = (
         round(stats["papers_with_embedding"] / stats["total_papers"] * 100, 1)
         if stats["total_papers"] > 0

@@ -367,7 +367,7 @@ class TestPaperCollectionFlow:
 class TestPaperParserIntegration:
     """E2E tests for paper parser with ArXiv enrichment."""
 
-    @patch("paper_parser.fetch_arxiv_html")
+    @patch("paper_parser_from_emails.fetch_arxiv_html")
     def test_parse_and_enrich_arxiv_paper(
         self,
         mock_fetch_arxiv: MagicMock,
@@ -389,7 +389,7 @@ class TestPaperParserIntegration:
         # Mock ArXiv fetch to return our sample HTML
         mock_fetch_arxiv.return_value = mock_arxiv_response_html
 
-        from paper_parser import parse_scholar_papers
+        from paper_parser_from_emails import parse_scholar_papers
 
         # Parse the mock email HTML
         papers = parse_scholar_papers(mock_scholar_email_html, enrich_arxiv=True)
@@ -421,7 +421,7 @@ class TestPaperParserIntegration:
         Mocks:
         - None (pure parsing test)
         """
-        from paper_parser import parse_scholar_papers
+        from paper_parser_from_emails import parse_scholar_papers
 
         # Parse without enrichment
         papers = parse_scholar_papers(mock_scholar_email_html, enrich_arxiv=False)

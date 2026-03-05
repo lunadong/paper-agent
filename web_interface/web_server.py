@@ -167,11 +167,9 @@ def api_area_summary(area):
             content = f.read()
 
         preview = extract_summary_preview(content)
-        return jsonify({
-            "exists": True,
-            "preview": preview,
-            "url": f"/area/{area.lower()}"
-        })
+        return jsonify(
+            {"exists": True, "preview": preview, "url": f"/area/{area.lower()}"}
+        )
     except Exception as e:
         return jsonify({"exists": False, "error": str(e)})
 

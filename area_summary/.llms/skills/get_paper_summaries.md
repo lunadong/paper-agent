@@ -1,18 +1,22 @@
 ---
-description: Fetch paper summaries from database with flexible filter criteria
+description: Fetch paper summaries from database with flexible filter criteria.
 oncalls:
   - paper_agent
-input:
-  - filter: Filter criteria — simple format (e.g., primary_topic=RAG) or SQL WHERE clause (e.g., primary_topic = 'RAG' AND year >= 2024)
-  - format: Output format — json, txt, or both (default json)
-  - output_dir: Output directory (default current directory)
-output:
-  - papers_file: JSON or TXT file with filtered papers and their summaries (Basics, Core, Technical_details, Experiments, Figures)
 ---
 
 # Get Paper Summaries
 
-Fetch paper summaries from the database using flexible filter criteria. Supports filtering by primary_topic, topic, year, recommendation date, and more. Outputs to JSON or text format.
+Fetch paper summaries from the database using flexible filter criteria.
+
+**Inputs:**
+- Filter criteria (simple format like `primary_topic=RAG` or SQL WHERE clause)
+- Output format (`json`/`txt`/`both`)
+- Output directory
+
+**Outputs:**
+- A JSON or TXT file with filtered papers and their summaries
+
+Supports filtering by primary_topic, topic, year, recommendation date, and more.
 
 ## Example Commands
 

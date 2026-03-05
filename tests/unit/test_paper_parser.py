@@ -1,7 +1,6 @@
-"""
-Unit tests for the paper parser module.
+"""Unit tests for the paper parser from emails module.
 
-Tests paper_collection/paper_metadata/paper_parser.py functionality including:
+Tests paper_collection/paper_parser_from_emails.py functionality including:
 - Year extraction from venue strings
 - URL extraction from Google Scholar redirect links
 - arXiv URL parsing and normalization
@@ -20,7 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection"))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "paper_metadata"))
 
-from paper_parser import (
+from paper_parser_from_emails import (
     extract_acm_url_from_link,
     extract_arxiv_url_from_link,
     extract_url_from_scholar_link,
@@ -209,7 +208,8 @@ class TestExtractAcmUrl:
         # Setup: ACM Digital Library URL (mock the converter function)
         link = "https://dl.acm.org/doi/pdf/10.1145/3787466"
 
-        with patch("paper_parser.convert_acm_pdf_to_abs") as mock_convert:
+        patch_target = "paper_parser_from_emails.convert_acm_pdf_to_abs"
+        with patch(patch_target) as mock_convert:
             mock_convert.return_value = "https://dl.acm.org/doi/abs/10.1145/3787466"
 
             # Execute: Extract ACM URL
@@ -229,7 +229,8 @@ class TestExtractAcmUrl:
             "url=https://dl.acm.org/doi/pdf/10.1145/1234567&hl=en"
         )
 
-        with patch("paper_parser.convert_acm_pdf_to_abs") as mock_convert:
+        patch_target = "paper_parser_from_emails.convert_acm_pdf_to_abs"
+        with patch(patch_target) as mock_convert:
             mock_convert.return_value = "https://dl.acm.org/doi/abs/10.1145/1234567"
 
             # Execute: Extract ACM URL from Scholar redirect
@@ -277,7 +278,8 @@ class TestParseScholarPapers:
         </html>
         """
 
-        with patch("paper_parser.enrich_paper_with_arxiv") as mock_enrich:
+        patch_target = "paper_parser_from_emails.enrich_paper_with_arxiv"
+        with patch(patch_target) as mock_enrich:
             # Make enrich return paper unchanged
             mock_enrich.side_effect = lambda p: p
 

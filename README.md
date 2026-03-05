@@ -209,8 +209,9 @@ paper-agent/
 |   |       |-- analysis_critics/    # Expert/beginner analysis
 |   |       +-- revised_prompts/     # Iteratively improved prompts
 |   |
-|   +-- paper_metadata/      # Paper parsing utilities
-|       |-- paper_parser.py  # Parse Google Scholar HTML
+|   |-- paper_parser_from_emails.py  # Parse Google Scholar alert emails
+|   |
+|   +-- paper_metadata/      # Paper metadata utilities
 |       |-- topic_tagger.py  # Topic classification (exact + semantic)
 |       +-- arxiv_fetcher.py # ArXiv metadata fetcher
 |
