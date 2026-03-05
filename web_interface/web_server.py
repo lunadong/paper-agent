@@ -18,9 +18,10 @@ Then visit: http://localhost:5001 (or your configured port)
 
 import argparse
 import os
+import re
 import sys
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 # Add parent directory for config import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -150,6 +151,106 @@ def api_stats():
     page_view_stats = get_page_views()
     stats.update(page_view_stats)
     return jsonify(stats)
+
+
+@app.route("/api/area_summary/<area>")
+def api_area_summary(area):
+    """API endpoint to check if area summary exists and return preview data."""
+    htmls_dir = os.path.join(SCRIPT_DIR, "htmls")
+    summary_file = os.path.join(htmls_dir, f"{area.lower()}_summary.html")
+
+    if not os.path.exists(summary_file):
+        return jsonify({"exists": False})
+
+    try:
+        with open(summary_file, encoding="utf-8") as f:
+            content = f.read()
+
+        preview = extract_summary_preview(content)
+        return jsonify({
+            "exists": True,
+            "preview": preview,
+            "url": f"/area/{area.lower()}"
+        })
+    except Exception as e:
+        return jsonify({"exists": False, "error": str(e)})
+
+
+def extract_summary_preview(html_content: str) -> dict:
+    """Extract preview data from area summary HTML."""
+    preview = {
+        "title": "",
+        "subtitle": "",
+        "stats": [],
+        "definition": "",
+        "motivation": "",
+        "paradigms": [],
+    }
+
+    title_match = re.search(r"<h1[^>]*>(.*?)</h1>", html_content, re.DOTALL)
+    if title_match:
+        preview["title"] = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
+
+    subtitle_match = re.search(
+        r'<p class="subtitle">(.*?)</p>', html_content, re.DOTALL
+    )
+    if subtitle_match:
+        preview["subtitle"] = re.sub(r"<[^>]+>", "", subtitle_match.group(1)).strip()
+
+    stat_pattern = re.compile(
+        r'<div class="stat-item">.*?<div class="stat-value">(.*?)</div>.*?'
+        r'<div class="stat-label">(.*?)</div>.*?</div>',
+        re.DOTALL,
+    )
+    for match in stat_pattern.finditer(html_content):
+        preview["stats"].append(
+            {"value": match.group(1).strip(), "label": match.group(2).strip()}
+        )
+
+    def_match = re.search(r'<p class="definition">(.*?)</p>', html_content, re.DOTALL)
+    if def_match:
+        preview["definition"] = re.sub(r"<[^>]+>", "", def_match.group(1)).strip()
+
+    motivation_match = re.search(
+        r'<p class="motivation"[^>]*>(.*?)</p>', html_content, re.DOTALL
+    )
+    if motivation_match:
+        preview["motivation"] = re.sub(
+            r"<[^>]+>", "", motivation_match.group(1)
+        ).strip()
+
+    paradigm_pattern = re.compile(
+        r'<div class="paradigm-card">\s*<strong>(.*?)</strong>\s*<p>(.*?)</p>',
+        re.DOTALL,
+    )
+    for match in paradigm_pattern.finditer(html_content):
+        preview["paradigms"].append(
+            {
+                "name": match.group(1).strip(),
+                "description": re.sub(r"<[^>]+>", "", match.group(2)).strip(),
+            }
+        )
+
+    return preview
+
+
+@app.route("/area/<area>")
+def serve_area_summary(area):
+    """Serve area summary HTML file."""
+    htmls_dir = os.path.join(SCRIPT_DIR, "htmls")
+    summary_file = f"{area.lower()}_summary.html"
+
+    if os.path.exists(os.path.join(htmls_dir, summary_file)):
+        return send_from_directory(htmls_dir, summary_file)
+    else:
+        return f"Summary for area '{area}' not found", 404
+
+
+@app.route("/htmls/<path:filename>")
+def serve_htmls_static(filename):
+    """Serve static files from htmls directory (CSS, etc.)."""
+    htmls_dir = os.path.join(SCRIPT_DIR, "htmls")
+    return send_from_directory(htmls_dir, filename)
 
 
 def parse_args():

@@ -532,6 +532,7 @@ function toggleSearchMode() {
 function clearAllTopics() {
     currentTopics = [];
     currentPrimaryTopic = '';
+    hideAreaPreview();
     updateTopicButtons();
     fetchPapers(1, currentSearch);
 }
@@ -547,14 +548,20 @@ function toggleTopicFilter(topic) {
         if (index > -1) {
             currentTopics.splice(index, 1);
         }
+        // Hide area preview
+        hideAreaPreview();
     } else if (currentTopics.includes(topic)) {
         // Second click: switch from topics to primary_topic filter
         const index = currentTopics.indexOf(topic);
         currentTopics.splice(index, 1);
         currentPrimaryTopic = topic;
+        // Fetch and show area preview if available
+        fetchAreaPreview(topic);
     } else {
         // First click: add to topics filter
         currentTopics.push(topic);
+        // Hide area preview when switching away from primary
+        hideAreaPreview();
     }
 
     // Update button states
@@ -562,6 +569,88 @@ function toggleTopicFilter(topic) {
 
     // Fetch papers with new filters
     fetchPapers(1, currentSearch);
+}
+
+// Fetch area summary preview from API
+async function fetchAreaPreview(area) {
+    try {
+        const response = await fetch(`/api/area_summary/${area}`);
+        const data = await response.json();
+
+        if (data.exists && data.preview) {
+            showAreaPreview(data.preview, data.url);
+        } else {
+            hideAreaPreview();
+        }
+    } catch (error) {
+        console.error('Error fetching area preview:', error);
+        hideAreaPreview();
+    }
+}
+
+// Show area summary preview
+function showAreaPreview(preview, url) {
+    const container = document.getElementById('areaPreview');
+    const titleEl = document.getElementById('areaPreviewTitle');
+    const subtitleEl = document.getElementById('areaPreviewSubtitle');
+    const linkEl = document.getElementById('areaPreviewLink');
+    const statsEl = document.getElementById('areaPreviewStats');
+    const definitionEl = document.getElementById('areaPreviewDefinition');
+    const motivationEl = document.getElementById('areaPreviewMotivation');
+    const paradigmsEl = document.getElementById('areaPreviewParadigms');
+
+    // Set title and subtitle
+    titleEl.textContent = preview.title || '';
+    subtitleEl.textContent = preview.subtitle || '';
+    linkEl.href = url || '#';
+
+    // Set stats
+    if (preview.stats && preview.stats.length > 0) {
+        statsEl.innerHTML = preview.stats.map(stat =>
+            `<div class="area-stat-item">
+                <div class="area-stat-value">${stat.value}</div>
+                <div class="area-stat-label">${stat.label}</div>
+            </div>`
+        ).join('');
+        statsEl.style.display = 'flex';
+    } else {
+        statsEl.style.display = 'none';
+    }
+
+    // Set definition
+    if (preview.definition) {
+        definitionEl.textContent = preview.definition;
+        definitionEl.style.display = 'block';
+    } else {
+        definitionEl.style.display = 'none';
+    }
+
+    // Set motivation
+    if (preview.motivation) {
+        motivationEl.innerHTML = '💡 <strong>Why it matters:</strong> ' + preview.motivation;
+        motivationEl.style.display = 'block';
+    } else {
+        motivationEl.style.display = 'none';
+    }
+
+    // Set paradigms
+    if (preview.paradigms && preview.paradigms.length > 0) {
+        paradigmsEl.innerHTML = preview.paradigms.map(p =>
+            `<span class="paradigm-tag" title="${p.description}">${p.name}</span>`
+        ).join('');
+        paradigmsEl.style.display = 'flex';
+    } else {
+        paradigmsEl.style.display = 'none';
+    }
+
+    // Show the container
+    container.classList.add('visible');
+}
+
+// Hide area summary preview
+function hideAreaPreview() {
+    const container = document.getElementById('areaPreview');
+    container.classList.remove('visible');
 }
 
 // Update topic button active states and tooltips
@@ -605,6 +694,13 @@ window.onpopstate = function() {
     document.getElementById('dateTo').value = currentDateTo;
     updateTopicButtons();
 
+    // Show/hide area preview based on primary_topic
+    if (currentPrimaryTopic) {
+        fetchAreaPreview(currentPrimaryTopic);
+    } else {
+        hideAreaPreview();
+    }
+
     fetchPapers(page, search);
 };
 
@@ -625,6 +721,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('dateFrom').value = currentDateFrom;
     document.getElementById('dateTo').value = currentDateTo;
     updateTopicButtons();
+
+    // Show area preview if primary_topic is set
+    if (currentPrimaryTopic) {
+        fetchAreaPreview(currentPrimaryTopic);
+    }
 
     fetchPapers(page, search);
 });

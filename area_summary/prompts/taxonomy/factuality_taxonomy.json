@@ -1,0 +1,179 @@
+{
+  "area": "factuality",
+  "area_description": "Factuality and hallucination in LLMs are critical challenges for reliable AI systems. In addition to RAG approaches, there are mainly two bodies of work to improve factuality and suppress hallucination.",
+  "categories": [
+    {
+      "id": "knowledge_internalization",
+      "name": "Knowledge Internalization",
+      "description": "The model learns to generate factual answers by internalizing knowledge from the training data, through pre-training, post-training, and novel memory architectures.",
+      "sub_topics": [
+        {
+          "id": "pretraining_midtraining",
+          "name": "Pre-training and Mid-training",
+          "description": "Internalization through pre-training and mid-training by feeding good pre-train data. Studies where to store the knowledge and when is the best time to feed knowledge.",
+          "matching_keywords": [
+            "pre-training data",
+            "mid-training",
+            "continual pre-training",
+            "knowledge injection",
+            "knowledge acquisition",
+            "training data quality",
+            "data curation"
+          ]
+        },
+        {
+          "id": "post_training",
+          "name": "Post-training",
+          "description": "Internalization through post-training. Fine-tuning can trigger more hallucinations, so post-training needs to be done carefully.",
+          "matching_keywords": [
+            "post-training",
+            "fine-tuning hallucination",
+            "supervised fine-tuning",
+            "instruction tuning factuality",
+            "knowledge distillation"
+          ]
+        },
+        {
+          "id": "new_memory_architecture",
+          "name": "New Memory Architecture",
+          "description": "Proposing new memory architecture for factual knowledge storage and retrieval, where knowledge is internalized in the model. Approaches include LoRA adaptor, memory layer, residual memory, etc.",
+          "matching_keywords": [
+            "memory architecture",
+            "LoRA adaptor",
+            "memory layer",
+            "residual memory",
+            "parametric knowledge",
+            "knowledge memorization",
+            "knowledge editing",
+            "knowledge updating"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "knowledge internalization",
+        "knowledge storage",
+        "factual knowledge",
+        "pre-training data",
+        "mid-training",
+        "continual pre-training",
+        "knowledge injection",
+        "knowledge acquisition",
+        "post-training",
+        "fine-tuning hallucination",
+        "supervised fine-tuning",
+        "instruction tuning factuality",
+        "memory architecture",
+        "LoRA adaptor",
+        "memory layer",
+        "residual memory",
+        "parametric knowledge",
+        "knowledge memorization",
+        "knowledge recall",
+        "knowledge editing",
+        "knowledge updating",
+        "continual learning",
+        "training data quality",
+        "data curation"
+      ]
+    },
+    {
+      "id": "hallucination_suppression",
+      "name": "Hallucination Suppression",
+      "description": "The model learns to reduce hallucinated facts in the generation through internal parameter manipulation, fine-tuning, confidence-based methods, and verification.",
+      "sub_topics": [
+        {
+          "id": "internal_parameters",
+          "name": "Internal Parameters",
+          "description": "Output the correct fact by leveraging internal parameters at different layers of the model with different attention mechanisms, or by reciting.",
+          "matching_keywords": [
+            "internal parameters",
+            "attention layers",
+            "probing",
+            "representation engineering",
+            "activation editing",
+            "inference-time intervention",
+            "recitation"
+          ]
+        },
+        {
+          "id": "fine_tuning",
+          "name": "Fine-tuning",
+          "description": "Output the correct fact by fine-tuning such that the model learns to choose the right token among its internal knowledge based on confidence.",
+          "matching_keywords": [
+            "fine-tuning for factuality",
+            "RLHF factuality",
+            "DPO factuality",
+            "token selection",
+            "factual fine-tuning"
+          ]
+        },
+        {
+          "id": "confidence_based",
+          "name": "Confidence-based Suppression",
+          "description": "Suppress incorrect facts using confidence-based softening, select to abstain with low confidence, or explicitly state confidence. Confidence comes from internal parameters or is calibrated with fine-tuning through consistency and comparison with ground truths.",
+          "matching_keywords": [
+            "confidence estimation",
+            "confidence calibration",
+            "uncertainty estimation",
+            "abstention",
+            "selective prediction",
+            "refusal",
+            "I don't know",
+            "self-consistency"
+          ]
+        },
+        {
+          "id": "verification",
+          "name": "Verification",
+          "description": "Suppress incorrect facts with verification using internal knowledge, removing hallucinations that cannot be verified.",
+          "matching_keywords": [
+            "self-verification",
+            "fact verification",
+            "fact-checking",
+            "self-evaluation",
+            "faithfulness",
+            "SelfCheckGPT"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "hallucination suppression",
+        "hallucination detection",
+        "hallucination mitigation",
+        "hallucination reduction",
+        "factual accuracy",
+        "factuality improvement",
+        "internal parameters",
+        "attention layers",
+        "probing",
+        "representation engineering",
+        "activation editing",
+        "inference-time intervention",
+        "recitation",
+        "fine-tuning for factuality",
+        "RLHF factuality",
+        "DPO factuality",
+        "token selection",
+        "confidence estimation",
+        "confidence calibration",
+        "uncertainty estimation",
+        "abstention",
+        "selective prediction",
+        "refusal",
+        "I don't know",
+        "self-consistency",
+        "self-verification",
+        "fact verification",
+        "fact-checking",
+        "self-evaluation",
+        "faithfulness",
+        "grounding",
+        "truthfulness",
+        "TruthfulQA",
+        "FActScore",
+        "FELM",
+        "SelfCheckGPT"
+      ]
+    }
+  ]
+}

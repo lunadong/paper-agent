@@ -1,0 +1,251 @@
+{
+  "area": "benchmark",
+  "area_description": "Benchmarks and evaluation papers propose datasets, metrics, evaluation frameworks, and present results and analysis on LLM's capabilities on various tasks.",
+  "categories": [
+    {
+      "id": "benchmark_datasets",
+      "name": "Benchmark Datasets",
+      "description": "Design and construction of benchmark datasets, covering task input/output format, dataset size, coverage of dimensions and distributions, and data generation methodology.",
+      "sub_topics": [
+        {
+          "id": "task_input_output",
+          "name": "Task Input and Output",
+          "description": "What the task input and output formats are for the benchmark.",
+          "matching_keywords": [
+            "task design",
+            "task formulation",
+            "input format",
+            "output format",
+            "task specification",
+            "task template"
+          ]
+        },
+        {
+          "id": "dataset_size",
+          "name": "Dataset Size",
+          "description": "The scale and size of the benchmark dataset.",
+          "matching_keywords": [
+            "dataset size",
+            "dataset scale",
+            "number of examples",
+            "benchmark size",
+            "data volume"
+          ]
+        },
+        {
+          "id": "dimensions_and_distribution",
+          "name": "Dimensions and Distribution",
+          "description": "Different dimensions the task covers such as domains, input types, input quality, and the distribution across each dimension.",
+          "matching_keywords": [
+            "data distribution",
+            "domain coverage",
+            "difficulty levels",
+            "dimension coverage",
+            "task diversity",
+            "data splits"
+          ]
+        },
+        {
+          "id": "generation_method",
+          "name": "Generation Method",
+          "description": "How the dataset is generated, including manual curation, synthetic generation, and any audition or quality-control phase.",
+          "matching_keywords": [
+            "synthetic data generation",
+            "manual annotation",
+            "human annotation",
+            "crowdsourcing",
+            "data augmentation",
+            "quality control",
+            "audition phase"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "benchmark dataset",
+        "benchmark construction",
+        "dataset creation",
+        "dataset curation",
+        "data collection",
+        "test set",
+        "evaluation dataset",
+        "evaluation set",
+        "task design",
+        "task formulation",
+        "input format",
+        "output format",
+        "dataset size",
+        "dataset scale",
+        "data distribution",
+        "domain coverage",
+        "difficulty levels",
+        "synthetic data generation",
+        "manual annotation",
+        "human annotation",
+        "crowdsourcing",
+        "data augmentation",
+        "quality control",
+        "audition phase",
+        "test suite",
+        "challenge set",
+        "leaderboard"
+      ]
+    },
+    {
+      "id": "metrics_and_evaluation",
+      "name": "Metrics and Evaluation",
+      "description": "Evaluation methodologies including what capabilities are evaluated, the metrics used and their value ranges, and answer labeling approaches such as rule-based, LLM-as-a-judge, or manual labeling.",
+      "sub_topics": [
+        {
+          "id": "whats_evaluated",
+          "name": "What's Evaluated",
+          "description": "The specific capabilities, tasks, or aspects of LLMs being evaluated by the benchmark.",
+          "matching_keywords": [
+            "capability evaluation",
+            "task evaluation",
+            "what's evaluated",
+            "evaluation target",
+            "evaluation scope"
+          ]
+        },
+        {
+          "id": "metric_and_range",
+          "name": "Metric and Range",
+          "description": "The evaluation metrics used and their value ranges or scoring scales.",
+          "matching_keywords": [
+            "evaluation metric",
+            "scoring",
+            "accuracy",
+            "F1 score",
+            "BLEU",
+            "ROUGE",
+            "exact match",
+            "pass@k",
+            "win rate",
+            "Elo rating"
+          ]
+        },
+        {
+          "id": "answer_labeling_method",
+          "name": "Answer Labeling Method",
+          "description": "How ground-truth answers or judgments are produced: rule-based, LLM-as-a-judge, or manual labeling.",
+          "matching_keywords": [
+            "LLM-as-a-judge",
+            "LLM judge",
+            "auto evaluation",
+            "automatic evaluation",
+            "rule-based evaluation",
+            "human evaluation",
+            "human judgment",
+            "manual labeling",
+            "annotation",
+            "inter-annotator agreement"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "evaluation metric",
+        "evaluation framework",
+        "evaluation methodology",
+        "evaluation protocol",
+        "scoring",
+        "accuracy",
+        "F1 score",
+        "BLEU",
+        "ROUGE",
+        "exact match",
+        "pass@k",
+        "win rate",
+        "Elo rating",
+        "LLM-as-a-judge",
+        "LLM judge",
+        "auto evaluation",
+        "automatic evaluation",
+        "rule-based evaluation",
+        "human evaluation",
+        "human judgment",
+        "manual labeling",
+        "annotation",
+        "inter-annotator agreement",
+        "ground truth",
+        "reference answer",
+        "rubric",
+        "grading criteria"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Comparative analysis of models and solutions, examining overall capabilities across different data slices and uncovering fundamental deficiencies of LLMs.",
+      "sub_topics": [
+        {
+          "id": "models_compared",
+          "name": "Models Compared",
+          "description": "Which models or solutions are compared in the benchmark evaluation.",
+          "matching_keywords": [
+            "model comparison",
+            "comparative analysis",
+            "model ranking",
+            "leaderboard results",
+            "state-of-the-art",
+            "SOTA comparison"
+          ]
+        },
+        {
+          "id": "overall_capability",
+          "name": "Overall Capability",
+          "description": "Assessment of overall performance and capabilities across different slices of data.",
+          "matching_keywords": [
+            "overall capability",
+            "performance analysis",
+            "capability analysis",
+            "performance breakdown",
+            "fine-grained analysis",
+            "data slice",
+            "category-wise performance"
+          ]
+        },
+        {
+          "id": "fundamental_deficiencies",
+          "name": "Fundamental Deficiencies",
+          "description": "Fundamental deficiencies or limitations of LLMs discovered through the analysis.",
+          "matching_keywords": [
+            "LLM limitations",
+            "LLM deficiencies",
+            "fundamental deficiency",
+            "weakness",
+            "shortcoming",
+            "reasoning gap",
+            "failure analysis",
+            "error analysis"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "model comparison",
+        "comparative analysis",
+        "performance analysis",
+        "capability analysis",
+        "error analysis",
+        "failure analysis",
+        "ablation study",
+        "performance gap",
+        "model ranking",
+        "leaderboard results",
+        "state-of-the-art",
+        "SOTA comparison",
+        "LLM capabilities",
+        "LLM limitations",
+        "LLM deficiencies",
+        "weakness",
+        "shortcoming",
+        "reasoning gap",
+        "performance breakdown",
+        "fine-grained analysis",
+        "data slice",
+        "category-wise performance",
+        "robustness analysis",
+        "generalization"
+      ]
+    }
+  ]
+}

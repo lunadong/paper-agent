@@ -1,0 +1,156 @@
+You are summarizing research papers in the topic: "{topic_name}"
+
+## Topic Description
+{topic_description}
+
+## Papers in this Group ({paper_count} papers)
+
+{papers_text}
+
+## Your Task
+
+Produce a JSON summary with these exact fields:
+
+```json
+{
+  "topic_id": "{category_id}",
+  "topic_name": "{topic_name}",
+  "paper_count": {paper_count},
+  "overview": "2-3 sentences describing what this research area is about and why it matters. Write for a technical reader who may not be an expert in this specific area.",
+  "sub_topics": [
+    {
+      "sub_topic_id": "sub_topic_id",
+      "sub_topic_name": "Sub-topic Name",
+      "description": "1-2 sentences explaining what this sub-topic covers",
+      "paper_count": 10,
+      "key_methods": ["method1", "method2"],
+      "representative_papers": [
+        {"paper_id": 1234, "title": "Paper title", "pub_date": "YYYY-MM"}
+      ]
+    }
+  ],
+  "methods": [
+    {
+      "method_name": "Name of the method/approach",
+      "summary": "2-3 sentence explanation of what problem this method solves and how it works at a high level. Avoid jargon; explain technical terms when needed.",
+      "key_idea": "One sentence capturing the core innovation in plain language",
+      "first_appeared": "YYYY-MM",
+      "latest_advancement": "YYYY-MM",
+      "representative_papers": [
+        {
+          "paper_id": 1234,
+          "title": "Paper title",
+          "pub_date": "YYYY-MM",
+          "contribution": "One-line description of this paper's specific contribution"
+        }
+      ]
+    }
+  ],
+  "timeline": {
+    "periods": [
+      {
+        "period": "YYYY-MM to YYYY-MM",
+        "theme": "Brief description of research focus during this period",
+        "key_developments": [
+          "Development 1 with paper references",
+          "Development 2 with paper references"
+        ],
+        "papers": [
+          {"paper_id": 1234, "title": "Paper title", "pub_date": "YYYY-MM"}
+        ]
+      }
+    ],
+    "trend_summary": "1-2 sentences describing how research in this topic has evolved over time"
+  },
+  "key_insights": [
+    "High-level takeaway or pattern observed across papers. Write in plain language."
+  ],
+  "limitations": [
+    {
+      "limitation": "Description of a common limitation or challenge (explain why it matters)",
+      "affected_methods": ["method_name_1", "method_name_2"],
+      "example_papers": [
+        {"paper_id": 1234, "title": "Paper that discusses this limitation"}
+      ],
+      "potential_solutions": "Brief description of how this might be addressed (if mentioned in papers)"
+    }
+  ],
+  "significant_papers": [
+    {
+      "paper_id": 1234,
+      "title": "Full paper title",
+      "pub_date": "YYYY-MM",
+      "breakthrough_score": 7,
+      "methods": ["method_name_1", "method_name_2"],
+      "why_significant": "Brief explanation of why this paper matters (in plain language)"
+    }
+  ]
+}
+```
+
+### Writing Style Guidelines
+
+1. **Avoid jargon**: When technical terms are necessary, briefly explain them
+   - BAD: "Uses MoE upcycling with sparse attention heads"
+   - GOOD: "Uses a mixture-of-experts approach (multiple specialized sub-models that activate selectively) to improve efficiency"
+
+2. **Balance high-level and technical depth**:
+   - Lead with the "what" and "why" before diving into "how"
+   - Include concrete metrics and results, but explain what they mean
+   - BAD: "Achieves 36.0% F1 on 2WikiMultiHopQA"
+   - GOOD: "Achieves 36.0% F1 on a challenging multi-step reasoning benchmark (2WikiMultiHopQA), a 20% improvement over prior methods"
+
+3. **Make it actionable**: Help readers understand when they might use each method
+
+### Field Guidelines
+
+| Field | Description |
+|-------|-------------|
+| `overview` | 2-3 sentences describing the main theme and research focus. Accessible to technical readers outside this specialty. |
+| `sub_topics` | If the topic has sub-topics defined in the taxonomy, provide summaries for each. Include paper counts and representative papers. |
+| `methods` | Group papers by method/approach. Each method should have a plain-language summary explaining the core idea. Include 2-4 representative papers per method. |
+| `methods[].representative_papers` | List 2-4 key papers per method with paper_id, title, pub_date, and contribution. Include paper links. |
+| `timeline` | Show progress over time by grouping developments into periods (e.g., 6-month or yearly chunks). |
+| `key_insights` | 2-3 high-level takeaways written in accessible language |
+| `limitations` | 2-4 common limitations. Explain why each matters, not just what it is. |
+| `significant_papers` | Top 5-10 most impactful papers. Prioritize papers with breakthrough_score ≥ 6. |
+
+### Paper Links
+
+All paper references should use this format:
+- Link URL: `https://papers.lunadong.com/paper/{paper_id}`
+- Example: Paper ID 52 → `https://papers.lunadong.com/paper/52`
+
+### Important Requirements
+
+1. **Paper Identification**: Every paper reference MUST include:
+   - `paper_id`: The unique database ID (from the input data)
+   - `pub_date`: Publication date in YYYY-MM format
+
+2. **Sub-topic Handling**:
+   - If the taxonomy defines sub_topics for this topic, include a `sub_topics` array
+   - Group papers into sub-topics based on matching_keywords
+   - Each sub-topic should list key methods and representative papers
+
+3. **Methods Organization**:
+   - Identify distinct methods/approaches within the topic
+   - Start each method summary with what problem it solves
+   - Include 2-4 representative papers (not all papers) per method
+   - Show when each method first appeared and its latest advancement
+
+4. **Significant Papers Selection**:
+   - Only include the most impactful papers (typically 5-10)
+   - Prioritize papers with breakthrough_score ≥ 6
+   - Explain significance in plain language
+
+### Paper Input Format
+
+For each paper in the input, you will receive:
+- **paper_id**: Unique database identifier (use this in all references)
+- **Title**: Paper title
+- **Venue Info**: Venue, year, and month (use for pub_date)
+- **Abstract**: Paper abstract
+- **Core Problem**: Problem statement
+- **Key Novelty**: Main idea and explanation
+- **Evaluation Highlights**: Key results
+- **Breakthrough Score**: Score from 1-10

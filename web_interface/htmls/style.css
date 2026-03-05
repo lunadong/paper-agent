@@ -1,0 +1,347 @@
+/* ============================================================
+   Area Summary — Shared Stylesheet
+   Matches the clean visual style of area_summary_v5.html.
+   Used by generate_html.py across all area summaries.
+   ============================================================ */
+
+/* --- CSS Variables & Reset --- */
+:root {
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --secondary: #7c3aed;
+  --secondary-light: #ede9fe;
+  --accent: #059669;
+  --accent-light: #d1fae5;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+}
+
+a { color: var(--primary); text-decoration: none; transition: color var(--transition); }
+a:hover { color: var(--secondary); text-decoration: underline; }
+
+/* --- Layout --- */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* --- Header --- */
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  padding: 48px 0 36px;
+  text-align: center;
+}
+.header h1 { font-size: 2.5rem; margin-bottom: 8px; }
+.header .subtitle { font-size: 1.1rem; opacity: 0.9; margin-bottom: 24px; }
+.stats-banner { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+.stat-item { text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; }
+.stat-label { font-size: 0.85rem; opacity: 0.85; }
+
+/* --- Section styling --- */
+.section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  margin: 24px 0;
+}
+.section h2 { font-size: 1.6rem; margin-bottom: 20px; color: var(--text); border-bottom: 2px solid var(--primary-light); padding-bottom: 10px; }
+.section h3 { font-size: 1.2rem; margin: 18px 0 10px; color: var(--text); }
+
+/* --- Area Overview Box --- */
+.area-overview-box {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin: 24px auto;
+  max-width: 1200px;
+}
+.area-overview-box h2 { border: none; font-size: 1.5rem; margin-bottom: 16px; }
+.definition { font-size: 1.05rem; line-height: 1.8; color: var(--text); margin-bottom: 16px; }
+.motivation { font-size: 1rem; line-height: 1.8; color: var(--text); }
+
+.evolution-stages { display: flex; flex-direction: column; gap: 16px; margin: 16px 0; }
+.evolution-stage { background: var(--surface); border-radius: var(--radius-sm); padding: 16px 20px; border-left: 4px solid var(--primary); }
+.stage-label { font-weight: 700; color: var(--primary); display: block; margin-bottom: 6px; font-size: 0.95rem; }
+
+/* FIX 6: Paradigm grid — 3 per row, more spacing from motivation text */
+.paradigm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+.paradigm-card { background: var(--surface); border-radius: var(--radius-sm); padding: 16px; border: 1px solid var(--border); transition: box-shadow var(--transition); }
+.paradigm-card:hover { box-shadow: var(--shadow-md); }
+.paradigm-card strong { color: var(--primary); }
+
+/* --- Field Timeline --- */
+.field-timeline { margin: 24px auto; max-width: 1200px; }
+.field-timeline h2 { font-size: 1.6rem; margin-bottom: 20px; color: var(--text); }
+.timeline-period { position: relative; padding-left: 28px; margin-bottom: 24px; border-left: 3px solid var(--primary); }
+.timeline-period::before { content: ''; position: absolute; left: -8px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary); border: 3px solid var(--surface); }
+.period-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.period-dates { background: var(--primary); color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.period-name { font-weight: 700; font-size: 1.1rem; color: var(--text); }
+.period-theme { font-style: italic; color: var(--text-secondary); margin-bottom: 8px; }
+.period-developments { list-style: none; padding: 0; }
+.period-developments li { padding: 4px 0; padding-left: 18px; position: relative; font-size: 0.95rem; }
+.period-developments li::before { content: '\25b8'; position: absolute; left: 0; color: var(--primary); }
+/* FIX 8: Timeline links use blue (var(--primary)) — already default via anchor color */
+.period-developments li a { color: var(--primary); }
+.paradigm-shifts { margin-top: 8px; }
+.paradigm-shift-tag { display: inline-block; background: var(--secondary-light); color: var(--secondary); padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; margin: 2px 4px 2px 0; }
+
+/* --- Table of Contents (v3 style) --- */
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.toc-section { margin-bottom: 8px; }
+.toc-section h3 { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.toc-section ul { list-style: none; }
+.toc-section li { padding: 3px 0; }
+.toc-section a { color: var(--primary); text-decoration: none; display: block; padding: 3px 0; transition: color var(--transition); font-size: 0.95rem; }
+.toc-section a:hover { color: var(--secondary); }
+.toc-sub a { padding-left: 16px; font-size: 0.9rem; }
+
+/* --- Topic Sections --- */
+.topic-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  margin: 24px auto;
+  max-width: 1200px;
+}
+.topic-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid var(--primary-light); padding-bottom: 12px; }
+.topic-header h2 { border: none; padding: 0; margin: 0; font-size: 1.6rem; }
+.topic-emoji { font-size: 1.8rem; }
+
+/* --- Topic Overview (brief info box) --- */
+.topic-overview {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--primary);
+}
+.topic-overview p { font-size: 0.95rem; line-height: 1.7; margin-bottom: 6px; }
+.challenge-list { list-style: none; padding: 0; }
+.challenge-list li { padding: 6px 0 6px 24px; position: relative; }
+.challenge-list li::before { content: '\26a0\fe0f'; position: absolute; left: 0; }
+
+/* --- Running Example (v4 green style) --- */
+.running-example {
+  background: #f0fdf4;
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  margin: 16px 0;
+  border: 1px solid #bbf7d0;
+}
+.running-example h3 { color: var(--success); margin-bottom: 8px; }
+.example-query { background: white; padding: 12px 16px; border-radius: 8px; font-style: italic; font-weight: 600; margin: 8px 0; color: var(--text); border-left: 3px solid var(--success); }
+.method-solution { background: white; padding: 12px 16px; border-radius: 8px; margin: 6px 0; }
+.method-solution strong { color: var(--primary); }
+.solution-item { background: white; padding: 10px 16px; border-radius: 8px; margin: 4px 0; font-size: 0.93rem; }
+.solution-name { font-weight: 600; color: var(--success); }
+.solution-desc { color: var(--text); }
+
+/* --- Overall Progress (distinct from running example) --- */
+.overall-progress {
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 16px 0;
+  border-left: 4px solid var(--primary);
+}
+.overall-progress h3 { font-size: 1rem; color: var(--primary); margin-bottom: 8px; }
+.overall-progress p { font-size: 0.93rem; color: var(--text); line-height: 1.7; }
+
+/* --- Sub-topics Grid --- */
+.subtopic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin: 12px 0 20px; }
+.subtopic-card { background: var(--bg); border-radius: var(--radius-sm); padding: 16px; border: 1px solid var(--border); }
+.subtopic-card h4 { color: var(--text); margin-bottom: 6px; font-size: 0.95rem; }
+.subtopic-card .paper-count { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; }
+.subtopic-card .methods { font-size: 0.85rem; color: var(--text-secondary); }
+.method-tag { display: inline-block; background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; margin: 2px; }
+
+/* --- Methods Table --- */
+.methods-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9rem; }
+.methods-table th { background: var(--primary); color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
+.methods-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.methods-table tr:hover { background: var(--bg); }
+.methods-table-wrapper { overflow-x: auto; }
+
+/* --- Benchmark Table --- */
+.benchmark-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+.benchmark-table th { background: var(--accent); color: white; padding: 8px 12px; text-align: left; }
+.benchmark-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+
+/* --- Key Insights --- */
+.insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 12px 0; }
+.insight-card { background: var(--bg); border-radius: var(--radius-sm); padding: 14px; border-left: 3px solid var(--accent); font-size: 0.93rem; }
+.insight-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 12px 0; }
+
+/* --- Progress Points --- */
+.progress-list { list-style: none; padding: 0; border-left: 3px solid var(--success); padding-left: 16px; margin: 12px 0; }
+.progress-list li { padding: 4px 0; font-size: 0.93rem; }
+.progress-list li::before { content: '\2713 '; color: var(--success); font-weight: 700; }
+
+/* --- Limitations (not folded) --- */
+.limitations-section { margin-top: 16px; }
+.limitations-section h3 {
+  color: var(--warning);
+  font-weight: 600;
+  padding: 10px 16px;
+  background: #fef3c7;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+}
+.limitations-list { list-style: none; padding: 8px 16px; }
+.limitations-list li { padding: 6px 0; font-size: 0.88rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+.limitations-list li:last-child { border-bottom: none; }
+.limitations-list li strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+/* --- Paper list --- */
+.paper-details { margin: 16px 0; }
+.paper-details summary { cursor: pointer; font-weight: 600; color: var(--primary); padding: 8px 0; }
+.paper-list { list-style: none; padding: 8px 0; columns: 2; column-gap: 24px; }
+.paper-list li { padding: 4px 0; font-size: 0.88rem; break-inside: avoid; }
+.paper-list-open { margin: 16px 0; }
+.paper-list-open .paper-list { columns: 2; column-gap: 24px; }
+
+/* --- Topic Transition (v5 style: gradient pill) --- */
+.topic-transition { text-align: center; margin: 16px auto; padding: 16px; max-width: 800px; }
+.transition-text { color: var(--text-secondary); font-style: italic; font-size: 0.95rem; background: linear-gradient(90deg, transparent, var(--primary-light), transparent); padding: 10px 20px; border-radius: 20px; display: inline-block; }
+
+/* --- Full Analysis Toggle --- */
+.topic-full {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.topic-full > summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  transition: background var(--transition);
+  list-style: none;
+}
+.topic-full > summary::-webkit-details-marker { display: none; }
+.topic-full > summary::before { content: "\25b6 "; font-size: 0.8rem; }
+.topic-full[open] > summary::before { content: "\25bc "; }
+.topic-full > summary:hover { background: var(--primary-light); }
+.topic-full-content { padding-top: 24px; }
+
+/* --- Recommendations --- */
+.rec-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.rec-table th { background: var(--text); color: white; padding: 10px 12px; text-align: left; }
+.rec-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 0.92rem; }
+.priority-high { background: #fecaca; color: #991b1b; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+.priority-medium { background: #fef08a; color: #854d0e; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+.priority-low { background: #bbf7d0; color: #166534; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+
+/* --- Key Takeaways (v5 style) --- */
+.takeaways-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.takeaway-card { background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%); border-radius: var(--radius); padding: 20px; }
+.takeaway-card .emoji { font-size: 2rem; }
+.takeaway-card h3 { margin: 8px 0; font-size: 1.05rem; }
+.takeaway-card p { font-size: 0.92rem; line-height: 1.6; }
+.one-liner { font-size: 0.82rem; color: var(--text-secondary); font-style: italic; margin-top: 8px; }
+
+/* --- Emerging Trends (v5 style, smaller font + blue captions) --- */
+.trend-item { padding: 16px; margin: 12px 0; background: var(--bg); border-radius: var(--radius-sm); border-left: 4px solid var(--secondary); }
+.trend-item h3 { color: var(--primary); margin-bottom: 8px; font-size: 1rem; }
+.trend-item p { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.6; }
+.trend-papers { margin-top: 6px; font-size: 0.82rem; }
+
+/* --- Research Opportunities (v5 style, smaller font + blue captions) --- */
+.opportunity-item { padding: 16px; margin: 12px 0; background: var(--bg); border-radius: var(--radius-sm); border-left: 4px solid var(--accent); }
+.opportunity-item h3 { color: var(--primary); margin-bottom: 8px; font-size: 1rem; }
+.opportunity-item p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px; }
+.difficulty-badge, .impact-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; margin-right: 6px; }
+.difficulty-high { background: #fecaca; color: #991b1b; }
+.difficulty-medium { background: #fef08a; color: #854d0e; }
+.difficulty-low { background: #bbf7d0; color: #166534; }
+.impact-high { background: #bbf7d0; color: #166534; }
+.impact-medium { background: var(--primary-light); color: var(--primary); }
+
+/* --- Benchmark Leaderboard --- */
+.benchmark-leaderboard .benchmark-card { background: var(--bg); border-radius: var(--radius-sm); padding: 20px; margin: 16px 0; }
+.benchmark-card h3 { color: var(--primary); margin-bottom: 4px; }
+.benchmark-description { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 12px; }
+
+/* --- Topic Brief (compact info above full analysis toggle) --- */
+.topic-brief { margin-bottom: 8px; }
+
+/* --- Topic Timeline (inside topic cards) --- */
+.topic-timeline { margin: 16px 0; }
+.topic-timeline h3 { font-size: 1.2rem; margin-bottom: 10px; }
+
+/* --- Period Content (wraps developments + paradigm shifts inside a period) --- */
+.period-content { padding: 4px 0; }
+
+/* --- Topic Distribution --- */
+.topic-distribution .topic-bar { display: flex; align-items: center; margin: 6px 0; height: 32px; }
+.topic-bar-bg { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 4px; min-width: 2px; transition: width 0.5s ease; display: flex; align-items: center; padding-left: 8px; }
+.topic-bar-label { font-size: 0.85rem; font-weight: 600; width: 220px; flex-shrink: 0; text-align: right; padding-right: 12px; }
+.topic-bar-value { font-size: 0.78rem; color: white; white-space: nowrap; padding-left: 4px; }
+.topic-bar-value-outside { font-size: 0.78rem; color: var(--text-secondary); padding-left: 8px; white-space: nowrap; }
+
+/* --- Glossary (centered) --- */
+.glossary-section { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 32px; margin: 24px auto; max-width: 1200px; }
+.glossary-section summary { font-size: 1.6rem; font-weight: 700; cursor: pointer; color: var(--text); }
+.glossary-grid { columns: 2; column-gap: 32px; margin-top: 16px; }
+.glossary-item { break-inside: avoid; padding: 8px 0; }
+.glossary-item dt { font-weight: 700; color: var(--primary); font-size: 0.92rem; }
+.glossary-item dd { font-size: 0.88rem; color: var(--text-secondary); margin: 2px 0 8px; }
+
+/* --- Score Badges --- */
+.score-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+.score-high { background: #bbf7d0; color: #166534; }
+.score-mid { background: #fef08a; color: #854d0e; }
+.score-low { background: #fed7aa; color: #9a3412; }
+
+/* --- Footer --- */
+.footer { text-align: center; padding: 32px 0; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+/* --- Print --- */
+@media print {
+  .header { background: var(--primary) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section, .topic-section { box-shadow: none; border: 1px solid var(--border); }
+  details { open: true; }
+}
+
+/* --- Mobile --- */
+@media (max-width: 768px) {
+  .header h1 { font-size: 1.6rem; }
+  .stats-banner { gap: 16px; }
+  .stat-value { font-size: 1.3rem; }
+  .toc-grid { grid-template-columns: 1fr; }
+  .paradigm-grid, .takeaways-grid, .insights-grid, .insight-cards { grid-template-columns: 1fr; }
+  .section, .topic-section { padding: 20px; margin: 16px 0; }
+  .paper-list { columns: 1; }
+  .glossary-grid { columns: 1; }
+  .methods-table { font-size: 0.82rem; }
+  .topic-bar-label { width: 140px; font-size: 0.78rem; }
+  .rec-table td, .rec-table th { padding: 8px; font-size: 0.82rem; }
+  .subtopic-grid { grid-template-columns: 1fr; }
+}

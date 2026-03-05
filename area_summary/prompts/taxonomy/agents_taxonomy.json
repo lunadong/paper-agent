@@ -1,0 +1,295 @@
+{
+  "area": "agents",
+  "area_description": "Agentic AI refers to LLM-based systems that can autonomously plan, reason, and take actions to accomplish tasks. There are several levels of AI agents.",
+  "categories": [
+    {
+      "id": "multi_call_fixed_plan",
+      "name": "Multi-call Tool Use with Fixed Plan",
+      "description": "The model generates a plan for a task, then executes the plan by calling tools. The plan is fixed and cannot be modified.",
+      "sub_topics": [
+        {
+          "id": "tool_profiling",
+          "name": "Tool Profiling",
+          "description": "Generate detailed profiles to guide LLMs for right tool call and right parameterization.",
+          "matching_keywords": [
+            "tool profiling",
+            "tool profile",
+            "tool description",
+            "tool documentation",
+            "API documentation",
+            "tool schema"
+          ]
+        },
+        {
+          "id": "tool_use_post_training",
+          "name": "Tool-use Post-training",
+          "description": "Post-train the LLM to understand tool profiles and generate tool calls.",
+          "matching_keywords": [
+            "tool-use post-training",
+            "tool-use fine-tuning",
+            "tool learning",
+            "Toolformer",
+            "tool-augmented LLM",
+            "function calling training"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "tool use",
+        "tool calling",
+        "tool call",
+        "function calling",
+        "function call",
+        "tool profiling",
+        "tool profile",
+        "tool description",
+        "tool documentation",
+        "API calling",
+        "tool-use post-training",
+        "tool-augmented LLM",
+        "tool learning",
+        "fixed plan",
+        "tool selection",
+        "tool parameterization",
+        "Toolformer",
+        "tool retrieval"
+      ]
+    },
+    {
+      "id": "multi_call_flexible_plan",
+      "name": "Multi-call Tool Use with Flexible Plan",
+      "description": "The model generates a plan for a task, then executes the plan by calling tools. The plan can be modified based on the returned results.",
+      "sub_topics": [
+        {
+          "id": "internalized_apis",
+          "name": "Invoking Internalized APIs",
+          "description": "APIs are either well understood (web search, calculator), or internalized into the parameters such as through embeddings.",
+          "matching_keywords": [
+            "internalized API",
+            "internalized tool",
+            "web search API",
+            "calculator",
+            "embedded API",
+            "API internalization"
+          ]
+        },
+        {
+          "id": "web_agents",
+          "name": "Web Agents",
+          "description": "Operate web browser for browsing, linking, searching, and button clicking.",
+          "matching_keywords": [
+            "web agent",
+            "web browsing",
+            "browser agent",
+            "web navigation",
+            "web automation",
+            "GUI agent",
+            "WebArena",
+            "Mind2Web",
+            "SeeAct"
+          ]
+        },
+        {
+          "id": "prompt_based_optimization",
+          "name": "Prompt-based Optimization",
+          "description": "Optimize which tools to use next based on previous tool-calling output, such as with contrastive learning and checking at critical points.",
+          "matching_keywords": [
+            "prompt optimization",
+            "prompt-based tool optimization",
+            "contrastive learning",
+            "critical point checking",
+            "tool selection optimization"
+          ]
+        },
+        {
+          "id": "rl_based",
+          "name": "RL-based Tool Use",
+          "description": "Optimize tool use through reinforcement learning. The reward function can be final tool call success, turn-level success, tool call correctness, etc.",
+          "matching_keywords": [
+            "reinforcement learning tool use",
+            "RL-based agent",
+            "RL tool calling",
+            "reward function",
+            "tool-use RL",
+            "policy optimization"
+          ]
+        },
+        {
+          "id": "reflection_based",
+          "name": "Reflection-based Tool Use",
+          "description": "Compare tool-call with expert actions to learn why expert actions are better.",
+          "matching_keywords": [
+            "reflection",
+            "self-reflection",
+            "expert imitation",
+            "learning from demonstration",
+            "action comparison",
+            "reflexion"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "flexible plan",
+        "adaptive planning",
+        "dynamic planning",
+        "web agent",
+        "web browsing",
+        "browser agent",
+        "web navigation",
+        "web automation",
+        "GUI agent",
+        "internalized API",
+        "ReAct",
+        "chain-of-thought tool use",
+        "prompt optimization",
+        "contrastive learning",
+        "reinforcement learning tool use",
+        "RL-based agent",
+        "reward function",
+        "reflection",
+        "self-reflection",
+        "expert imitation",
+        "tool-use optimization",
+        "iterative tool calling",
+        "sequential decision making",
+        "action grounding",
+        "WebArena",
+        "Mind2Web",
+        "SeeAct"
+      ]
+    },
+    {
+      "id": "multi_turn_user_interactions",
+      "name": "Multi-turn with User Interactions",
+      "description": "Based on user responses, generate next steps. One challenge is to help users resolve ambiguity and make decisions, balancing exploration and exploitation.",
+      "sub_topics": [],
+      "matching_keywords": [
+        "multi-turn",
+        "multi-turn interaction",
+        "user interaction",
+        "conversational agent",
+        "dialogue agent",
+        "interactive agent",
+        "clarification",
+        "ambiguity resolution",
+        "exploration exploitation",
+        "user feedback",
+        "human-in-the-loop",
+        "human-agent interaction",
+        "conversational planning",
+        "interactive task completion"
+      ]
+    },
+    {
+      "id": "multi_agent",
+      "name": "Multi-agent",
+      "description": "Use multiple agents to collaboratively fulfill tasks. There are various organizational structures for agent collaboration.",
+      "sub_topics": [
+        {
+          "id": "role_based",
+          "name": "Role-based Multi-agent",
+          "description": "Different agents play different roles in fulfilling a task.",
+          "matching_keywords": [
+            "role-based agent",
+            "role playing",
+            "role assignment",
+            "specialized agent",
+            "agent roles",
+            "CAMEL"
+          ]
+        },
+        {
+          "id": "lead_worker",
+          "name": "Lead-Worker Multi-agent",
+          "description": "There is a lead agent that coordinates and delegates to worker agents.",
+          "matching_keywords": [
+            "lead agent",
+            "worker agent",
+            "orchestrator agent",
+            "coordinator agent",
+            "manager agent",
+            "delegation"
+          ]
+        },
+        {
+          "id": "decentralized",
+          "name": "Decentralized Multi-agent",
+          "description": "Decentralized agents work and collaborate without a central coordinator.",
+          "matching_keywords": [
+            "decentralized agent",
+            "peer-to-peer agent",
+            "cooperative agents",
+            "distributed agents",
+            "autonomous collaboration"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "multi-agent",
+        "multi-agent system",
+        "multi-agent collaboration",
+        "multi-agent debate",
+        "agent collaboration",
+        "agent communication",
+        "role-based agent",
+        "role playing",
+        "lead agent",
+        "worker agent",
+        "orchestrator agent",
+        "decentralized agent",
+        "cooperative agents",
+        "agent team",
+        "agent society",
+        "AutoGen",
+        "ChatDev",
+        "MetaGPT",
+        "CAMEL",
+        "agent negotiation"
+      ]
+    },
+    {
+      "id": "agent_evolution",
+      "name": "Agent Evolution",
+      "description": "The agent will gradually evolve to become more capable over time.",
+      "sub_topics": [],
+      "matching_keywords": [
+        "agent evolution",
+        "agent learning",
+        "agent improvement",
+        "self-improvement",
+        "self-evolving",
+        "continual learning",
+        "lifelong learning",
+        "agent adaptation",
+        "experience learning",
+        "agent memory",
+        "skill acquisition",
+        "progressive agent",
+        "agent growth"
+      ]
+    },
+    {
+      "id": "multi_task_planning",
+      "name": "Multi-task Planning",
+      "description": "There is not a single task, but oftentimes a big task with multiple subtasks, such as planning a day (instead of one single activity).",
+      "sub_topics": [],
+      "matching_keywords": [
+        "multi-task planning",
+        "task decomposition",
+        "task planning",
+        "subtask",
+        "sub-task",
+        "hierarchical planning",
+        "complex task",
+        "compound task",
+        "plan generation",
+        "goal decomposition",
+        "day planning",
+        "travel planning",
+        "itinerary planning",
+        "task graph",
+        "workflow planning"
+      ]
+    }
+  ]
+}

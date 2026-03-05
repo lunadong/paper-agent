@@ -1,0 +1,259 @@
+{
+  "area": "rag",
+  "area_description": "RAG refers to providing grounded information by retrieving from external sources, including web sources, knowledge graphs, and documents. The retrieved information is then used to answer questions or generate responses that are relevant to the user's query.",
+  "categories": [
+    {
+      "id": "modularized_rag_pipeline",
+      "name": "Modularized RAG Pipeline",
+      "description": "A modular RAG pipeline containing distinct stages: RAG triggering, query rewriting, retrieval, post-processing, and answer generation, with a special case of embedding concatenation.",
+      "sub_topics": [
+        {
+          "id": "rag_triggering",
+          "name": "RAG Triggering",
+          "description": "Deciding whether to trigger the RAG pipeline, including trigger-for-all or trigger-for-real-time-questions approaches.",
+          "matching_keywords": [
+            "RAG triggering",
+            "trigger-for-all",
+            "retrieval triggering",
+            "adaptive retrieval trigger",
+            "when to retrieve",
+            "retrieval decision"
+          ]
+        },
+        {
+          "id": "query_rewriting",
+          "name": "Query Rewriting",
+          "description": "Generating the web search query, or query for particular data sources like knowledge graphs and documents.",
+          "matching_keywords": [
+            "query rewriting",
+            "query reformulation",
+            "query generation",
+            "query expansion",
+            "query decomposition",
+            "search query generation",
+            "query transformation"
+          ]
+        },
+        {
+          "id": "retrieval",
+          "name": "Retrieval",
+          "description": "Retrieving from potentially multiple types of sources, including retrieval and ranking.",
+          "matching_keywords": [
+            "retrieval",
+            "dense retrieval",
+            "sparse retrieval",
+            "passage retrieval",
+            "document retrieval",
+            "retrieval and ranking",
+            "retriever",
+            "BM25"
+          ]
+        },
+        {
+          "id": "post_processing",
+          "name": "Post-processing",
+          "description": "Chunking retrieval results, re-ranking and filtering on the chunks.",
+          "matching_keywords": [
+            "post-processing",
+            "re-ranking",
+            "reranking",
+            "chunk",
+            "chunking",
+            "filtering",
+            "document selection",
+            "context compression"
+          ]
+        },
+        {
+          "id": "answer_generation",
+          "name": "Answer Generation",
+          "description": "Generating answers that are resilient to retrieval noises.",
+          "matching_keywords": [
+            "answer generation",
+            "answer synthesis",
+            "noise-resilient generation",
+            "RAG generation",
+            "response generation",
+            "generate-then-read"
+          ]
+        },
+        {
+          "id": "embedding_concatenation",
+          "name": "Embedding Concatenation",
+          "description": "Special case where embeddings are concatenated instead of texts for retrieval augmentation.",
+          "matching_keywords": [
+            "embedding concatenation",
+            "concatenate embeddings",
+            "kNN-LM",
+            "parallel context encoding",
+            "embedding fusion"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "Modularized RAG pipeline",
+        "modular RAG",
+        "RAG triggering",
+        "trigger-for-all",
+        "Query rewriting",
+        "query reformulation",
+        "query generation",
+        "Retrieval",
+        "retrieval and ranking",
+        "dense retrieval",
+        "sparse retrieval",
+        "passage retrieval",
+        "document retrieval",
+        "Post-processing",
+        "re-ranking",
+        "chunk",
+        "filtering",
+        "Answer generation",
+        "answer synthesis",
+        "noise-resilient generation",
+        "RAG pipeline",
+        "embedding concatenation",
+        "kNN-LM",
+        "generate-then-read",
+        "Pre-computation / Indexing",
+        "Parallel context encoding",
+        "Fact verification",
+        "Hallucination suppression"
+      ]
+    },
+    {
+      "id": "graph_based_rag_pipeline",
+      "name": "Graph-based RAG Pipeline",
+      "description": "Constructing a knowledge graph from the corpus and leveraging the graph to enable reasoning for retrieval-augmented generation.",
+      "sub_topics": [],
+      "matching_keywords": [
+        "Graph-based RAG pipeline",
+        "graph RAG",
+        "GraphRAG",
+        "knowledge graph",
+        "KG",
+        "graph-based retrieval",
+        "graph reasoning",
+        "graph construction",
+        "knowledge graph construction",
+        "graph-enhanced RAG",
+        "structured retrieval",
+        "entity linking",
+        "relation extraction",
+        "graph neural network"
+      ]
+    },
+    {
+      "id": "agentic_rag_pipeline",
+      "name": "Agentic RAG Pipeline",
+      "description": "Iteratively deciding whether to retrieve and how to augment retrieval results during decoding, with retrieval interleaved at the decoding phase.",
+      "sub_topics": [],
+      "matching_keywords": [
+        "Agentic RAG pipeline",
+        "agentic RAG",
+        "iterative retrieval",
+        "adaptive retrieval",
+        "active retrieval",
+        "multi-step retrieval",
+        "Agentic multi-step retrieval",
+        "interleaved retrieval",
+        "self-RAG",
+        "FLARE",
+        "ReAct",
+        "retrieval agent",
+        "sub-question decomposition",
+        "sequential decision making for retrieval",
+        "retrieve-and-refine"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "complex_question",
+      "name": "Complex Question",
+      "description": "Answering complex questions that require aggregating multiple pieces of information and potentially issuing multiple searches.",
+      "matching_keywords": [
+        "Complex question",
+        "complex QA",
+        "multi-hop question",
+        "multi-hop reasoning",
+        "Multi-hop Question Answering",
+        "multi-step question",
+        "question decomposition",
+        "compositional question",
+        "aggregation question",
+        "multiple searches",
+        "multi-hop QA",
+        "complex reasoning",
+        "Open-Domain Question Answering",
+        "Table-and-Text QA"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "area": "memory",
+  "area_description": "Memory in LLMs addresses the challenge of maintaining and utilizing information across interactions, and help users recall past multi-modal memories.",
+  "categories": [
+    {
+      "id": "memory_recall",
+      "name": "Memory Recall",
+      "description": "Retrieve from past interactions and logs to answer the users' recall questions. Challenges include generating answers across different memories and handling dense, highly similar memories.",
+      "sub_topics": [
+        {
+          "id": "sparse_memory_qa",
+          "name": "Sparse Memory QA",
+          "description": "Past memory is fairly sparse. Generating answers across different sparse memories can still be challenging.",
+          "matching_keywords": [
+            "sparse memory",
+            "sparse memory QA",
+            "cross-memory reasoning",
+            "memory aggregation",
+            "scattered memory"
+          ]
+        },
+        {
+          "id": "dense_memory_qa",
+          "name": "Dense Memory QA",
+          "description": "Past memory is dense, highly similar with many duplicates. Retrieval, noise reduction, and deduplication are even more challenging.",
+          "matching_keywords": [
+            "dense memory",
+            "dense memory QA",
+            "memory deduplication",
+            "noise reduction",
+            "duplicate memory",
+            "similar memory"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "memory recall",
+        "memory retrieval",
+        "memory QA",
+        "memory question answering",
+        "sparse memory",
+        "dense memory",
+        "recall question",
+        "conversational memory retrieval",
+        "long-term memory retrieval",
+        "multi-modal memory recall",
+        "memory search",
+        "noise reduction",
+        "deduplication",
+        "memory-augmented QA",
+        "personal memory recall"
+      ]
+    },
+    {
+      "id": "memory_organization",
+      "name": "Memory Organization",
+      "description": "Best way to organize past memory for recall QA and personalized conversation. Includes linear, layered, graph-based, and internalized memory structures.",
+      "sub_topics": [
+        {
+          "id": "linear_memory",
+          "name": "Linear Memory",
+          "description": "Focus on when to discard and update memory. RL can be leveraged to make decisions to maintain a clean and compact memory.",
+          "matching_keywords": [
+            "linear memory",
+            "memory update",
+            "memory discard",
+            "memory eviction",
+            "memory compaction",
+            "RL memory management"
+          ]
+        },
+        {
+          "id": "layered_memory",
+          "name": "Layered Memory",
+          "description": "Multiple layers such as core (profile), semantic (factual), episodic (associated with time/location). Also covers retrieval granularity: session-level, turn-level, and topic-level.",
+          "matching_keywords": [
+            "layered memory",
+            "episodic memory",
+            "semantic memory",
+            "core memory",
+            "memory hierarchy",
+            "session-level memory",
+            "turn-level memory",
+            "topic-level memory"
+          ]
+        },
+        {
+          "id": "tree_graph_memory",
+          "name": "Tree/Graph-based Memory",
+          "description": "Mimic human associative memory, making it easier to hop from one memory to another related by topic, location, event, person, etc.",
+          "matching_keywords": [
+            "tree memory",
+            "graph memory",
+            "graph-based memory",
+            "associative memory",
+            "memory graph",
+            "memory network",
+            "memory hopping"
+          ]
+        },
+        {
+          "id": "memory_internalization",
+          "name": "Memory Internalization",
+          "description": "Store personal memories into model parameters through LoRA, embedding feeding, and other parameter-level methods.",
+          "matching_keywords": [
+            "memory internalization",
+            "LoRA memory",
+            "embedding feeding",
+            "parameter memory",
+            "memory consolidation",
+            "memory compression"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "memory organization",
+        "memory management",
+        "memory structure",
+        "memory architecture",
+        "linear memory",
+        "memory update",
+        "memory discard",
+        "memory eviction",
+        "layered memory",
+        "episodic memory",
+        "semantic memory",
+        "core memory",
+        "memory hierarchy",
+        "session-level memory",
+        "turn-level memory",
+        "topic-level memory",
+        "tree memory",
+        "graph memory",
+        "graph-based memory",
+        "associative memory",
+        "memory graph",
+        "memory network",
+        "memory internalization",
+        "LoRA memory",
+        "embedding feeding",
+        "parameter memory",
+        "memory consolidation",
+        "memory compression",
+        "long-term memory",
+        "short-term memory",
+        "working memory",
+        "memory bank",
+        "memory store",
+        "personalized memory",
+        "reinforcement learning memory"
+      ]
+    }
+  ]
+}

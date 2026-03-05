@@ -1,0 +1,97 @@
+You have summaries from {topic_count} topic groups covering {total_papers} papers in the "{area}" research area.
+
+## Topic Summaries
+{topic_summaries}
+
+## Your Task
+
+Produce a JSON cross-topic analysis with these fields:
+
+```json
+{
+  "statistics": {
+    "total_papers": {total_papers},
+    "year_range": "YYYY-YYYY",
+    "avg_breakthrough_score": X.X,
+    "papers_by_topic": {"topic_name": count, ...}
+  },
+  "practical_recommendations": [
+    {
+      "recommendation": "Actionable recommendation written in plain language",
+      "priority": "High | Medium | Low",
+      "supporting_evidence": "Brief citation of papers/methods supporting this",
+      "example_papers": [
+        {"paper_id": 1234, "title": "Paper title", "pub_date": "YYYY-MM"}
+      ]
+    }
+  ],
+  "key_takeaways": [
+    {
+      "emoji": "🎯",
+      "title": "Short title (4-6 words)",
+      "description": "2-3 sentence explanation in accessible language. Lead with the insight, then provide evidence."
+    }
+  ],
+  "emerging_trends": [
+    {
+      "trend": "Description of the emerging trend in plain language",
+      "evidence": "Brief explanation of why this is emerging",
+      "example_papers": [
+        {"paper_id": 1234, "title": "Paper title", "pub_date": "YYYY-MM"},
+        {"paper_id": 5678, "title": "Another paper title", "pub_date": "YYYY-MM"}
+      ]
+    }
+  ],
+  "research_opportunities": [
+    {
+      "opportunity": "Description of a research gap or opportunity",
+      "rationale": "Why this is an important area to explore (in plain language)",
+      "related_topics": ["topic_1", "topic_2"],
+      "difficulty": "High | Medium | Low",
+      "potential_impact": "High | Medium | Low"
+    }
+  ]
+}
+```
+
+### Writing Style Guidelines
+
+1. **Avoid jargon**: Explain technical concepts when they appear
+   - BAD: "MoE architectures with sparse attention enable efficient scaling"
+   - GOOD: "Using specialized sub-models that activate selectively (mixture-of-experts) allows systems to scale efficiently without proportional compute increases"
+
+2. **Lead with "why it matters"**:
+   - BAD: "GraphRAG combines knowledge graphs with retrieval"
+   - GOOD: "Connecting retrieved information through knowledge graphs helps AI systems reason about relationships between facts, improving accuracy on complex questions by 20-30%"
+
+3. **Include concrete evidence**: Pair recommendations with specific results
+   - Include example papers for each recommendation
+   - Quote improvements in understandable terms (e.g., "20% more accurate" rather than just "0.87 F1")
+
+### Paper Links
+
+All paper references should use this format:
+- Link URL: `https://papers.lunadong.com/paper/{paper_id}`
+- Example: Paper ID 52 → `https://papers.lunadong.com/paper/52`
+
+### Field Guidelines
+
+| Field | Count | Description |
+|-------|-------|-------------|
+| `practical_recommendations` | 6-8 | Actionable recommendations with priority levels. Include 1-2 example papers per recommendation. |
+| `key_takeaways` | 4-6 | High-level insights with emoji, title, and description. Write for a broad technical audience. |
+| `emerging_trends` | 3-5 | Trends with supporting evidence and 2-3 example papers each |
+| `research_opportunities` | 4-6 | Gaps and opportunities with difficulty and impact assessment |
+
+### Priority Levels
+
+- **High**: Critical recommendations backed by multiple high-impact papers
+- **Medium**: Important recommendations for near-term consideration
+- **Low**: Promising directions with preliminary evidence
+
+### Focus Areas
+
+- Cross-cutting patterns that span multiple topics
+- Practical implications for real-world systems
+- Gaps and opportunities for future research
+- Connections between different topic areas

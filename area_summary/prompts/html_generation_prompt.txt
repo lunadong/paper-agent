@@ -1,0 +1,148 @@
+Generate a self-contained HTML file for the "{area}" research area summary.
+
+## Data Inputs
+- Area: {area}
+- Total Papers: {total_papers}
+- Year Range: {year_range}
+- Avg Breakthrough Score: {avg_score}
+- Taxonomy: {taxonomy_json}
+- Topic Summaries: {topic_summaries_json}
+- Cross-Topic Analysis: {cross_topic_json}
+
+## Paper Links
+
+All paper references MUST be clickable links using this format:
+- Link URL: `https://papers.lunadong.com/paper/{paper_id}`
+- Example: `<a href="https://papers.lunadong.com/paper/52">Paper Title</a>`
+
+## Design Requirements
+
+### Header Section
+- Gradient background (use CSS variables for theming)
+- Area name with emoji
+- Stats banner: paper count, theme count, avg score, year range
+
+### Table of Contents
+- Clickable links to each section
+- Two-column layout on desktop
+- **Order topics according to the taxonomy file** (not alphabetically or by paper count)
+
+### Topic Sections (one per topic)
+
+**IMPORTANT**: Render topic sections in the **same order as they appear in the taxonomy file**. Do NOT reorder by paper count or alphabetically.
+
+Each section must include:
+
+1. **Section header** with:
+   - Emoji icon
+   - Topic name
+   - (Do NOT show paper count badge in the header)
+
+2. **Sub-topics section** (if applicable):
+   - For topics with sub_topics in the taxonomy, show a summary of each sub-topic
+   - Include paper counts and key methods per sub-topic
+
+3. **Methods table** with columns:
+   - Method name (bold, linked to representative papers)
+   - Key Innovation (plain language explanation)
+   - Representative Papers (2-3 clickable links to major papers)
+
+   Example method row:
+   ```html
+   <tr>
+     <td><strong>Corrective Retrieval</strong></td>
+     <td>Evaluates retrieval quality and triggers fallback search when confidence is low</td>
+     <td>
+       <a href="https://papers.lunadong.com/paper/23">CRAG</a>,
+       <a href="https://papers.lunadong.com/paper/124">OPEN-RAG</a>
+     </td>
+   </tr>
+   ```
+
+4. **Progress points** as styled list with left border
+
+5. **Key insights** in card format (written in accessible language)
+
+6. **Collapsible paper list** using HTML5 details/summary:
+   ```html
+   <details class="paper-details">
+     <summary>📚 View all papers in this topic</summary>
+     <ul class="paper-list">
+       <li><a href="https://papers.lunadong.com/paper/{paper_id}">{paper_title}</a> ({pub_date})</li>
+       ...
+     </ul>
+   </details>
+   ```
+
+### Practical Recommendations Table
+- Priority column with color coding:
+  - High: red/pink background
+  - Medium: yellow background
+  - Low: green background
+- Include paper links for supporting evidence
+
+### Key Takeaways Grid
+- Responsive grid (3 columns on desktop, 1 on mobile)
+- Each card has emoji, title, description
+- Gradient background styling
+- Write descriptions in accessible, non-jargon language
+
+### Emerging Trends Section
+- List emerging trends with supporting evidence
+- Include clickable paper citations with links
+
+### Research Opportunities Section
+- List identified research gaps and opportunities
+- Show difficulty and potential impact levels
+- Write in plain language explaining why each matters
+
+### Topic Distribution Chart (at the end)
+Place the topic distribution chart **after** all topic sections and analysis, near the end of the document (before footer).
+
+Pure CSS horizontal bar chart (no JavaScript):
+
+```html
+<div class="topic-distribution">
+  <h2>📊 Topic Distribution</h2>
+  <div class="topic-bar" style="--bar-width: {percentage}%;">
+    <span class="topic-bar-label">{topic_name}</span>
+    <span class="topic-bar-value">{paper_count} papers ({percentage}%)</span>
+  </div>
+  <!-- Repeat for each topic, ordered by taxonomy -->
+</div>
+```
+
+### Footer
+- Generation timestamp
+- Paper count and source info
+
+### CSS Requirements
+- Use CSS variables for colors (primary, secondary, accent, success, warning)
+- Mobile-responsive (breakpoint at 768px)
+- Print-friendly styles
+- Smooth hover transitions
+
+### Creative Enhancements
+1. **Breakthrough score indicators**: Color-coded badges (7+: green, 5-7: yellow, <5: orange)
+2. **Collapsible paper lists**: Using <details>/<summary> tags
+3. **Method paper links**: Styled spans linking to 2-3 key papers
+4. **Topic distribution chart**: At end of document, showing paper distribution
+
+### Topic Ordering
+
+**CRITICAL**: Topics must be rendered in the order specified in the taxonomy file:
+1. Read the `categories` array from the taxonomy JSON
+2. Render topic sections in that exact order
+3. Render topic distribution bars in that exact order
+4. Do NOT sort by paper count, alphabetically, or any other criteria
+
+### Writing Style
+
+- **Avoid jargon** in all user-facing text. If technical terms are necessary, include brief explanations.
+- **Lead with impact**: Start descriptions with why something matters, not technical details.
+- **Be concrete**: Include specific improvements (e.g., "30% faster") rather than vague claims.
+
+## Output
+
+Return ONLY the complete HTML content (no markdown code fences).
+Start with `<!DOCTYPE html>` and end with `</html>`.
