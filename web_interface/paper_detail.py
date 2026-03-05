@@ -63,6 +63,18 @@ def extract_figure_number(figure_id: str) -> str:
     return match.group(1) if match else str(figure_id)
 
 
+def _parse_json_field(value, default=None):
+    """Parse JSON field, handling both string and dict inputs."""
+    if default is None:
+        default = {}
+    if not value:
+        return default
+    try:
+        return json.loads(value) if isinstance(value, str) else value
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+
 # Register custom Jinja2 filter
 @paper_detail_bp.app_template_filter("extract_fig_num")
 def extract_fig_num_filter(value):
@@ -128,55 +140,8 @@ def get_paper_with_summary(paper_id: int) -> dict:
     # Parse summary JSON fields
     summary = {}
     if has_summary:
-        if paper.get("summary_basics"):
-            try:
-                summary["basics"] = (
-                    json.loads(paper["summary_basics"])
-                    if isinstance(paper["summary_basics"], str)
-                    else paper["summary_basics"]
-                )
-            except (json.JSONDecodeError, TypeError):
-                summary["basics"] = {}
-
-        if paper.get("summary_core"):
-            try:
-                summary["core"] = (
-                    json.loads(paper["summary_core"])
-                    if isinstance(paper["summary_core"], str)
-                    else paper["summary_core"]
-                )
-            except (json.JSONDecodeError, TypeError):
-                summary["core"] = {}
-
-        if paper.get("summary_techniques"):
-            try:
-                summary["techniques"] = (
-                    json.loads(paper["summary_techniques"])
-                    if isinstance(paper["summary_techniques"], str)
-                    else paper["summary_techniques"]
-                )
-            except (json.JSONDecodeError, TypeError):
-                summary["techniques"] = {}
-
-        if paper.get("summary_experiments"):
-            try:
-                summary["experiments"] = (
-                    json.loads(paper["summary_experiments"])
-                    if isinstance(paper["summary_experiments"], str)
-                    else paper["summary_experiments"]
-                )
-            except (json.JSONDecodeError, TypeError):
-                summary["experiments"] = {}
-
-        if paper.get("summary_figures"):
-            try:
-                summary["figures"] = (
-                    json.loads(paper["summary_figures"])
-                    if isinstance(paper["summary_figures"], str)
-                    else paper["summary_figures"]
-                )
-            except (json.JSONDecodeError, TypeError):
-                summary["figures"] = {}
+        for field in ["basics", "core", "techniques", "experiments", "figures"]:
+            summary[field] = _parse_json_field(paper.get(f"summary_{field}"), {})
 
     # Get paper images from database
     paper_images = get_paper_images(paper_id)
@@ -184,13 +149,11 @@ def get_paper_with_summary(paper_id: int) -> dict:
     # Build a mapping from figure_name (e.g., "1", "2") to image_id
     image_map = {}
     for img in paper_images:
-        # Extract figure number from figure_name (e.g., "Figure 1" -> "1", or just "1" -> "1")
         fig_name = img.get("figure_name", "")
         if fig_name:
-            # Try to extract number from the name
-            match = re.search(r"(\d+)", fig_name)
-            if match:
-                image_map[match.group(1)] = img["id"]
+            fig_num = extract_figure_number(fig_name)
+            if fig_num:
+                image_map[fig_num] = img["id"]
             else:
                 image_map[fig_name] = img["id"]
 

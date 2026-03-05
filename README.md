@@ -29,6 +29,7 @@ interface with AI-powered summarization.
     - Expert and beginner perspective analysis
     - Devmate skills for automated prompt revision
 - **Web Interface**: Browse, search, and view paper summaries with collapsible sections
+- **Area Summary Preview**: Interactive preview of research area summaries when filtering by topic
 - **Daily Updates**: Automated collection with parallel processing and email notifications
 - **Scheduled Tasks**: macOS launchd integration for daily automated updates
 - **Vercel Deployment**: Ready for serverless deployment
@@ -220,6 +221,9 @@ paper-agent/
     |-- paper_detail.py      # Paper detail page blueprint
     |-- vercel.json          # Vercel deployment config
     |-- VERCEL_DEPLOY.md     # Vercel deployment guide
+    |-- htmls/               # Area summary HTML files
+    |   |-- *_summary.html   # Generated area summaries (e.g., rag_summary.html)
+    |   +-- style.css        # Shared styles for summary pages
     |-- templates/
     |   |-- papers.html      # Main papers list page
     |   +-- paper_detail.html # Paper detail with summary

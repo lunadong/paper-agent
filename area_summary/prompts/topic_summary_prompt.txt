@@ -16,7 +16,27 @@ Produce a JSON summary with these exact fields:
   "topic_id": "{category_id}",
   "topic_name": "{topic_name}",
   "paper_count": {paper_count},
-  "overview": "2-3 sentences describing what this research area is about and why it matters. Write for a technical reader who may not be an expert in this specific area.",
+  "overview": {
+    "definition": "1-2 sentences defining what this topic covers. Be concise.",
+    "motivation": "1-2 sentences explaining why this topic matters.",
+    "baseline": "1-2 sentences describing the conventional/baseline approach that papers in this topic improve upon.",
+    "key_challenges": [
+      "Challenge 1 that makes this problem hard",
+      "Challenge 2",
+      "Challenge 3"
+    ]
+  },
+  "running_example": {
+    "example_query": "A concrete question or scenario that illustrates the problem this topic addresses",
+    "baseline_behavior": "How a baseline system would handle this query (and why it fails or is suboptimal)",
+    "challenge_illustration": "What makes this particular example challenging",
+    "method_solutions": [
+      {
+        "method_name": "Name of method from this topic",
+        "how_it_helps": "How this method improves the result for this specific example"
+      }
+    ]
+  },
   "sub_topics": [
     {
       "sub_topic_id": "sub_topic_id",
@@ -34,6 +54,7 @@ Produce a JSON summary with these exact fields:
       "method_name": "Name of the method/approach",
       "summary": "2-3 sentence explanation of what problem this method solves and how it works at a high level. Avoid jargon; explain technical terms when needed.",
       "key_idea": "One sentence capturing the core innovation in plain language",
+      "improves_on": "What baseline or prior method this improves upon",
       "first_appeared": "YYYY-MM",
       "latest_advancement": "YYYY-MM",
       "representative_papers": [
@@ -52,18 +73,38 @@ Produce a JSON summary with these exact fields:
         "period": "YYYY-MM to YYYY-MM",
         "theme": "Brief description of research focus during this period",
         "key_developments": [
-          "Development 1 with paper references",
-          "Development 2 with paper references"
+          "MethodName ([MethodName](https://papers.lunadong.com/paper/ID), YYYY) did X, achieving Y% improvement over Z",
+          "AnotherMethod ([AnotherMethod](https://papers.lunadong.com/paper/ID), YYYY) introduced A"
         ],
         "papers": [
           {"paper_id": 1234, "title": "Paper title", "pub_date": "YYYY-MM"}
         ]
       }
     ],
+    "overall_progress": "1 sentence summarizing the single biggest paradigm shift or progress in this topic.",
     "trend_summary": "1-2 sentences describing how research in this topic has evolved over time"
   },
+  "benchmark_results": {
+    "primary_benchmarks": [
+      {
+        "benchmark_name": "Name of the benchmark",
+        "what_it_measures": "What capability this benchmark tests",
+        "metric": "Primary metric (e.g., Accuracy, F1, EM)",
+        "top_results": [
+          {
+            "method": "Method name",
+            "value": "Score (e.g., 85.3%)",
+            "relative_improvement": "+X% over previous best",
+            "paper_id": 1234,
+            "paper_title": "Paper title",
+            "year": "YYYY"
+          }
+        ]
+      }
+    ]
+  },
   "key_insights": [
-    "High-level takeaway or pattern observed across papers. Write in plain language."
+    "One-sentence takeaway. Max 25 words per insight."
   ],
   "limitations": [
     {
@@ -80,9 +121,16 @@ Produce a JSON summary with these exact fields:
       "paper_id": 1234,
       "title": "Full paper title",
       "pub_date": "YYYY-MM",
+      "year": "YYYY",
       "breakthrough_score": 7,
       "methods": ["method_name_1", "method_name_2"],
       "why_significant": "Brief explanation of why this paper matters (in plain language)"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Technical Term",
+      "definition": "Plain-language definition of the term, accessible to a technical reader outside this specialty"
     }
   ]
 }
@@ -106,14 +154,28 @@ Produce a JSON summary with these exact fields:
 
 | Field | Description |
 |-------|-------------|
-| `overview` | 2-3 sentences describing the main theme and research focus. Accessible to technical readers outside this specialty. |
+| `overview` | A dict with `definition` (1-2 sentences), `motivation` (1-2 sentences), `baseline` (1-2 sentences), and `key_challenges` (3-4 items). Keep each field concise. |
+| `running_example` | A concrete example query/scenario showing the problem, how a baseline fails, what makes it hard, and how 2-4 methods from this topic solve it. |
 | `sub_topics` | If the topic has sub-topics defined in the taxonomy, provide summaries for each. Include paper counts and representative papers. |
-| `methods` | Group papers by method/approach. Each method should have a plain-language summary explaining the core idea. Include 2-4 representative papers per method. |
-| `methods[].representative_papers` | List 2-4 key papers per method with paper_id, title, pub_date, and contribution. Include paper links. |
-| `timeline` | Show progress over time by grouping developments into periods (e.g., 6-month or yearly chunks). |
-| `key_insights` | 2-3 high-level takeaways written in accessible language |
-| `limitations` | 2-4 common limitations. Explain why each matters, not just what it is. |
-| `significant_papers` | Top 5-10 most impactful papers. Prioritize papers with breakthrough_score ≥ 6. |
+| `methods` | Group papers by method/approach. Each method should have a plain-language summary explaining the core idea. Include `improves_on` to show what baseline it beats. Include 2-4 representative papers per method. |
+| `methods[].representative_papers` | List 2-4 key papers per method with paper_id, title, pub_date, and contribution. |
+| `timeline` | Show progress over time by grouping developments into periods (e.g., 6-month or yearly chunks). **Each key_development MUST include a markdown paper link** in the format `[ShortName](https://papers.lunadong.com/paper/{paper_id})`. |
+| `timeline.overall_progress` | 1 sentence (max 30 words) capturing the single biggest shift or advance. |
+| `benchmark_results` | Key benchmarks mentioned in the papers with top results. Include 1-3 benchmarks if available. |
+| `key_insights` | 4-6 high-level takeaways, each max 25 words. Lead with the insight, not the evidence. |
+| `limitations` | 3-5 common limitations. Explain why each matters, not just what it is. |
+| `significant_papers` | Top 5-10 most impactful papers. Prioritize papers with breakthrough_score ≥ 6. Include `year` field. |
+| `glossary` | 10-20 technical terms used in this topic, with plain-language definitions. |
+
+### Paper Links in Timeline
+
+**CRITICAL**: Every key_development in timeline periods MUST embed markdown-style paper links. Use this format:
+
+```
+"MethodName ([MethodName](https://papers.lunadong.com/paper/52), 2024) introduced X, achieving Y"
+```
+
+This allows the HTML renderer to create clickable paper links in the timeline.
 
 ### Paper Links
 
@@ -137,11 +199,13 @@ All paper references should use this format:
    - Start each method summary with what problem it solves
    - Include 2-4 representative papers (not all papers) per method
    - Show when each method first appeared and its latest advancement
+   - Include `improves_on` to show what the method builds on
 
 4. **Significant Papers Selection**:
    - Only include the most impactful papers (typically 5-10)
    - Prioritize papers with breakthrough_score ≥ 6
    - Explain significance in plain language
+   - Include `year` field (just the year part of pub_date)
 
 ### Paper Input Format
 

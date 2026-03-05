@@ -1,178 +1,273 @@
 {
   "area": "factuality",
-  "area_description": "Factuality and hallucination in LLMs are critical challenges for reliable AI systems. In addition to RAG approaches, there are mainly two bodies of work to improve factuality and suppress hallucination.",
+  "area_description": "Factuality and hallucination in LLMs are critical challenges for reliable AI systems. In addition to RAG approaches, there are mainly two bodies of work to improve factuality and suppress hallucination: knowledge internalization and hallucination suppression.",
   "categories": [
     {
       "id": "knowledge_internalization",
       "name": "Knowledge Internalization",
-      "description": "The model learns to generate factual answers by internalizing knowledge from the training data, through pre-training, post-training, and novel memory architectures.",
+      "description": "The model learns to generate factual answers by internalizing knowledge from training data, including pre-training/mid-training strategies, post-training approaches, and new memory architectures for factual knowledge storage and retrieval.",
       "sub_topics": [
         {
           "id": "pretraining_midtraining",
           "name": "Pre-training and Mid-training",
-          "description": "Internalization through pre-training and mid-training by feeding good pre-train data. Studies where to store the knowledge and when is the best time to feed knowledge.",
+          "description": "Internalization through pre-training and mid-training by feeding good pre-train data, studying where to store knowledge and when is the best time to feed knowledge.",
           "matching_keywords": [
             "pre-training data",
             "mid-training",
-            "continual pre-training",
-            "knowledge injection",
-            "knowledge acquisition",
+            "knowledge storage",
             "training data quality",
+            "knowledge feeding",
+            "continual pre-training",
+            "knowledge acquisition",
             "data curation"
           ]
         },
         {
           "id": "post_training",
           "name": "Post-training",
-          "description": "Internalization through post-training. Fine-tuning can trigger more hallucinations, so post-training needs to be done carefully.",
+          "description": "Internalization through post-training, where fine-tuning must be done carefully as it can trigger more hallucinations.",
           "matching_keywords": [
             "post-training",
             "fine-tuning hallucination",
+            "instruction tuning",
+            "RLHF",
+            "alignment training",
             "supervised fine-tuning",
-            "instruction tuning factuality",
-            "knowledge distillation"
+            "knowledge distillation",
+            "preference optimization"
           ]
         },
         {
           "id": "new_memory_architecture",
           "name": "New Memory Architecture",
-          "description": "Proposing new memory architecture for factual knowledge storage and retrieval, where knowledge is internalized in the model. Approaches include LoRA adaptor, memory layer, residual memory, etc.",
+          "description": "Proposing new memory architecture for factual knowledge storage and retrieval, where knowledge is internalized in the model through LoRA adaptors, memory layers, residual memory, etc.",
           "matching_keywords": [
             "memory architecture",
             "LoRA adaptor",
             "memory layer",
             "residual memory",
-            "parametric knowledge",
-            "knowledge memorization",
+            "parametric memory",
+            "knowledge storage architecture",
+            "memory-augmented model",
+            "knowledge neurons"
+          ]
+        },
+        {
+          "id": "knowledge_editing",
+          "name": "Knowledge Editing",
+          "description": "Techniques to edit or update specific factual knowledge stored within the model's parameters without full retraining.",
+          "matching_keywords": [
             "knowledge editing",
-            "knowledge updating"
+            "model editing",
+            "fact editing",
+            "knowledge update",
+            "ROME",
+            "MEMIT",
+            "sequential editing",
+            "knowledge modification"
           ]
         }
       ],
       "matching_keywords": [
         "knowledge internalization",
         "knowledge storage",
-        "factual knowledge",
+        "parametric knowledge",
         "pre-training data",
         "mid-training",
-        "continual pre-training",
-        "knowledge injection",
-        "knowledge acquisition",
         "post-training",
-        "fine-tuning hallucination",
-        "supervised fine-tuning",
-        "instruction tuning factuality",
+        "fine-tuning",
         "memory architecture",
-        "LoRA adaptor",
+        "LoRA",
         "memory layer",
         "residual memory",
-        "parametric knowledge",
-        "knowledge memorization",
-        "knowledge recall",
         "knowledge editing",
-        "knowledge updating",
-        "continual learning",
-        "training data quality",
-        "data curation"
+        "model editing",
+        "knowledge neurons",
+        "knowledge acquisition"
       ]
     },
     {
       "id": "hallucination_suppression",
       "name": "Hallucination Suppression",
-      "description": "The model learns to reduce hallucinated facts in the generation through internal parameter manipulation, fine-tuning, confidence-based methods, and verification.",
+      "description": "The model learns to reduce hallucinated facts in generation through leveraging internal parameters, fine-tuning for correct token selection, confidence-based suppression, and verification-based approaches.",
       "sub_topics": [
         {
           "id": "internal_parameters",
           "name": "Internal Parameters",
-          "description": "Output the correct fact by leveraging internal parameters at different layers of the model with different attention mechanisms, or by reciting.",
+          "description": "Outputting the correct fact by leveraging internal parameters at different layers of the model with different attention mechanisms, or by reciting.",
           "matching_keywords": [
             "internal parameters",
             "attention layers",
+            "internal representation",
+            "recitation",
             "probing",
-            "representation engineering",
-            "activation editing",
-            "inference-time intervention",
-            "recitation"
+            "layer-wise analysis",
+            "mechanistic interpretability",
+            "activation steering"
           ]
         },
         {
-          "id": "fine_tuning",
-          "name": "Fine-tuning",
-          "description": "Output the correct fact by fine-tuning such that the model learns to choose the right token among its internal knowledge based on confidence.",
+          "id": "fine_tuning_based",
+          "name": "Fine-tuning Based",
+          "description": "Outputting the correct fact by fine-tuning, such that the model learns to choose the right token among its internal knowledge based on confidence.",
           "matching_keywords": [
-            "fine-tuning for factuality",
-            "RLHF factuality",
-            "DPO factuality",
+            "fine-tuning",
             "token selection",
-            "factual fine-tuning"
+            "factuality fine-tuning",
+            "hallucination-aware training",
+            "DPO",
+            "preference learning",
+            "factual alignment",
+            "knowledge-grounded fine-tuning"
           ]
         },
         {
           "id": "confidence_based",
-          "name": "Confidence-based Suppression",
-          "description": "Suppress incorrect facts using confidence-based softening, select to abstain with low confidence, or explicitly state confidence. Confidence comes from internal parameters or is calibrated with fine-tuning through consistency and comparison with ground truths.",
+          "name": "Confidence-based",
+          "description": "Suppressing incorrect facts using confidence-based softening, selective abstention with low confidence, or explicitly stating confidence. Confidence comes from internal parameters or is calibrated through fine-tuning with consistency and ground truth comparison.",
           "matching_keywords": [
-            "confidence estimation",
-            "confidence calibration",
+            "confidence-based",
             "uncertainty estimation",
             "abstention",
             "selective prediction",
-            "refusal",
-            "I don't know",
-            "self-consistency"
+            "calibration",
+            "confidence scoring",
+            "self-consistency",
+            "know what you don't know"
           ]
         },
         {
-          "id": "verification",
-          "name": "Verification",
-          "description": "Suppress incorrect facts with verification using internal knowledge, removing hallucinations that cannot be verified.",
+          "id": "verification_based",
+          "name": "Verification-based",
+          "description": "Suppressing incorrect facts with verification using internal knowledge, removing hallucinations that cannot be verified.",
           "matching_keywords": [
-            "self-verification",
+            "verification",
             "fact verification",
+            "self-verification",
             "fact-checking",
-            "self-evaluation",
-            "faithfulness",
-            "SelfCheckGPT"
+            "claim verification",
+            "hallucination detection",
+            "consistency checking",
+            "entailment verification"
           ]
         }
       ],
       "matching_keywords": [
         "hallucination suppression",
-        "hallucination detection",
         "hallucination mitigation",
         "hallucination reduction",
-        "factual accuracy",
-        "factuality improvement",
+        "factual generation",
         "internal parameters",
-        "attention layers",
-        "probing",
-        "representation engineering",
-        "activation editing",
-        "inference-time intervention",
+        "attention mechanism",
         "recitation",
-        "fine-tuning for factuality",
-        "RLHF factuality",
-        "DPO factuality",
-        "token selection",
-        "confidence estimation",
-        "confidence calibration",
+        "fine-tuning",
+        "confidence-based",
         "uncertainty estimation",
         "abstention",
-        "selective prediction",
-        "refusal",
-        "I don't know",
-        "self-consistency",
-        "self-verification",
-        "fact verification",
+        "calibration",
+        "verification",
         "fact-checking",
-        "self-evaluation",
-        "faithfulness",
-        "grounding",
-        "truthfulness",
-        "TruthfulQA",
-        "FActScore",
-        "FELM",
-        "SelfCheckGPT"
+        "hallucination detection"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "factuality_evaluation",
+      "name": "Factuality Evaluation",
+      "description": "Evaluating factual accuracy of LLM outputs, including detection methods, metrics, and assessment frameworks for hallucinated content.",
+      "matching_keywords": [
+        "factuality evaluation",
+        "hallucination detection",
+        "factual accuracy",
+        "truthfulness assessment",
+        "LLM evaluation",
+        "factuality metrics",
+        "reference-free evaluation",
+        "automated fact-checking",
+        "error detection"
+      ]
+    },
+    {
+      "id": "mechanistic_interpretability",
+      "name": "Mechanistic Interpretability",
+      "description": "Understanding how factual knowledge is represented, stored, and retrieved within model internals, including probing, circuit analysis, and representation studies.",
+      "matching_keywords": [
+        "mechanistic interpretability",
+        "interpretability",
+        "probing",
+        "knowledge representation",
+        "circuit analysis",
+        "internal representation",
+        "linear probing",
+        "knowledge localization",
+        "activation analysis"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
       ]
     }
   ]

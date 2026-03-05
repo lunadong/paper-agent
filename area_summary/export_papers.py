@@ -53,6 +53,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / "paper_collection"))
 
 from paper_db import PaperDB
 
@@ -60,19 +61,20 @@ from paper_db import PaperDB
 def get_all_topics() -> list:
     """Get all unique primary_topic values from the database with counts."""
     db = PaperDB()
-    cursor = db._get_cursor()
-    cursor.execute(
-        """
-        SELECT primary_topic, COUNT(*) as count
-        FROM papers
-        WHERE primary_topic IS NOT NULL
-        GROUP BY primary_topic
-        ORDER BY count DESC
-        """
-    )
-    result = [dict(row) for row in cursor.fetchall()]
-    db.close()
-    return result
+    try:
+        cursor = db._get_cursor()
+        cursor.execute(
+            """
+            SELECT primary_topic, COUNT(*) as count
+            FROM papers
+            WHERE primary_topic IS NOT NULL
+            GROUP BY primary_topic
+            ORDER BY count DESC
+            """
+        )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        db.close()
 
 
 def get_papers_with_filter(where_clause: str) -> list:
@@ -86,22 +88,21 @@ def get_papers_with_filter(where_clause: str) -> list:
         List of paper dictionaries
     """
     db = PaperDB()
-    cursor = db._get_cursor()
-    # Build the query with the provided WHERE clause
-    query = f"""
-        SELECT id, title, authors, abstract, link, venue, year,
-               topics, primary_topic, recomm_date,
-               summary_basics, summary_core, summary_techniques,
-               summary_experiments, summary_figures
-        FROM papers
-        WHERE {where_clause}
-        ORDER BY created_at DESC
-    """
-
-    cursor.execute(query)
-    result = [dict(row) for row in cursor.fetchall()]
-    db.close()
-    return result
+    try:
+        cursor = db._get_cursor()
+        query = f"""
+            SELECT id, title, authors, abstract, link, venue, year,
+                   topics, primary_topic, recomm_date,
+                   summary_basics, summary_core, summary_techniques,
+                   summary_experiments, summary_figures
+            FROM papers
+            WHERE {where_clause}
+            ORDER BY created_at DESC
+        """
+        cursor.execute(query)
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        db.close()
 
 
 def format_paper_for_json(paper: dict) -> dict:

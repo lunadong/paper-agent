@@ -151,10 +151,14 @@ def get_topic_order(taxonomy, paper_groups):
             for st in sub_topics:
                 st_id = st["id"]
                 if ("sub_topic", st_id) in files_by_key:
-                    ordered.append(("sub_topic", st_id, assign_emoji("sub_topic", st_idx)))
+                    ordered.append(
+                        ("sub_topic", st_id, assign_emoji("sub_topic", st_idx))
+                    )
                     st_idx += 1
         if ("category_general", cat_id) in files_by_key:
-            ordered.append(("category_general", cat_id, assign_emoji("category_general", cat_idx)))
+            ordered.append(
+                ("category_general", cat_id, assign_emoji("category_general", cat_idx))
+            )
             cat_idx += 1
 
     # Add "other" category before themes
@@ -195,7 +199,9 @@ def find_transition(connections, from_name, to_name):
     for conn in connections:
         ft = conn.get("from_topic", "").lower()
         tt = conn.get("to_topic", "").lower()
-        if (from_lower in ft or ft in from_lower) and (to_lower in tt or tt in to_lower):
+        if (from_lower in ft or ft in from_lower) and (
+            to_lower in tt or tt in to_lower
+        ):
             return conn.get("transition_sentence", conn.get("connection", ""))
     return None
 
@@ -230,6 +236,7 @@ def linkify_text(text):
 
     return re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", _replace_md_link, e(text))
 
+
 def _shorten_md_paper_links(text):
     """Shorten markdown link text from full paper titles to short names.
 
@@ -257,8 +264,8 @@ def _shorten_md_paper_links(text):
     # Collapse "Full Name ([ShortName](url), year)" -> "ShortName ([ShortName](url), year)"
     # Pattern: "Some Long Title ([\w-]+](url), 20XX)"
     result = re.sub(
-        r"[A-Z][A-Za-z\s,:\-]+ \(\[([A-Z][A-Za-z0-9._-]+(?:\s?[A-Za-z0-9._-]+){0,2})\]",
-        r"[\1]",
+        r"[A-Z][A-Za-z\s,:\-]+ (\(\[([A-Z][A-Za-z0-9._-]+(?:\s?[A-Za-z0-9._-]+){0,2})\])",
+        lambda m: "(" + "[" + m.group(2) + "]",
         result,
     )
     return result
@@ -273,63 +280,140 @@ def css_path(_output_path):
     return "/htmls/style.css"
 
 
+# ============================================================
+# Phase 1 Helpers: Paper Year/ID Extraction
+# ============================================================
+
+
+def _extract_year_from_item(item):
+    """Extract and normalize year from a paper item dict.
+
+    Handles both 'year' and 'pub_date' fields, truncating to 4 chars if needed.
+    Returns empty string if no valid year found.
+    """
+    yr = item.get("year") or item.get("pub_date", "")
+    if isinstance(yr, str) and len(yr) >= 4:
+        return yr[:4]
+    return str(yr) if yr else ""
+
+
+def _extract_paper_id(item):
+    """Safely extract paper_id as int from item dict.
+
+    Returns None if paper_id is missing or invalid.
+    """
+    pid = item.get("paper_id")
+    if pid is None:
+        return None
+    try:
+        return int(pid)
+    except (ValueError, TypeError):
+        return None
+
+
+def _add_paper_to_map(pmap, item, overwrite=True):
+    """Add a paper's id->year mapping to pmap.
+
+    Args:
+        pmap: dict to update (paper_id -> year)
+        item: paper item dict with paper_id and year/pub_date
+        overwrite: if False, skip if paper_id already in pmap
+    """
+    pid = _extract_paper_id(item)
+    if pid is None:
+        return
+    if not overwrite and pid in pmap:
+        return
+    yr = _extract_year_from_item(item)
+    pmap[pid] = yr
+
+
+def _extract_short_name_link(item):
+    """Extract (short_name, paper_id, year) from a paper item.
+
+    Returns None if paper_id is missing or no short name can be derived.
+    """
+    pid = _extract_paper_id(item)
+    if pid is None:
+        return None
+    title = item.get("title", "")
+    sn = short_paper_name(title)
+    if not sn:
+        return None
+    yr = _extract_year_from_item(item)
+    return (sn, pid, yr)
+
+
+def _add_paper_links_from_list(links, papers, overwrite=False):
+    """Add short-name links from a list of paper items.
+
+    Args:
+        links: dict to update (short_name -> (paper_id, year))
+        papers: list of paper item dicts
+        overwrite: if False, skip if short_name already in links
+    """
+    for paper in papers:
+        result = _extract_short_name_link(paper)
+        if result is None:
+            continue
+        sn, pid, yr = result
+        if overwrite or sn not in links:
+            links[sn] = (pid, yr)
+
+
 def _shorten_expanded_acronyms(text):
     """Shorten 'Full Name (ACRONYM, Paper N)' to 'ACRONYM (Paper N)' in text."""
-    import re as _re
-    # Match: Some Long Name (ACRONYM, Paper N) or (ACRONYM, year)
+
     def _repl(m):
         acronym = m.group(1)
         rest = m.group(2)
         return f"{acronym} ({rest})"
-    text = _re.sub(
+
+    text = re.sub(
         r"[A-Z][A-Za-z\s,\-]+ \(([A-Z][A-Z0-9\-]+),\s*(Paper \d+|20\d{2})\)",
-        _repl, text
+        _repl,
+        text,
     )
     return text
 
+
 def _build_paper_year_map(topic_summaries, cross_topic):
-    """Build a comprehensive paper_id -> year mapping from all data sources."""
+    """Build a comprehensive paper_id -> year mapping from all data sources.
+
+    Collects papers from field_timeline, significant_papers, methods, and benchmarks.
+    """
     pmap = {}
+
+    # 1. Field timeline landmark papers (these take priority, so overwrite=True)
     ft = cross_topic.get("field_timeline", {})
-    for p in ft.get("periods", []):
-        for lp in p.get("landmark_papers", []):
-            pid = lp.get("paper_id")
-            yr = lp.get("year") or lp.get("pub_date", "")
-            if isinstance(yr, str) and len(yr) >= 4:
-                yr = yr[:4]
-            if pid:
-                pmap[int(pid)] = yr
+    for period in ft.get("periods", []):
+        for lp in period.get("landmark_papers", []):
+            _add_paper_to_map(pmap, lp, overwrite=True)
+
+    # 2. Topic summaries: significant_papers, methods, benchmarks (no overwrite)
     for ts in topic_summaries.values():
+        # Significant papers
         for sp in ts.get("significant_papers", []):
-            pid = sp.get("paper_id")
-            yr = sp.get("year") or sp.get("pub_date", "")
-            if isinstance(yr, str) and len(yr) >= 4:
-                yr = yr[:4]
-            if pid and int(pid) not in pmap:
-                pmap[int(pid)] = yr
-        for m in ts.get("methods", []):
-            for rp in m.get("representative_papers", []):
-                pid = rp.get("paper_id")
-                yr = rp.get("year") or rp.get("pub_date", "")
-                if isinstance(yr, str) and len(yr) >= 4:
-                    yr = yr[:4]
-                if pid and int(pid) not in pmap:
-                    pmap[int(pid)] = yr
+            _add_paper_to_map(pmap, sp, overwrite=False)
+
+        # Representative papers from methods
+        for method in ts.get("methods", []):
+            for rp in method.get("representative_papers", []):
+                _add_paper_to_map(pmap, rp, overwrite=False)
+
+        # Best results from benchmarks
         bm_data = ts.get("benchmark_results", {})
         for bm in bm_data.get("primary_benchmarks", []):
             best = bm.get("best_result", {})
             if isinstance(best, dict):
-                pid = best.get("paper_id")
-                yr = best.get("year") or best.get("pub_date", "")
-                if isinstance(yr, str) and len(yr) >= 4:
-                    yr = yr[:4]
-                if pid and int(pid) not in pmap:
-                    pmap[int(pid)] = yr
+                _add_paper_to_map(pmap, best, overwrite=False)
+
     return pmap
 
 
 def _replace_paper_refs_with_year(text, paper_year_map):
     """Replace (Paper N) and 'Paper N' references with (year) using paper data."""
+
     def _repl_parens(m):
         pid = int(m.group(1))
         year = paper_year_map.get(pid)
@@ -352,80 +436,79 @@ def _replace_paper_refs_with_year(text, paper_year_map):
 def _build_timeline_paper_links(field_timeline):
     """Build mapping of paper short name -> (paper_id, year) from landmark_papers."""
     links = {}
-    for p in field_timeline.get("periods", []):
-        for lp in p.get("landmark_papers", []):
-            pid = lp.get("paper_id")
-            title = lp.get("title", "")
-            year = lp.get("year") or lp.get("pub_date", "")
-            if isinstance(year, str) and len(year) > 4:
-                year = year[:4]
-            if not pid:
-                continue
-            sn = short_paper_name(title)
-            if sn:
-                links[sn] = (int(pid), str(year))
+    for period in field_timeline.get("periods", []):
+        _add_paper_links_from_list(
+            links, period.get("landmark_papers", []), overwrite=True
+        )
     return links
 
 
-def _build_global_paper_links(topic_summaries, field_timeline):
-    """Build name->link mapping from ALL papers across all topic summaries."""
-    links = _build_timeline_paper_links(field_timeline)
-    # Extract acronyms from timeline development text:
-    # "Full Name (ACRONYM, Paper N)" -> ACRONYM -> paper_id
-    paper_year_map = _build_paper_year_map(topic_summaries, {"field_timeline": field_timeline})
-    for p in field_timeline.get("periods", []):
-        for d in p.get("key_developments", p.get("developments", [])):
-            txt = d if isinstance(d, str) else d.get("description", d.get("development", ""))
-            for m in re.finditer(
+def _extract_acronyms_from_developments(field_timeline, paper_year_map):
+    """Extract acronym->link mappings from development text patterns.
+
+    Parses "Full Name (ACRONYM, Paper N)" patterns from timeline developments.
+    Returns dict of acronym -> (paper_id, year).
+    """
+    acronym_links = {}
+    for period in field_timeline.get("periods", []):
+        for dev in period.get("key_developments", period.get("developments", [])):
+            txt = (
+                dev
+                if isinstance(dev, str)
+                else dev.get("description", dev.get("development", ""))
+            )
+            for match in re.finditer(
                 r"[A-Z][A-Za-z\s,\-]+ \(([A-Z][A-Z0-9\-]+),\s*Paper (\d+)\)", txt
             ):
-                acronym, pid_str = m.group(1), int(m.group(2))
-                yr = paper_year_map.get(pid_str, "")
-                if acronym not in links:
-                    links[acronym] = (pid_str, str(yr))
+                acronym, pid = match.group(1), int(match.group(2))
+                yr = paper_year_map.get(pid, "")
+                if acronym not in acronym_links:
+                    acronym_links[acronym] = (pid, str(yr))
+    return acronym_links
+
+
+def _build_global_paper_links(topic_summaries, field_timeline):
+    """Build name->link mapping from ALL papers across all topic summaries.
+
+    Collects links from: timeline landmark_papers, development acronyms,
+    topic landmark_papers, and method representative_papers.
+    """
+    # 1. Timeline landmark papers (highest priority)
+    links = _build_timeline_paper_links(field_timeline)
+
+    # 2. Acronyms from timeline development text
+    paper_year_map = _build_paper_year_map(
+        topic_summaries, {"field_timeline": field_timeline}
+    )
+    acronym_links = _extract_acronyms_from_developments(field_timeline, paper_year_map)
+    for acronym, link_data in acronym_links.items():
+        if acronym not in links:
+            links[acronym] = link_data
+
+    # 3. Topic summaries: landmark_papers and method representative_papers
     for ts in topic_summaries.values():
-        for lp in ts.get("landmark_papers", []):
-            pid = lp.get("paper_id")
-            title = lp.get("title", "")
-            year = lp.get("year") or lp.get("pub_date", "")
-            if isinstance(year, str) and len(year) > 4:
-                year = year[:4]
-            if not pid:
-                continue
-            sn = short_paper_name(title)
-            if sn and sn not in links:
-                links[sn] = (int(pid), str(year))
-        for m in ts.get("methods", []):
-            for rp in m.get("representative_papers", []):
-                pid = rp.get("paper_id")
-                title = rp.get("title", "")
-                year = rp.get("year") or rp.get("pub_date", "")
-                if isinstance(year, str) and len(year) > 4:
-                    year = year[:4]
-                if not pid:
-                    continue
-                sn = short_paper_name(title)
-                if sn and sn not in links:
-                    links[sn] = (int(pid), str(year))
+        _add_paper_links_from_list(
+            links, ts.get("landmark_papers", []), overwrite=False
+        )
+        for method in ts.get("methods", []):
+            _add_paper_links_from_list(
+                links, method.get("representative_papers", []), overwrite=False
+            )
+
     return links
 
 
 def _linkify_timeline_papers(text, timeline_links):
     """Replace known paper names with clickable links in timeline text."""
-    for name, (pid, year) in sorted(
-        timeline_links.items(), key=lambda x: -len(x[0])
-    ):
+    for name, (pid, year) in sorted(timeline_links.items(), key=lambda x: -len(x[0])):
         pattern = re.escape(name) + r"\s*\(" + re.escape(year) + r"\)"
         link = (
             f'<a href="{PAPER_BASE_URL}/{pid}" '
             f'target="_blank" rel="noopener noreferrer">'
-            f'{name} ({year})</a>'
+            f"{name} ({year})</a>"
         )
         text = re.sub(pattern, link, text)
     return text
-
-
-
 
 
 # ============================================================
@@ -466,8 +549,13 @@ def render_area_overview(overview, area):
     for p in paradigms:
         name = e(p.get("paradigm_name", p.get("name", p.get("paradigm", ""))))
         desc = e(p.get("description", ""))
+        link = p.get("link", "")
+        if link:
+            name_html = f'<a href="{link}" style="color:inherit;text-decoration:underline;">{name}</a>'
+        else:
+            name_html = name
         paradigm_html += f"""
-      <div class="paradigm-card"><strong>{name}</strong><p>{desc}</p></div>"""
+      <div class="paradigm-card"><strong>{name_html}</strong><p>{desc}</p></div>"""
 
     return f"""
 <div class="container">
@@ -499,18 +587,24 @@ def render_field_timeline(field_timeline, paper_year_map=None, timeline_links=No
         dev_items = ""
         for d in devs:
             if isinstance(d, str):
-                cleaned = _replace_paper_refs_with_year(_shorten_expanded_acronyms(d), paper_year_map)
+                cleaned = _replace_paper_refs_with_year(
+                    _shorten_expanded_acronyms(d), paper_year_map
+                )
                 linked = _linkify_timeline_papers(linkify_text(cleaned), timeline_links)
                 dev_items += f"\n          <li>{linked}</li>"
             elif isinstance(d, dict):
                 desc = d.get("description", d.get("development", ""))
-                cleaned = _replace_paper_refs_with_year(_shorten_expanded_acronyms(desc), paper_year_map)
+                cleaned = _replace_paper_refs_with_year(
+                    _shorten_expanded_acronyms(desc), paper_year_map
+                )
                 linked = _linkify_timeline_papers(linkify_text(cleaned), timeline_links)
                 dev_items += f"\n          <li>{linked}</li>"
         shifts = p.get("paradigm_shifts", [])
         shift_html = ""
         if shifts:
-            tags = " ".join(f'<span class="paradigm-shift-tag">{e(s)}</span>' for s in shifts[:4])
+            tags = " ".join(
+                f'<span class="paradigm-shift-tag">{e(s)}</span>' for s in shifts[:4]
+            )
             shift_html = f'<div class="paradigm-shifts">{tags}</div>'
         periods_html += f"""
     <div class="timeline-period">
@@ -539,6 +633,26 @@ def render_field_timeline(field_timeline, paper_year_map=None, timeline_links=No
 
 
 def render_toc(ordered_topics, topic_summaries, taxonomy):
+    cats, subs, themes = _categorize_ordered_topics(ordered_topics, topic_summaries)
+    pipeline_section = _build_pipeline_section(cats, subs, taxonomy)
+    theme_section = _build_theme_section(themes)
+    cross_section = _build_cross_topic_section()
+
+    return f"""
+<div class="container">
+<div class="section">
+  <h2>\U0001f4d1 Table of Contents</h2>
+  <div class="toc">{pipeline_section}{theme_section}{cross_section}
+  </div>
+</div>
+</div>"""
+
+
+def _categorize_ordered_topics(ordered_topics, topic_summaries):
+    """Categorize ordered topics into cats, subs, and themes lists.
+
+    Returns tuple of (cats, subs, themes) where each is a list of (emoji, name, anchor).
+    """
     cats = []
     subs = []
     themes = []
@@ -556,44 +670,67 @@ def render_toc(ordered_topics, topic_summaries, taxonomy):
             subs.append(entry)
         else:
             themes.append(entry)
+    return cats, subs, themes
 
+
+def _build_pipeline_section(cats, subs, taxonomy):
+    """Build the pipeline categories TOC section HTML."""
     pipeline_html = ""
     for cat in taxonomy.get("categories", []):
         cat_id = cat["id"]
-        cat_entry = None
-        for em, nm, anc in cats:
-            if anc == cat_id or cat_id in anc:
-                cat_entry = (em, nm, anc)
-                break
+        cat_entry = _find_matching_cat_entry(cats, cat_id)
         sub_ids = [s["id"] for s in cat.get("sub_topics", [])]
         matched_subs = [(em, nm, anc) for em, nm, anc in subs if anc in sub_ids]
+
         if cat_entry:
             pipeline_html += f'\n          <li><a href="#{e(cat_entry[2])}">{cat_entry[0]} {e(cat_entry[1])}</a></li>'
         for _s_em, s_nm, s_anc in matched_subs:
             pipeline_html += f'\n          <li class="toc-sub"><a href="#{e(s_anc)}">\u2192 {e(s_nm)}</a></li>'
+
+        # Fallback matching if no direct match found
         if not cat_entry and not matched_subs:
             for em, nm, anc in cats:
                 if cat_id.replace("_", "") in anc.replace("_", ""):
-                    pipeline_html += f'\n          <li><a href="#{e(anc)}">{em} {e(nm)}</a></li>'
+                    pipeline_html += (
+                        f'\n          <li><a href="#{e(anc)}">{em} {e(nm)}</a></li>'
+                    )
 
-    pipeline_section = f"""
+    if not pipeline_html:
+        return ""
+    return f"""
       <div class="toc-section">
         <h3>Pipeline Categories</h3>
         <ul>{pipeline_html}
         </ul>
-      </div>""" if pipeline_html else ""
+      </div>"""
 
+
+def _find_matching_cat_entry(cats, cat_id):
+    """Find a category entry that matches the given cat_id."""
+    for em, nm, anc in cats:
+        if anc == cat_id or cat_id in anc:
+            return (em, nm, anc)
+    return None
+
+
+def _build_theme_section(themes):
+    """Build the research themes TOC section HTML."""
+    if not themes:
+        return ""
     theme_items = ""
     for em, nm, anc in themes:
         theme_items += f'\n          <li><a href="#{e(anc)}">{em} {e(nm)}</a></li>'
-    theme_section = f"""
+    return f"""
       <div class="toc-section">
         <h3>Research Themes</h3>
         <ul>{theme_items}
         </ul>
-      </div>""" if theme_items else ""
+      </div>"""
 
-    cross_section = """
+
+def _build_cross_topic_section():
+    """Build the cross-topic analysis TOC section HTML."""
+    return """
       <div class="toc-section">
         <h3>Cross-Topic Analysis</h3>
         <ul>
@@ -606,15 +743,6 @@ def render_toc(ordered_topics, topic_summaries, taxonomy):
         </ul>
       </div>"""
 
-    return f"""
-<div class="container">
-<div class="section">
-  <h2>\U0001f4d1 Table of Contents</h2>
-  <div class="toc">{pipeline_section}{theme_section}{cross_section}
-  </div>
-</div>
-</div>"""
-
 
 def render_recommendations(recs):
     if not recs:
@@ -622,7 +750,11 @@ def render_recommendations(recs):
     rows = ""
     for r in recs:
         priority = r.get("priority", "Medium")
-        css_cls = f"priority-{priority.lower()}" if priority.lower() in ("high", "medium", "low") else "priority-medium"
+        css_cls = (
+            f"priority-{priority.lower()}"
+            if priority.lower() in ("high", "medium", "low")
+            else "priority-medium"
+        )
         text = e(r.get("recommendation", ""))
         evidence = e(r.get("supporting_evidence", ""))
         rows += f"""
@@ -682,7 +814,11 @@ def render_trends(trends):
         evidence = e(t.get("evidence", ""))
         papers = t.get("supporting_papers", [])
         paper_links = ", ".join(paper_link_short(p) for p in papers) if papers else ""
-        paper_html = f'<p class="trend-papers">\U0001f4c4 {paper_links}</p>' if paper_links else ""
+        paper_html = (
+            f'<p class="trend-papers">\U0001f4c4 {paper_links}</p>'
+            if paper_links
+            else ""
+        )
         items += f"""
       <div class="trend-item">
         <h3>{trend_text}</h3>
@@ -708,8 +844,6 @@ def render_opportunities(opps):
         rationale = e(o.get("rationale", ""))
         difficulty = o.get("difficulty", "Medium")
         impact = o.get("potential_impact", o.get("impact", "Medium"))
-        diff_cls = f"diff-{difficulty.lower()}" if difficulty.lower() in ("high", "medium", "low") else "diff-medium"
-        imp_cls = f"impact-{impact.lower()}" if impact.lower() in ("high", "medium", "low") else "impact-medium"
         items += f"""
       <div class="opportunity-item">
         <h3>{title}</h3>
@@ -887,7 +1021,9 @@ def render_running_example(example):
             <span class="solution-desc">{how}</span>
           </div>"""
         elif i == 3:
-            solutions_html += "\n          <details><summary>Show more solutions</summary>"
+            solutions_html += (
+                "\n          <details><summary>Show more solutions</summary>"
+            )
             solutions_html += f"""
             <div class="solution-item">
               <span class="solution-name">\u2705 {name}:</span>
@@ -918,7 +1054,11 @@ def render_key_insights(insights):
         return ""
     cards = ""
     for ins in insights:
-        text = ins if isinstance(ins, str) else ins.get("insight", ins.get("description", str(ins)))
+        text = (
+            ins
+            if isinstance(ins, str)
+            else ins.get("insight", ins.get("description", str(ins)))
+        )
         cards += f"""
         <div class="insight-card"><p>\U0001f4a1 {e(text)}</p></div>"""
 
@@ -940,7 +1080,7 @@ def render_topic_timeline(timeline):
     trend = timeline.get("trend_summary", "")
 
     periods_html = ""
-    for i, p in enumerate(periods):
+    for _i, p in enumerate(periods):
         period_str = e(p.get("period", ""))
         theme = e(p.get("theme", ""))
         shift = p.get("paradigm_shift", "")
@@ -952,7 +1092,11 @@ def render_topic_timeline(timeline):
             elif isinstance(d, dict):
                 desc = d.get("description", d.get("development", ""))
                 dev_items += f"\n              <li>{linkify_text(_shorten_md_paper_links(desc))}</li>"
-        shift_html = f'<p style="font-size:0.85rem;color:var(--secondary);margin-top:6px;">\U0001f500 <em>{e(shift)}</em></p>' if shift else ""
+        shift_html = (
+            f'<p style="font-size:0.85rem;color:var(--secondary);margin-top:6px;">\U0001f500 <em>{e(shift)}</em></p>'
+            if shift
+            else ""
+        )
 
         period_block = f"""
           <div class="timeline-period">
@@ -969,7 +1113,11 @@ def render_topic_timeline(timeline):
 
         periods_html += period_block
 
-    trend_html = f'<p style="font-size:0.88rem;color:var(--gray-500);margin-top:4px;margin-bottom:18px;"><em>{e(trend)}</em></p>' if trend else ""
+    trend_html = (
+        f'<p style="font-size:0.88rem;color:var(--gray-500);margin-top:4px;margin-bottom:18px;"><em>{e(trend)}</em></p>'
+        if trend
+        else ""
+    )
 
     return f"""
         <div class="topic-timeline">
@@ -1074,11 +1222,15 @@ def render_benchmark_results(benchmark_data):
         name = e(bm.get("benchmark_name", ""))
         metric = e(bm.get("metric", ""))
         best = bm.get("best_result", {})
+        if not best and bm.get("top_results"):
+            best = bm["top_results"][0]
         if isinstance(best, dict):
             value = e(best.get("value", ""))
             paper_id = best.get("paper_id", "")
             paper_title = best.get("paper_title", "")
-            label = paper_label_short(best) if paper_title else e(best.get("method", ""))
+            label = (
+                paper_label_short(best) if paper_title else e(best.get("method", ""))
+            )
             yr = best.get("year") or best.get("pub_date", "")
             if isinstance(yr, str) and len(yr) > 4:
                 yr = yr[:4]
@@ -1288,7 +1440,8 @@ def generate_html(area, input_dir, taxonomy_path, output_path):
 
     ordered = get_topic_order(taxonomy, paper_groups)
 
-    topic_html = ""
+    # Use list accumulation instead of string concatenation to avoid O(n²) memory
+    topic_parts = []
     prev_name = None
     for topic_type, topic_id, emoji_icon in ordered:
         key = summary_file_key(topic_type, topic_id)
@@ -1299,13 +1452,16 @@ def generate_html(area, input_dir, taxonomy_path, output_path):
         if prev_name:
             transition = find_transition(connections, prev_name, cur_name)
             if transition:
-                topic_html += render_topic_transition(transition)
-        topic_html += render_topic_card(ts, emoji_icon, topic_type)
+                topic_parts.append(render_topic_transition(transition))
+        topic_parts.append(render_topic_card(ts, emoji_icon, topic_type))
         prev_name = cur_name
+    topic_html = "".join(topic_parts)
+    del topic_parts  # Free memory after join
 
     all_glossary = merge_glossaries(topic_summaries, cross_topic)
 
     paper_year_map = _build_paper_year_map(topic_summaries, cross_topic)
+    global_paper_links = _build_global_paper_links(topic_summaries, field_tl)
     rel_css = css_path(output_path)
 
     html = f"""<!DOCTYPE html>
@@ -1319,7 +1475,7 @@ def generate_html(area, input_dir, taxonomy_path, output_path):
 <body>
 {render_header(area, stats)}
 {render_area_overview(overview, area)}
-{render_field_timeline(field_tl, paper_year_map, _build_global_paper_links(topic_summaries, field_tl))}
+{render_field_timeline(field_tl, paper_year_map, global_paper_links)}
 {render_toc(ordered, topic_summaries, taxonomy)}
 {topic_html}
 {render_recommendations(cross_topic.get("practical_recommendations", []))}
@@ -1333,7 +1489,17 @@ def generate_html(area, input_dir, taxonomy_path, output_path):
 </body>
 </html>"""
 
+    # Free intermediate data structures before final processing
+    del topic_summaries
+    del cross_topic
+    del paper_groups
+    del taxonomy
+    del all_glossary
+    del global_paper_links
+    del topic_html
+
     html = _replace_paper_refs_with_year(html, paper_year_map)
+    del paper_year_map  # Free after use
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     Path(output_path).write_text(html, encoding="utf-8")
@@ -1355,12 +1521,8 @@ def main():
         required=True,
         help="Directory containing *_summary.json and cross_topic_analysis.json",
     )
-    parser.add_argument(
-        "--taxonomy", required=True, help="Path to taxonomy JSON file"
-    )
-    parser.add_argument(
-        "--output", required=True, help="Output HTML file path"
-    )
+    parser.add_argument("--taxonomy", required=True, help="Path to taxonomy JSON file")
+    parser.add_argument("--output", required=True, help="Output HTML file path")
     args = parser.parse_args()
 
     output = generate_html(args.area, args.input_dir, args.taxonomy, args.output)

@@ -236,13 +236,6 @@ def get_all_papers(order_by="recomm_date", order_dir="DESC"):
     return papers
 
 
-def invalidate_papers_cache():
-    """Invalidate the papers cache (call after database updates)."""
-    global _papers_cache, _papers_cache_time
-    _papers_cache = None
-    _papers_cache_time = 0
-
-
 def search_papers_keyword(query):
     """Search papers by keyword (SQL ILIKE)."""
     search_pattern = f"%{query}%"

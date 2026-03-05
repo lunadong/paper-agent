@@ -2,13 +2,15 @@
 description: Load a background file for a research area and extract a structured topic taxonomy for paper grouping
 oncalls:
   - paper_agent
-input:
-  - area: The research area name (e.g., rag, factuality, agents, memory, p13n, benchmark), or "all" to process every area in parallel
-output:
-  - taxonomy_json: prompts/taxonomy/{area}_taxonomy.json — hierarchical topic taxonomy with categories, sub_topics, theme (each with matching_keywords), and category-level matching_keywords (one file per area)
 ---
 
 # Extract Topic Taxonomy
+
+**Input:**
+- **area**: The research area name (e.g., rag, factuality, agents, memory, p13n, benchmark), or "all" to process every area in parallel
+
+**Output:**
+- **taxonomy_json**: prompts/taxonomy/{area}_taxonomy.json — hierarchical topic taxonomy with categories, sub_topics, theme (each with matching_keywords), and category-level matching_keywords (one file per area)
 
 Load `background_{area}.txt` and extract a hierarchical topic taxonomy with matching keywords for downstream paper grouping. This includes:
 - **Categories** (disjoint) — each paper belongs to exactly one category

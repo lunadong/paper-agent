@@ -11,9 +11,9 @@ This script consumes the output of parse_papers.py and does NOT overlap with it:
 
 Usage:
     python group_papers.py --area rag
-    python group_papers.py --area rag --papers tmp_summary/rag/papers_parsed.json
+    python group_papers.py --area rag --papers prompt_optimization/area_summaries/rag/papers_parsed.json
     python group_papers.py --area agents --taxonomy prompts/taxonomy/agents_taxonomy.json
-"""
+        """,
 
 import argparse
 import json
@@ -385,7 +385,7 @@ def main():
         epilog="""
 Examples:
   python group_papers.py --area rag
-  python group_papers.py --area rag --papers tmp_summary/rag/papers_parsed.json
+  python group_papers.py --area rag --papers prompt_optimization/area_summaries/rag/papers_parsed.json
   python group_papers.py --area agents --taxonomy prompts/taxonomy/agents_taxonomy.json
         """,
     )
@@ -398,7 +398,7 @@ Examples:
     parser.add_argument(
         "--papers",
         "-p",
-        help="Path to papers_parsed.json (default: tmp_summary/{area}/papers_parsed.json)",
+        help="Path to papers_parsed.json (default: prompt_optimization/area_summaries/{area}/papers_parsed.json)",
     )
     parser.add_argument(
         "--taxonomy",
@@ -408,7 +408,7 @@ Examples:
     parser.add_argument(
         "--output-dir",
         "-o",
-        help="Output directory for formatted papers (default: tmp_summary/{area})",
+        help="Output directory for formatted papers (default: prompt_optimization/area_summaries/{area})",
     )
     parser.add_argument(
         "--summary-only",
@@ -420,9 +420,9 @@ Examples:
     args = parser.parse_args()
 
     area = args.area
-    papers_path = Path(args.papers or f"tmp_summary/{area}/papers_parsed.json")
+    papers_path = Path(args.papers or f"prompt_optimization/area_summaries/{area}/papers_parsed.json")
     taxonomy_path = Path(args.taxonomy or f"prompts/taxonomy/{area}_taxonomy.json")
-    output_dir = Path(args.output_dir or f"tmp_summary/{area}")
+    output_dir = Path(args.output_dir or f"prompt_optimization/area_summaries/{area}")
 
     # Load papers
     if not papers_path.exists():
