@@ -122,7 +122,7 @@ When addressing analysis issues, map each issue to the appropriate prompt file(s
 
 ## Integrating User Instructions
 
-> 🛑 **MANDATORY: User Instructions MUST Be Applied First**
+> [STOP] **MANDATORY: User Instructions MUST Be Applied First**
 >
 > Before considering analysis feedback, you MUST read and apply EVERY item in `user_instructions.md`.
 > This is the PRIMARY source of revision requirements. Analysis feedback is SECONDARY.
@@ -153,20 +153,20 @@ Read: .llms/skills/user_instructions.md
 ## User Instructions Checklist
 
 ### For Beginners
-- [ ] Item 1 from user_instructions.md → Which prompt file? What change?
-- [ ] Item 2 from user_instructions.md → Which prompt file? What change?
+- [ ] Item 1 from user_instructions.md -> Which prompt file? What change?
+- [ ] Item 2 from user_instructions.md -> Which prompt file? What change?
 ...
 
 ### For Experts
-- [ ] Item 1 from user_instructions.md → Which prompt file? What change?
+- [ ] Item 1 from user_instructions.md -> Which prompt file? What change?
 ...
 
 ### For Tutorial Presenters
-- [ ] Item 1 from user_instructions.md → Which prompt file? What change?
+- [ ] Item 1 from user_instructions.md -> Which prompt file? What change?
 ...
 
 ### Specific Issues with Current HTML Output
-- [ ] Issue 1 → Which prompt file? What change?
+- [ ] Issue 1 -> Which prompt file? What change?
 ...
 
 ### Good and Keep (DO NOT MODIFY)
@@ -174,7 +174,7 @@ Read: .llms/skills/user_instructions.md
 - (list all items to preserve)
 ```
 
-### User Instruction → Prompt Mapping
+### User Instruction -> Prompt Mapping
 
 | User Instruction Category | Primary Prompt File | May Also Affect |
 |---------------------------|---------------------|-----------------|
@@ -191,24 +191,24 @@ Read: .llms/skills/user_instructions.md
 **After revising, verify EVERY checkbox is checked:**
 
 ```markdown
-## User Instructions Applied ✓
+## User Instructions Applied [OK]
 
 ### For Beginners
-- [x] ~30 words target → Added word count limits to overview fields
-- [x] No premature numbers → Added "NO numbers or percentages" guidance
-- [x] Max 5 methods → Added "STRICT MAXIMUM: 5 methods per topic"
+- [x] ~30 words target -> Added word count limits to overview fields
+- [x] No premature numbers -> Added "NO numbers or percentages" guidance
+- [x] Max 5 methods -> Added "STRICT MAXIMUM: 5 methods per topic"
 ...
 
 ### For Experts
-- [x] Running examples for all topics → Required running_example field
+- [x] Running examples for all topics -> Required running_example field
 ...
 
 ### Specific Issues
-- [x] Merge "How field evolved" and timeline → Updated HTML prompt section ordering
+- [x] Merge "How field evolved" and timeline -> Updated HTML prompt section ordering
 ...
 ```
 
-**⚠️ If ANY item is unchecked, you MUST continue revising until ALL items are addressed.**
+**[!] If ANY item is unchecked, you MUST continue revising until ALL items are addressed.**
 
 ---
 
@@ -219,7 +219,7 @@ Ensure all three prompt files exist in `revised_prompts/`. Copy from `prompts/` 
 
 ### Step 2: Load User Instructions and Create Checklist (MANDATORY)
 
-> 🛑 **THIS STEP IS MANDATORY AND MUST BE DONE FIRST**
+> [STOP] **THIS STEP IS MANDATORY AND MUST BE DONE FIRST**
 
 1. **Read** `.llms/skills/user_instructions.md`
 2. **Create a checklist** of ALL items from user_instructions.md (see "MANDATORY: Create User Instructions Checklist" above)
@@ -306,14 +306,14 @@ prompt_optimization/revised_prompts/html_generation_prompt.txt
     "good_and_keep_preserved": ["<item 1 preserved>", "<item 2 preserved>"]
   },
   "analysis_issues_addressed": {
-    "beginner": ["<issue> → <fix>"],
-    "expert": ["<issue> → <fix>"],
-    "presenter": ["<issue> → <fix>"]
+"beginner": ["<issue> -> <fix>"],
+    "expert": ["<issue> -> <fix>"],
+    "presenter": ["<issue> -> <fix>"]
   }
 }
 ```
 
-**⚠️ CRITICAL:** The `user_instructions_applied` section MUST list EVERY item from `user_instructions.md` and show how each was applied. If any item is missing, the revision is incomplete.
+**[!] CRITICAL:** The `user_instructions_applied` section MUST list EVERY item from `user_instructions.md` and show how each was applied. If any item is missing, the revision is incomplete.
 
 ### Step 8: Handle Completed User Instructions (Final Step)
 
@@ -321,13 +321,13 @@ After completing all revisions, check if ALL points in `user_instructions.md` ha
 
 #### 8.1 Verify All Instructions Fixed
 
-Review `revision_metadata.json` → `user_instructions_addressed.specific_issues_fixed` to confirm every item from `user_instructions.md` has been addressed.
+Review `revision_metadata.json` -> `user_instructions_addressed.specific_issues_fixed` to confirm every item from `user_instructions.md` has been addressed.
 
 **If any items remain unaddressed:** Stop here and continue revising until all are fixed.
 
-#### 8.2 If All Instructions Fixed → Ask User Two Questions
+#### 8.2 If All Instructions Fixed -> Ask User Two Questions
 
-> 🛑 **MANDATORY USER CONFIRMATION**
+> [STOP] **MANDATORY USER CONFIRMATION**
 >
 > When ALL user_instructions are fixed, you MUST ask the user these two questions before proceeding.
 
@@ -357,7 +357,7 @@ ask_user_question(
 )
 ```
 
-#### 8.3 If User Confirms "Update Critics" → Update analyze_area_summary.md
+#### 8.3 If User Confirms "Update Critics" -> Update analyze_area_summary.md
 
 Add the fixed issues as new criteria checks in `analyze_area_summary.md`:
 
@@ -365,7 +365,7 @@ Add the fixed issues as new criteria checks in `analyze_area_summary.md`:
 2. Add the fixed issues to the "User Instructions Checklist" tables
 3. Save the updated file
 
-#### 8.4 If User Confirms "Clear Instructions" → Clear user_instructions.md
+#### 8.4 If User Confirms "Clear Instructions" -> Clear user_instructions.md
 
 **IMPORTANT:** Do NOT delete the file or empty it completely. Keep the skeleton structure.
 
@@ -430,14 +430,14 @@ Revised files saved to prompt_optimization/revised_prompts/:
 - revision_metadata.json: Updated with pass details
 
 User Instructions Addressed:
-✓ For Beginners: Ensure technical terms are explained
-✓ For Experts: Include specific paper citations
-✓ For Presenters: Add crisp takeaways
+[OK] For Beginners: Ensure technical terms are explained
+[OK] For Experts: Include specific paper citations
+[OK] For Presenters: Add crisp takeaways
 
 Analysis Issues Addressed:
-- Beginner jargon_handling (6.5 → target 8.0)
-- Expert evidence_grounding (7.0 → target 8.0)
-- Presenter narrative_arc (6.8 → target 8.0)
+- Beginner jargon_handling (6.5 -> target 8.0)
+- Expert evidence_grounding (7.0 -> target 8.0)
+- Presenter narrative_arc (6.8 -> target 8.0)
 ```
 
 ---

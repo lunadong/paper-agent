@@ -124,7 +124,7 @@ prompt_optimization/paper_summaries/paper_{paper_id}.json
 
 ### Step 6: Populate Database
 
-> 🛑 **STOP: MANDATORY USER CONFIRMATION REQUIRED**
+> [STOP] **STOP: MANDATORY USER CONFIRMATION REQUIRED**
 >
 > After saving the JSON file, you MUST ask the user if they want to populate the database.
 > **DO NOT skip this confirmation. DO NOT assume the answer.**
@@ -168,7 +168,7 @@ db = PaperDB()
 db.update_paper_summary(paper_id, summary_json)
 db.close()
 
-print(f"✅ Database updated for paper_id: {paper_id}")
+print(f"[OK] Database updated for paper_id: {paper_id}")
 ```
 
 #### 6.3 If User Declines "No"

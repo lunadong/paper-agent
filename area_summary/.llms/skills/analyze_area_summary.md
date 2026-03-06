@@ -8,7 +8,7 @@ oncalls:
 
 Analyze area summary outputs from **3 perspectives** (beginner, expert, tutorial presenter) to identify quality issues and improvement opportunities.
 
-## 🔍 User Instructions Checklist
+## User Instructions Checklist
 
 **CRITICAL:** In addition to weighted criteria, ALWAYS check specific issues from `user_instructions.md`:
 
@@ -44,12 +44,12 @@ Analyze area summary outputs from **3 perspectives** (beginner, expert, tutorial
 | **Timeline for ALL topics** | Topic summaries `timeline` for every category/component/theme | Any topic missing timeline showing field evolution |
 | **Overlapping timeline stages OK** | Topic summaries `timeline.periods` | Flagging overlapping date ranges as errors (overlapping is acceptable and expected) |
 | **Absolute benchmark numbers required** | Topic summaries `benchmark_results`, cross-topic `benchmark_leaderboard` | Showing only relative improvements ('+17.67% over baseline') without absolute scores ('57.2% EM'). MUST include BOTH relative AND absolute |
-| **No paper_id: 0 in cross-topic** | Cross-topic `field_timeline.landmark_papers` | Any landmark paper with paper_id: 0 or placeholder ID — all paper_id values must be real database IDs |
+| **No paper_id: 0 in cross-topic** | Cross-topic `field_timeline.landmark_papers` | Any landmark paper with paper_id: 0 or placeholder ID -- all paper_id values must be real database IDs |
 
 ### Tutorial Presenter Checks
 | Check | Where to Look | What Fails |
 |-------|--------------|------------|
-| Clear narrative arc | Cross-topic analysis, HTML | No story from problem → approaches → frontiers |
+| Clear narrative arc | Cross-topic analysis, HTML | No story from problem -> approaches -> frontiers |
 | Presentation-ready takeaways | Topic summaries `key_insights` | Takeaways too verbose or vague for slides |
 | Visual structure | HTML output | Poorly organized sections, missing visual aids |
 | Balanced coverage | All topic summaries | One topic dominates, others under-covered |
@@ -188,7 +188,7 @@ analysis_critics/analysis_{area}_{perspective}.json
 | **accessibility** | 25% | Can someone new to the area understand the overview, methods, and insights? | Is the main area contribution explained in plain terms? Could a general ML researcher follow the key points? Are there unexplained assumptions about domain knowledge? |
 | **jargon_handling** | 20% | Are technical terms explained or defined? | Are area-specific terms defined on first use? Are acronyms expanded? Is there excessive jargon that could be simplified? |
 | **motivation_clarity** | 20% | Is it clear WHY each method/trend matters (real-world impact)? | Does each topic explain why this research direction is important? Would a reader understand the practical significance? |
-| **logical_flow** | 15% | Does the summary tell a coherent story from overview → methods → insights? | Does the summary flow logically across topics? Are the connections between sections clear? Is there a clear narrative arc? |
+| **logical_flow** | 15% | Does the summary tell a coherent story from overview -> methods -> insights? | Does the summary flow logically across topics? Are the connections between sections clear? Is there a clear narrative arc? |
 | **completeness** | 20% | Are essential sections present and informative? | Are the major topics covered? Is there enough context to understand each approach? Are key papers referenced? |
 
 ### Beginner Analysis Prompt Template
@@ -358,7 +358,7 @@ Focus on technical accuracy and completeness for domain experts.
 
 | Criterion | Weight | Description | Questions to Ask |
 |-----------|--------|-------------|------------------|
-| **narrative_arc** | 25% | Is there a clear story from problem landscape → approaches → frontiers? | Does the summary tell a compelling story? Is there a clear progression? Could you build a presentation outline from this? |
+| **narrative_arc** | 25% | Is there a clear story from problem landscape -> approaches -> frontiers? | Does the summary tell a compelling story? Is there a clear progression? Could you build a presentation outline from this? |
 | **visual_structure** | 20% | Is the HTML well-organized with clear sections, tables, charts? | Are sections clearly delineated? Are there helpful visual elements? Is the hierarchy clear? |
 | **key_takeaways** | 20% | Are takeaways crisp, memorable, and presentation-ready? | Are insights concise enough for slides? Are they memorable? Do they capture the essence? |
 | **paper_links** | 15% | Are paper references correct and clickable? | Do paper links work? Are titles accurate? Are key papers easy to find? |
@@ -505,10 +505,10 @@ Check area_summary/prompt_optimization/area_summaries/{area}/ for:
 ```
 
 ### Step 2: Determine Perspective
-- `perspective="beginner"` → Go to Step 3 only
-- `perspective="expert"` → Go to Step 4 only
-- `perspective="presenter"` → Go to Step 5 only
-- `perspective="all"` (DEFAULT) → Run Steps 3, 4, 5 in parallel
+- `perspective="beginner"` -> Go to Step 3 only
+- `perspective="expert"` -> Go to Step 4 only
+- `perspective="presenter"` -> Go to Step 5 only
+- `perspective="all"` (DEFAULT) -> Run Steps 3, 4, 5 in parallel
 
 ### Step 3: Beginner Analysis
 Apply the beginner prompt template and evaluate each criterion.

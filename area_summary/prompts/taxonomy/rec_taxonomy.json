@@ -1,0 +1,503 @@
+{
+  "area": "rec",
+  "area_description": "Recommendation Systems with LLMs encompasses techniques that leverage large language models to enhance, replace, or augment traditional recommendation pipelines, spanning direct LLM-as-recommender approaches, LLM-enhanced feature engineering, conversational and knowledge-augmented recommendation, generative retrieval paradigms, and multimodal recommendation methods.",
+  "categories": [
+    {
+      "id": "llm_as_recommender",
+      "name": "LLM as Recommender",
+      "description": "Approaches that directly use LLMs as the core recommendation engine, leveraging their language understanding and generation capabilities to produce recommendations through prompting, in-context learning, or instruction tuning.",
+      "sub_topics": [
+        {
+          "id": "prompt_based_recommendation",
+          "name": "Prompt-based Recommendation",
+          "description": "Using carefully designed prompts to cast recommendation tasks as natural language tasks, enabling zero-shot or few-shot recommendation without task-specific training.",
+          "matching_keywords": [
+            "prompt-based recommendation",
+            "zero-shot recommendation",
+            "few-shot recommendation",
+            "LLM prompting for recommendation",
+            "recommendation as language task",
+            "prompt template recommendation",
+            "natural language recommendation"
+          ]
+        },
+        {
+          "id": "in_context_learning_rec",
+          "name": "In-Context Learning for Recommendation",
+          "description": "Leveraging in-context learning to provide user-item interaction examples within the prompt, enabling LLMs to learn recommendation patterns from demonstrations at inference time.",
+          "matching_keywords": [
+            "in-context learning recommendation",
+            "ICL recommendation",
+            "demonstration-based recommendation",
+            "example-based recommendation",
+            "context window recommendation",
+            "few-shot ICL rec"
+          ]
+        },
+        {
+          "id": "instruction_tuned_recommenders",
+          "name": "Instruction-tuned Recommenders",
+          "description": "Fine-tuning LLMs with recommendation-specific instructions to create specialized recommender models that follow natural language directives for various recommendation tasks.",
+          "matching_keywords": [
+            "instruction tuning recommendation",
+            "InstructRec",
+            "recommendation fine-tuning",
+            "task-specific recommender LLM",
+            "instruction-following recommender",
+            "recommendation instruction dataset",
+            "tuned recommender model"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "LLM as recommender",
+        "LLM-based recommendation",
+        "LLM recommender system",
+        "prompt-based recommendation",
+        "zero-shot recommendation",
+        "in-context learning recommendation",
+        "instruction tuning recommendation",
+        "language model recommendation",
+        "ChatGPT recommendation",
+        "GPT-based recommendation",
+        "LLM for recommendation",
+        "recommendation with LLM",
+        "LLM recommendation pipeline",
+        "direct LLM recommendation"
+      ]
+    },
+    {
+      "id": "llm_enhanced_features",
+      "name": "LLM-enhanced Features",
+      "description": "Methods that use LLMs to generate, enrich, or transform features for downstream recommendation models, including text embeddings for items, user profile construction, and review summarization.",
+      "sub_topics": [
+        {
+          "id": "text_embeddings_items",
+          "name": "Text Embeddings for Items",
+          "description": "Using LLM-generated text embeddings to represent items with rich semantic features, improving item understanding and similarity computation in recommendation systems.",
+          "matching_keywords": [
+            "item text embedding",
+            "LLM item representation",
+            "semantic item embedding",
+            "item description embedding",
+            "content-based embedding",
+            "LLM feature extraction",
+            "item semantic features"
+          ]
+        },
+        {
+          "id": "user_profile_generation",
+          "name": "User Profile Generation",
+          "description": "Leveraging LLMs to generate natural language user profiles from interaction histories, capturing user preferences, interests, and behavioral patterns in text form.",
+          "matching_keywords": [
+            "user profile generation",
+            "LLM user modeling",
+            "natural language user profile",
+            "preference summarization",
+            "user interest extraction",
+            "behavioral profile generation",
+            "user representation LLM"
+          ]
+        },
+        {
+          "id": "review_summarization",
+          "name": "Review Summarization",
+          "description": "Using LLMs to summarize and extract key information from user reviews, transforming unstructured feedback into structured features for recommendation enhancement.",
+          "matching_keywords": [
+            "review summarization recommendation",
+            "opinion mining recommendation",
+            "sentiment extraction",
+            "review-based features",
+            "feedback summarization",
+            "review analysis recommendation"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "LLM-enhanced features",
+        "LLM feature engineering",
+        "text embedding recommendation",
+        "item representation LLM",
+        "user profile generation",
+        "review summarization",
+        "semantic features recommendation",
+        "LLM augmented features",
+        "content understanding recommendation",
+        "feature extraction LLM",
+        "LLM side information",
+        "auxiliary information LLM",
+        "enriched item features",
+        "LLM-derived features"
+      ]
+    },
+    {
+      "id": "conversational_recommendation",
+      "name": "Conversational Recommendation",
+      "description": "Recommendation approaches that operate through natural language dialogue, enabling interactive preference elicitation, dynamic recommendation refinement, and natural language explanations of recommendations.",
+      "sub_topics": [
+        {
+          "id": "dialogue_based_recommendation",
+          "name": "Dialogue-based Recommendation",
+          "description": "Multi-turn conversational systems that recommend items through natural language dialogue, adapting recommendations based on ongoing conversation context.",
+          "matching_keywords": [
+            "conversational recommender system",
+            "dialogue-based recommendation",
+            "interactive recommendation",
+            "multi-turn recommendation",
+            "chat-based recommendation",
+            "conversational agent recommendation",
+            "recommendation dialogue"
+          ]
+        },
+        {
+          "id": "preference_elicitation",
+          "name": "Preference Elicitation",
+          "description": "Techniques for actively extracting user preferences through strategic questioning and dialogue, using LLMs to ask clarifying questions and refine understanding of user needs.",
+          "matching_keywords": [
+            "preference elicitation",
+            "active preference learning",
+            "user preference extraction",
+            "clarifying questions recommendation",
+            "preference refinement",
+            "interactive preference learning",
+            "query-based preference"
+          ]
+        },
+        {
+          "id": "explanation_generation",
+          "name": "Explanation Generation",
+          "description": "Using LLMs to generate natural language explanations for why specific items are recommended, improving transparency and user trust in recommendation systems.",
+          "matching_keywords": [
+            "recommendation explanation",
+            "explainable recommendation",
+            "explanation generation",
+            "recommendation justification",
+            "natural language explanation",
+            "reasoning for recommendation",
+            "interpretable recommendation"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "conversational recommendation",
+        "dialogue recommendation",
+        "interactive recommendation",
+        "preference elicitation",
+        "explanation generation",
+        "explainable recommendation",
+        "multi-turn recommendation",
+        "chat-based recommendation",
+        "conversational recommender",
+        "recommendation dialogue system",
+        "user interaction recommendation",
+        "natural language recommendation interface",
+        "recommendation explanation"
+      ]
+    },
+    {
+      "id": "knowledge_augmented_recommendation",
+      "name": "Knowledge-augmented Recommendation",
+      "description": "Methods that incorporate external knowledge sources—including knowledge graphs, retrieved documents, and LLM world knowledge—to enhance recommendation quality, especially for cold-start and sparse-data scenarios.",
+      "sub_topics": [
+        {
+          "id": "kg_enhanced_rec",
+          "name": "KG-enhanced Recommendation",
+          "description": "Integrating knowledge graphs with LLMs to provide structured relational knowledge about items, users, and their connections for improved recommendations.",
+          "matching_keywords": [
+            "knowledge graph recommendation",
+            "KG-enhanced recommendation",
+            "graph-based knowledge recommendation",
+            "entity relation recommendation",
+            "structured knowledge recommendation",
+            "knowledge-aware recommendation",
+            "ontology-based recommendation"
+          ]
+        },
+        {
+          "id": "retrieval_augmented_rec",
+          "name": "Retrieval-augmented Recommendation",
+          "description": "Combining retrieval mechanisms with LLMs to fetch relevant contextual information—such as similar user interactions, item descriptions, or domain knowledge—to augment recommendations.",
+          "matching_keywords": [
+            "retrieval-augmented recommendation",
+            "RAG recommendation",
+            "retrieval-enhanced recommendation",
+            "document-augmented recommendation",
+            "context retrieval recommendation",
+            "information retrieval recommendation"
+          ]
+        },
+        {
+          "id": "world_knowledge_cold_start",
+          "name": "World Knowledge for Cold Start",
+          "description": "Leveraging the world knowledge encoded in LLMs to address the cold-start problem, providing reasonable recommendations for new users or items with limited interaction data.",
+          "matching_keywords": [
+            "cold start LLM",
+            "world knowledge recommendation",
+            "zero-interaction recommendation",
+            "new user recommendation",
+            "new item recommendation",
+            "LLM prior knowledge",
+            "cold start mitigation",
+            "knowledge transfer cold start"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "knowledge-augmented recommendation",
+        "knowledge graph recommendation",
+        "KG recommendation",
+        "retrieval-augmented recommendation",
+        "RAG recommendation",
+        "cold start recommendation",
+        "world knowledge recommendation",
+        "external knowledge recommendation",
+        "knowledge-enhanced recommendation",
+        "knowledge-aware recommendation",
+        "domain knowledge recommendation",
+        "knowledge integration recommendation",
+        "side information recommendation"
+      ]
+    },
+    {
+      "id": "generative_recommendation",
+      "name": "Generative Recommendation",
+      "description": "Paradigms that reformulate recommendation as a generative task, where LLMs directly generate item identifiers, textual descriptions, or sequential predictions rather than scoring from a fixed candidate set.",
+      "sub_topics": [
+        {
+          "id": "generative_retrieval",
+          "name": "Generative Retrieval",
+          "description": "Replacing traditional retrieve-and-rank pipelines with generative models that directly produce relevant items through autoregressive generation.",
+          "matching_keywords": [
+            "generative retrieval recommendation",
+            "generative candidate generation",
+            "autoregressive retrieval",
+            "generate-then-rank",
+            "direct generation recommendation",
+            "generative search recommendation"
+          ]
+        },
+        {
+          "id": "item_id_generation",
+          "name": "Item ID Generation",
+          "description": "Methods that train LLMs to generate item identifiers (numeric IDs, semantic IDs, or tokenized representations) as output tokens, bridging language generation with item recommendation.",
+          "matching_keywords": [
+            "item ID generation",
+            "semantic ID recommendation",
+            "item tokenization",
+            "item identifier generation",
+            "collaborative indexing",
+            "token-based item representation",
+            "generative item ID"
+          ]
+        },
+        {
+          "id": "sequential_recommendation_llm",
+          "name": "Sequential Recommendation with LLMs",
+          "description": "Using LLMs for sequential recommendation by modeling user interaction sequences as text and generating next-item predictions through language modeling.",
+          "matching_keywords": [
+            "sequential recommendation LLM",
+            "next item prediction LLM",
+            "interaction sequence modeling",
+            "temporal recommendation LLM",
+            "session-based recommendation LLM",
+            "autoregressive recommendation",
+            "sequence modeling recommendation"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "generative recommendation",
+        "generative retrieval",
+        "item ID generation",
+        "sequential recommendation LLM",
+        "autoregressive recommendation",
+        "generative candidate generation",
+        "semantic ID recommendation",
+        "item tokenization",
+        "next item prediction",
+        "generate-then-rank",
+        "generative paradigm recommendation",
+        "text-based item generation",
+        "sequence-to-sequence recommendation"
+      ]
+    },
+    {
+      "id": "multimodal_recommendation",
+      "name": "Multimodal Recommendation",
+      "description": "Recommendation approaches that leverage multiple modalities—including text, images, video, and audio—using vision-language models and cross-modal alignment techniques to enrich item understanding and user preference modeling.",
+      "sub_topics": [
+        {
+          "id": "vision_language_rec",
+          "name": "Vision-Language Recommendation",
+          "description": "Using vision-language models to jointly understand visual and textual features of items for improved recommendation, particularly for visually-rich domains like fashion, food, and products.",
+          "matching_keywords": [
+            "vision-language recommendation",
+            "visual recommendation LLM",
+            "image-text recommendation",
+            "CLIP recommendation",
+            "visual content recommendation",
+            "product image recommendation",
+            "fashion recommendation LLM"
+          ]
+        },
+        {
+          "id": "cross_modal_matching",
+          "name": "Cross-modal Matching",
+          "description": "Techniques for aligning representations across different modalities to enable cross-modal retrieval and recommendation, matching user preferences expressed in one modality with items described in another.",
+          "matching_keywords": [
+            "cross-modal matching recommendation",
+            "multimodal alignment recommendation",
+            "modality alignment",
+            "cross-modal retrieval",
+            "modal fusion recommendation",
+            "representation alignment recommendation"
+          ]
+        },
+        {
+          "id": "multimedia_content_rec",
+          "name": "Multimedia Content Recommendation",
+          "description": "Recommending multimedia content such as videos, music, and podcasts by leveraging LLMs to understand and match content across audio, visual, and textual modalities.",
+          "matching_keywords": [
+            "multimedia recommendation",
+            "video recommendation LLM",
+            "music recommendation LLM",
+            "audio recommendation",
+            "podcast recommendation",
+            "multimodal content recommendation",
+            "rich media recommendation"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "multimodal recommendation",
+        "vision-language recommendation",
+        "cross-modal recommendation",
+        "multimedia recommendation",
+        "visual recommendation",
+        "image-based recommendation",
+        "multi-modal features recommendation",
+        "CLIP recommendation",
+        "multimodal user preference",
+        "cross-modal matching",
+        "visual-textual recommendation",
+        "modality fusion recommendation",
+        "multimodal content understanding"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "cold_start_problem",
+      "name": "Cold Start Problem",
+      "description": "Papers addressing the challenge of making recommendations for new users or new items with limited or no interaction history, leveraging LLMs' world knowledge and generalization capabilities.",
+      "matching_keywords": [
+        "cold start",
+        "cold-start problem",
+        "new user recommendation",
+        "new item recommendation",
+        "data sparsity",
+        "zero-shot recommendation",
+        "few-shot recommendation",
+        "warm-up recommendation",
+        "sparse interaction"
+      ]
+    },
+    {
+      "id": "fairness_bias",
+      "name": "Fairness and Bias in Recommendations",
+      "description": "Papers examining and mitigating biases in LLM-based recommendation systems, including popularity bias, position bias, demographic bias, and fairness-aware recommendation strategies.",
+      "matching_keywords": [
+        "fairness recommendation",
+        "bias recommendation",
+        "popularity bias",
+        "position bias",
+        "demographic bias",
+        "debiasing recommendation",
+        "fair recommendation",
+        "equitable recommendation",
+        "bias mitigation recommendation"
+      ]
+    },
+    {
+      "id": "explainable_recommendations",
+      "name": "Explainable Recommendations",
+      "description": "Papers focused on generating human-understandable explanations for recommendations, improving transparency, trust, and user satisfaction through interpretable recommendation reasoning.",
+      "matching_keywords": [
+        "explainable recommendation",
+        "interpretable recommendation",
+        "recommendation explanation",
+        "transparent recommendation",
+        "explainability recommendation",
+        "recommendation reasoning",
+        "justification recommendation",
+        "trustworthy recommendation"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

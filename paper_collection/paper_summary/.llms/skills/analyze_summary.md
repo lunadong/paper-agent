@@ -8,7 +8,7 @@ oncalls:
 
 Analyze paper summaries from beginner and expert perspectives to identify quality issues and improvement opportunities.
 
-## 🔍 User Instructions Checklist
+## User Instructions Checklist
 
 **CRITICAL:** In addition to weighted criteria, ALWAYS check these specific issues from `user_instructions.md`:
 
@@ -26,7 +26,7 @@ Analyze paper summaries from beginner and expert perspectives to identify qualit
 ### Expert-Side Checks
 | Check | Where to Look | What Fails |
 |-------|--------------|------------|
-| OVERLAP CHECK: constraints ≠ limitations | Technical_details.problem_definition.constraints_assumptions vs Limitations | Same point appears in both sections |
+| OVERLAP CHECK: constraints != limitations | Technical_details.problem_definition.constraints_assumptions vs Limitations | Same point appears in both sections |
 | novel_architectural_elements = architecture only | Technical_details.novel_architectural_elements | Includes modeling innovations (loss functions), benchmark contributions, or evaluation methodology |
 | FIELD OMISSION: no "Not applicable" | All fields | Field value is "Not applicable", "None", empty string, or empty array instead of being omitted |
 | Limitations 3-5 bullets | Limitations section | More than 5 bullets, or related points not merged |
@@ -496,13 +496,13 @@ Read the summary JSON file (example or generated):
 
 ### Step 2: Determine Perspective and PDF Option
 Check which perspective to run:
-- `perspective="beginner"` → Go to Step 3 only
-- `perspective="expert"` → Go to Step 4 only
-- `perspective="both"` (DEFAULT) → Run both Step 3 and Step 4
+- `perspective="beginner"` -> Go to Step 3 only
+- `perspective="expert"` -> Go to Step 4 only
+- `perspective="both"` (DEFAULT) -> Run both Step 3 and Step 4
 
 Check PDF option:
-- `use_pdf=false` (DEFAULT) → Analyze summary JSON only
-- `use_pdf=true` → Also fetch PDF to verify claims (requires arxiv_id from summary)
+- `use_pdf=false` (DEFAULT) -> Analyze summary JSON only
+- `use_pdf=true` -> Also fetch PDF to verify claims (requires arxiv_id from summary)
 
 ### Step 3: Beginner Analysis
 Apply the beginner prompt template and evaluate each criterion.
@@ -739,11 +739,11 @@ Output file format:
 
 ```
 "Analyze the summary example"
-→ Read prompts/v2/summary_example.json and analyze from both perspectives
+-> Read prompts/v2/summary_example.json and analyze from both perspectives
 
 "Analyze the summary for paper 3569"
-→ Find and analyze optimization_runs/.../summary_3569.json
+-> Find and analyze optimization_runs/.../summary_3569.json
 
 "Check if the example meets a threshold of 8.0"
-→ Analyze and report whether all criterion scores >= 8.0
+-> Analyze and report whether all criterion scores >= 8.0
 ```

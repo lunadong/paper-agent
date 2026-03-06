@@ -1,0 +1,516 @@
+{
+  "area": "qa",
+  "area_description": "Question Answering with LLMs encompasses techniques and architectures for answering questions using large language models, spanning closed-book parametric approaches, retrieval-augmented open-domain methods, multi-hop reasoning, conversational interactions, long-form generation with attribution, and structured data querying.",
+  "categories": [
+    {
+      "id": "closed_book_qa",
+      "name": "Closed-book QA",
+      "description": "Approaches where the LLM answers questions solely from its parametric knowledge without external retrieval, including methods for probing, measuring, and editing the knowledge stored in model parameters.",
+      "sub_topics": [
+        {
+          "id": "parametric_knowledge",
+          "name": "Parametric Knowledge",
+          "description": "Leveraging knowledge encoded in LLM parameters during pre-training to answer questions without external sources.",
+          "matching_keywords": [
+            "parametric knowledge",
+            "closed-book",
+            "memorized knowledge",
+            "implicit knowledge",
+            "parametric memory",
+            "knowledge in parameters",
+            "world knowledge LLM"
+          ]
+        },
+        {
+          "id": "knowledge_probing",
+          "name": "Knowledge Probing",
+          "description": "Methods for probing and measuring what factual knowledge LLMs have internalized, using cloze-style tests, prompting, and diagnostic probes.",
+          "matching_keywords": [
+            "knowledge probing",
+            "LAMA",
+            "cloze test",
+            "fact probing",
+            "knowledge assessment",
+            "probing LLM knowledge",
+            "knowledge measurement"
+          ]
+        },
+        {
+          "id": "knowledge_editing_qa",
+          "name": "Knowledge Editing for QA",
+          "description": "Techniques for updating or correcting factual knowledge in LLMs to improve question answering accuracy without full retraining.",
+          "matching_keywords": [
+            "knowledge editing",
+            "model editing",
+            "fact editing",
+            "knowledge update",
+            "ROME",
+            "MEMIT",
+            "knowledge correction",
+            "fact update"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "closed-book QA",
+        "closed-book question answering",
+        "parametric knowledge",
+        "knowledge probing",
+        "knowledge editing",
+        "model editing",
+        "memorized knowledge",
+        "implicit knowledge",
+        "LAMA",
+        "world knowledge",
+        "knowledge stored in parameters",
+        "zero-resource QA",
+        "no-retrieval QA"
+      ]
+    },
+    {
+      "id": "open_domain_qa",
+      "name": "Open-domain QA",
+      "description": "Methods that combine retrieval from external knowledge sources with LLM reading comprehension to answer questions from broad domains, including retrieval-augmented pipelines, passage reranking, and reader models.",
+      "sub_topics": [
+        {
+          "id": "retrieval_augmented_qa",
+          "name": "Retrieval-augmented QA",
+          "description": "Integrating document or passage retrieval with LLM-based answer generation, where the model conditions on retrieved evidence to produce answers.",
+          "matching_keywords": [
+            "retrieval-augmented QA",
+            "retrieve-and-read",
+            "open-domain retrieval",
+            "DPR",
+            "dense passage retrieval",
+            "retriever-reader",
+            "evidence-based QA",
+            "knowledge-grounded QA"
+          ]
+        },
+        {
+          "id": "passage_reranking_qa",
+          "name": "Passage Reranking for QA",
+          "description": "Using LLMs or cross-encoders to rerank retrieved passages for relevance before answer extraction, improving retrieval precision.",
+          "matching_keywords": [
+            "passage reranking",
+            "cross-encoder reranking",
+            "LLM reranker",
+            "rerank passages",
+            "relevance reranking",
+            "document reranking",
+            "listwise reranking"
+          ]
+        },
+        {
+          "id": "reader_models",
+          "name": "Reader Models",
+          "description": "Models specialized in extracting or generating answers from retrieved passages, including extractive span selection and generative answer production.",
+          "matching_keywords": [
+            "reader model",
+            "extractive QA",
+            "extractive reader",
+            "generative reader",
+            "span extraction",
+            "answer extraction",
+            "FiD",
+            "Fusion-in-Decoder"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "open-domain QA",
+        "open-domain question answering",
+        "retrieval-augmented QA",
+        "retrieve-and-read",
+        "DPR",
+        "dense passage retrieval",
+        "passage reranking",
+        "reader model",
+        "extractive QA",
+        "generative reader",
+        "FiD",
+        "Fusion-in-Decoder",
+        "evidence-based QA",
+        "knowledge-grounded QA",
+        "document retrieval QA"
+      ]
+    },
+    {
+      "id": "multi_hop_qa",
+      "name": "Multi-hop QA",
+      "description": "Approaches for answering questions that require reasoning over multiple pieces of evidence, including decomposition strategies, iterative retrieval, and graph-based reasoning methods.",
+      "sub_topics": [
+        {
+          "id": "decomposition_based",
+          "name": "Decomposition-based Multi-hop QA",
+          "description": "Breaking complex multi-hop questions into simpler sub-questions that can be answered independently and composed into a final answer.",
+          "matching_keywords": [
+            "question decomposition",
+            "sub-question generation",
+            "decomposed QA",
+            "DecompRC",
+            "least-to-most QA",
+            "compositional QA",
+            "question breakdown"
+          ]
+        },
+        {
+          "id": "iterative_retrieval",
+          "name": "Iterative Retrieval",
+          "description": "Performing multiple rounds of retrieval where each round is informed by previously retrieved evidence and intermediate reasoning.",
+          "matching_keywords": [
+            "iterative retrieval",
+            "multi-step retrieval",
+            "IRCoT",
+            "chain-of-retrieval",
+            "adaptive retrieval",
+            "sequential retrieval",
+            "retrieve-then-reason"
+          ]
+        },
+        {
+          "id": "graph_based_reasoning",
+          "name": "Graph-based Reasoning",
+          "description": "Using knowledge graphs or constructing reasoning graphs from evidence to connect entities and facts across multiple hops.",
+          "matching_keywords": [
+            "graph reasoning QA",
+            "knowledge graph QA",
+            "entity graph",
+            "reasoning graph",
+            "graph neural network QA",
+            "multi-hop graph",
+            "hop reasoning"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "multi-hop QA",
+        "multi-hop question answering",
+        "multi-hop reasoning",
+        "question decomposition",
+        "iterative retrieval",
+        "graph-based reasoning",
+        "compositional QA",
+        "HotpotQA",
+        "MuSiQue",
+        "bridge reasoning",
+        "multi-step reasoning QA",
+        "complex question answering",
+        "reasoning chain QA",
+        "evidence aggregation"
+      ]
+    },
+    {
+      "id": "conversational_qa",
+      "name": "Conversational QA",
+      "description": "Techniques for question answering in multi-turn dialogue settings, handling context-dependent follow-up questions, coreference resolution, and clarification strategies.",
+      "sub_topics": [
+        {
+          "id": "dialogue_based_qa",
+          "name": "Dialogue-based QA",
+          "description": "QA systems that maintain conversational context across multiple turns, resolving references and tracking topic shifts in dialogue.",
+          "matching_keywords": [
+            "dialogue QA",
+            "conversational question answering",
+            "multi-turn QA",
+            "QuAC",
+            "CoQA",
+            "dialogue context",
+            "conversational reading comprehension"
+          ]
+        },
+        {
+          "id": "follow_up_questions",
+          "name": "Follow-up Questions",
+          "description": "Handling context-dependent follow-up questions that build on previous answers, requiring coreference resolution and conversation history understanding.",
+          "matching_keywords": [
+            "follow-up question",
+            "context-dependent question",
+            "coreference resolution QA",
+            "conversational history",
+            "question rewriting",
+            "ellipsis resolution",
+            "anaphora resolution QA"
+          ]
+        },
+        {
+          "id": "clarification",
+          "name": "Clarification",
+          "description": "Systems that ask clarifying questions when queries are ambiguous or under-specified, and handle user clarifications to refine answers.",
+          "matching_keywords": [
+            "clarification question",
+            "ambiguous question",
+            "clarifying question generation",
+            "query clarification",
+            "disambiguation QA",
+            "under-specified question"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "conversational QA",
+        "conversational question answering",
+        "dialogue QA",
+        "multi-turn QA",
+        "QuAC",
+        "CoQA",
+        "follow-up question",
+        "clarification question",
+        "question rewriting",
+        "conversational search",
+        "interactive QA",
+        "dialogue-based question answering",
+        "context-dependent QA"
+      ]
+    },
+    {
+      "id": "long_form_qa",
+      "name": "Long-form QA",
+      "description": "Methods for generating detailed, paragraph-length or longer answers to complex questions, with emphasis on attribution, citation, and verification of generated content.",
+      "sub_topics": [
+        {
+          "id": "long_form_answer_generation",
+          "name": "Long-form Answer Generation",
+          "description": "Generating comprehensive, multi-sentence or multi-paragraph answers that fully address complex or open-ended questions.",
+          "matching_keywords": [
+            "long-form answer",
+            "long-form QA",
+            "LFQA",
+            "ELI5",
+            "paragraph-length answer",
+            "elaborate answer generation",
+            "comprehensive answer"
+          ]
+        },
+        {
+          "id": "attribution_citation",
+          "name": "Attribution and Citation",
+          "description": "Methods for grounding generated answers in source documents by providing inline citations, attributions, or references to supporting evidence.",
+          "matching_keywords": [
+            "attribution",
+            "citation generation",
+            "attributed QA",
+            "inline citation",
+            "source attribution",
+            "verifiable answer",
+            "cited answer",
+            "ALCE"
+          ]
+        },
+        {
+          "id": "answer_verification",
+          "name": "Answer Verification",
+          "description": "Techniques for verifying the factual correctness of generated answers, including claim-level verification and entailment-based checking.",
+          "matching_keywords": [
+            "answer verification",
+            "fact verification",
+            "claim verification",
+            "entailment verification",
+            "answer validation",
+            "factual consistency check",
+            "NLI-based verification"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "long-form QA",
+        "long-form question answering",
+        "LFQA",
+        "ELI5",
+        "attribution",
+        "citation generation",
+        "answer verification",
+        "attributed QA",
+        "paragraph-length answer",
+        "comprehensive answer generation",
+        "verifiable answers",
+        "source grounding",
+        "claim verification",
+        "factual consistency"
+      ]
+    },
+    {
+      "id": "table_structured_qa",
+      "name": "Table and Structured QA",
+      "description": "Approaches for answering questions over structured data such as tables, databases, and knowledge bases, including table understanding, SQL generation, and structured data reasoning with LLMs.",
+      "sub_topics": [
+        {
+          "id": "table_qa",
+          "name": "Table QA",
+          "description": "Question answering directly over tabular data, including cell lookup, aggregation, and reasoning over table contents using LLMs.",
+          "matching_keywords": [
+            "table QA",
+            "table question answering",
+            "tabular QA",
+            "TAPAS",
+            "table understanding",
+            "table reasoning",
+            "WikiTableQuestions"
+          ]
+        },
+        {
+          "id": "sql_generation",
+          "name": "SQL Generation",
+          "description": "Translating natural language questions into SQL queries to answer questions over relational databases, including text-to-SQL methods.",
+          "matching_keywords": [
+            "text-to-SQL",
+            "SQL generation",
+            "NL2SQL",
+            "natural language to SQL",
+            "Spider",
+            "semantic parsing SQL",
+            "database QA"
+          ]
+        },
+        {
+          "id": "structured_data_reasoning",
+          "name": "Structured Data Reasoning",
+          "description": "Reasoning over structured data formats including knowledge bases, APIs, and semi-structured documents to answer questions.",
+          "matching_keywords": [
+            "structured data reasoning",
+            "knowledge base QA",
+            "KBQA",
+            "semi-structured QA",
+            "API-based QA",
+            "structured reasoning",
+            "schema reasoning"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "table QA",
+        "table question answering",
+        "text-to-SQL",
+        "SQL generation",
+        "NL2SQL",
+        "structured QA",
+        "tabular QA",
+        "TAPAS",
+        "knowledge base QA",
+        "KBQA",
+        "semantic parsing",
+        "database question answering",
+        "WikiTableQuestions",
+        "Spider",
+        "structured data reasoning"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "factual_accuracy",
+      "name": "Factual Accuracy in QA",
+      "description": "Papers focused on improving and measuring the factual correctness of LLM-generated answers, including hallucination detection and faithfulness.",
+      "matching_keywords": [
+        "factual accuracy",
+        "factual correctness",
+        "hallucination QA",
+        "faithfulness",
+        "factuality",
+        "factual consistency",
+        "answer correctness",
+        "grounded answers",
+        "truthful QA"
+      ]
+    },
+    {
+      "id": "domain_specific_qa",
+      "name": "Domain-specific QA",
+      "description": "Papers applying QA techniques to specialized domains such as medicine, law, science, and finance, addressing domain-specific challenges.",
+      "matching_keywords": [
+        "medical QA",
+        "biomedical QA",
+        "clinical QA",
+        "legal QA",
+        "scientific QA",
+        "financial QA",
+        "domain-specific QA",
+        "specialized domain QA",
+        "healthcare QA",
+        "PubMedQA"
+      ]
+    },
+    {
+      "id": "multilingual_qa",
+      "name": "Multilingual QA",
+      "description": "Papers addressing question answering across multiple languages, including cross-lingual transfer, multilingual retrieval, and low-resource language QA.",
+      "matching_keywords": [
+        "multilingual QA",
+        "cross-lingual QA",
+        "multilingual question answering",
+        "cross-lingual transfer",
+        "low-resource QA",
+        "multilingual retrieval",
+        "XOR-QA",
+        "TyDi QA",
+        "language transfer QA"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

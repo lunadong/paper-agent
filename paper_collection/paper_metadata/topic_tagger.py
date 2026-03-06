@@ -360,13 +360,13 @@ def set_primary_topic(paper_id: int, topic: Optional[str]):
     new_primary = topic if topic else None
     if db.update_paper(paper_id, primary_topic=new_primary):
         if new_primary:
-            print(f"\n✓ Set primary_topic to '{new_primary}'")
+            print(f"\n[OK] Set primary_topic to '{new_primary}'")
         else:
-            print("\n✓ Cleared primary_topic")
+            print("\n[OK] Cleared primary_topic")
         db.close()
         return True
     else:
-        print("\n✗ Failed to update primary_topic")
+        print("\n[X] Failed to update primary_topic")
         db.close()
         return False
 

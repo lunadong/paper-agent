@@ -1,0 +1,347 @@
+{
+  "area": "agent",
+  "area_description": "Agentic AI refers to LLM-based systems that can autonomously plan, reason, and take actions to accomplish tasks.",
+  "categories": [
+    {
+      "id": "multi_call_tool_use_fixed_plan",
+      "name": "Multi-call Tool Use with Fixed Plan",
+      "description": "The model generates a plan for a task, then executes the plan by calling tools. The plan is fixed and cannot be modified.",
+      "sub_topics": [
+        {
+          "id": "tool_profiling",
+          "name": "Tool Profiling",
+          "description": "Generate detailed profiles to guide LLMs for right tool call and right parameterization.",
+          "matching_keywords": [
+            "tool profiling",
+            "tool description",
+            "tool documentation",
+            "API documentation",
+            "tool selection",
+            "parameterization",
+            "tool card",
+            "function description"
+          ]
+        },
+        {
+          "id": "tool_use_post_training",
+          "name": "Tool-use Post-training",
+          "description": "Post-train the LLM to understand tool profiles and generate tool calls.",
+          "matching_keywords": [
+            "tool-use post-training",
+            "tool calling fine-tuning",
+            "function calling training",
+            "tool-augmented training",
+            "tool-use SFT",
+            "tool learning",
+            "Toolformer",
+            "tool-use fine-tuning"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "tool use",
+        "tool calling",
+        "function calling",
+        "fixed plan",
+        "tool profiling",
+        "tool-use post-training",
+        "API calling",
+        "tool-augmented LLM",
+        "tool learning",
+        "Toolformer",
+        "tool selection",
+        "parameterization",
+        "tool description",
+        "sequential tool calling",
+        "static plan"
+      ]
+    },
+    {
+      "id": "multi_call_tool_use_flexible_plan",
+      "name": "Multi-call Tool Use with Flexible Plan",
+      "description": "The model generates a plan for a task, then executes the plan by calling tools. The plan can be modified based on the returned results.",
+      "sub_topics": [
+        {
+          "id": "internalized_apis",
+          "name": "Invoking Internalized APIs",
+          "description": "APIs are either well understood (web search, calculator), or internalized into the parameters such as through embeddings.",
+          "matching_keywords": [
+            "internalized APIs",
+            "web search API",
+            "calculator",
+            "embedded API",
+            "API internalization",
+            "built-in tools",
+            "implicit tool use",
+            "code interpreter"
+          ]
+        },
+        {
+          "id": "web_agents",
+          "name": "Web Agents",
+          "description": "Operate web browser for browsing, linking, searching, button clicking.",
+          "matching_keywords": [
+            "web agent",
+            "browser agent",
+            "web browsing",
+            "web navigation",
+            "web interaction",
+            "browser automation",
+            "WebArena",
+            "Mind2Web"
+          ]
+        },
+        {
+          "id": "prompt_based_optimization",
+          "name": "Prompt-based Optimization",
+          "description": "Optimize which tools to use next based on previous tool-calling output, such as with contrastive learning and checking at critical points.",
+          "matching_keywords": [
+            "prompt-based optimization",
+            "tool selection optimization",
+            "contrastive learning",
+            "critical point checking",
+            "tool-use planning",
+            "next tool prediction",
+            "dynamic tool selection"
+          ]
+        },
+        {
+          "id": "rl_based",
+          "name": "RL-based Tool Use",
+          "description": "Optimize tool use through reinforcement learning. The reward function can be final tool call success, turn-level success, tool call correctness, etc.",
+          "matching_keywords": [
+            "reinforcement learning tool use",
+            "RL-based agent",
+            "reward function",
+            "tool call success",
+            "turn-level reward",
+            "RL agent",
+            "policy optimization",
+            "tool-use RL"
+          ]
+        },
+        {
+          "id": "reflection_based",
+          "name": "Reflection-based Tool Use",
+          "description": "Compare tool-call with expert actions to learn why expert actions are better.",
+          "matching_keywords": [
+            "reflection",
+            "self-reflection",
+            "expert comparison",
+            "action reflection",
+            "learning from expert",
+            "Reflexion",
+            "self-critique",
+            "reflective agent"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "flexible plan",
+        "adaptive planning",
+        "dynamic plan",
+        "internalized APIs",
+        "web agent",
+        "browser agent",
+        "prompt-based optimization",
+        "RL-based tool use",
+        "reflection-based",
+        "tool-use optimization",
+        "adaptive tool use",
+        "plan modification",
+        "iterative planning",
+        "ReAct",
+        "dynamic tool calling"
+      ]
+    },
+    {
+      "id": "multi_turn_user_interactions",
+      "name": "Multi-turn with User Interactions",
+      "description": "Based on user responses, generate next steps. One challenge is to help users resolve the ambiguity and make decisions, balancing exploration and exploitation.",
+      "sub_topics": [],
+      "matching_keywords": [
+        "multi-turn",
+        "user interaction",
+        "conversational agent",
+        "dialog agent",
+        "user feedback",
+        "ambiguity resolution",
+        "exploration exploitation",
+        "interactive agent",
+        "turn-based agent",
+        "clarification",
+        "user intent",
+        "human-in-the-loop"
+      ]
+    },
+    {
+      "id": "multi_agent",
+      "name": "Multi-agent",
+      "description": "Use multiple agents to collaboratively fulfill tasks. There are various ways including role-based, lead-worker, and decentralized approaches.",
+      "sub_topics": [
+        {
+          "id": "role_based",
+          "name": "Role-based Multi-agent",
+          "description": "Different agents play different roles to collaboratively fulfill tasks.",
+          "matching_keywords": [
+            "role-based agents",
+            "role playing",
+            "specialized roles",
+            "agent roles",
+            "persona-based agents",
+            "role assignment",
+            "role specialization"
+          ]
+        },
+        {
+          "id": "lead_worker",
+          "name": "Lead-Worker Multi-agent",
+          "description": "There is a lead agent that orchestrates and worker agents that execute subtasks.",
+          "matching_keywords": [
+            "lead agent",
+            "worker agent",
+            "orchestrator",
+            "manager agent",
+            "hierarchical agents",
+            "supervisor agent",
+            "lead-worker"
+          ]
+        },
+        {
+          "id": "decentralized",
+          "name": "Decentralized Multi-agent",
+          "description": "Decentralized agents work and collaborate without a central coordinator.",
+          "matching_keywords": [
+            "decentralized agents",
+            "distributed agents",
+            "peer agents",
+            "autonomous collaboration",
+            "agent swarm",
+            "decentralized collaboration",
+            "peer-to-peer agents"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "multi-agent",
+        "multiple agents",
+        "agent collaboration",
+        "collaborative agents",
+        "role-based agents",
+        "lead-worker",
+        "decentralized agents",
+        "agent communication",
+        "agent coordination",
+        "multi-agent system",
+        "agent team",
+        "agent orchestration",
+        "cooperative agents"
+      ]
+    },
+    {
+      "id": "multi_task_planning",
+      "name": "Multi-task Planning",
+      "description": "There is not a single task, but oftentimes a big task with multiple subtasks, such as planning a day instead of one single activity.",
+      "sub_topics": [],
+      "matching_keywords": [
+        "multi-task planning",
+        "task decomposition",
+        "subtask",
+        "complex task",
+        "hierarchical planning",
+        "task scheduling",
+        "planning agent",
+        "goal decomposition",
+        "multi-step planning",
+        "composite task",
+        "task graph"
+      ]
+    },
+    {
+      "id": "agent_evolution",
+      "name": "Agent Evolution",
+      "description": "The agent will gradually evolve to become more capable over time.",
+      "sub_topics": [],
+      "matching_keywords": [
+        "agent evolution",
+        "self-improvement",
+        "evolving agent",
+        "agent learning",
+        "continuous learning",
+        "agent adaptation",
+        "capability growth",
+        "progressive improvement",
+        "lifelong learning agent",
+        "self-evolving"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

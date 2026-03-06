@@ -1,0 +1,491 @@
+{
+  "area": "reasoning",
+  "area_description": "Reasoning in LLMs encompasses techniques to elicit, train, verify, and enhance the logical and structured thinking capabilities of large language models, spanning prompting strategies, reinforcement learning, test-time compute scaling, reward models, and latent reasoning architectures.",
+  "categories": [
+    {
+      "id": "prompting_based_reasoning",
+      "name": "Reasoning Elicitation through Prompting",
+      "description": "Techniques that elicit reasoning from LLMs through prompt design, including chain-of-thought prompting, structured reasoning formats, and ensemble methods that improve answer reliability.",
+      "sub_topics": [
+        {
+          "id": "chain_of_thought",
+          "name": "Chain-of-Thought Prompting",
+          "description": "Prompting LLMs to produce intermediate reasoning steps before arriving at a final answer, including zero-shot and few-shot variants.",
+          "matching_keywords": [
+            "chain-of-thought",
+            "CoT",
+            "step-by-step reasoning",
+            "intermediate steps",
+            "reasoning trace",
+            "zero-shot CoT",
+            "few-shot CoT",
+            "let's think step by step"
+          ]
+        },
+        {
+          "id": "structured_reasoning_prompts",
+          "name": "Structured Reasoning Prompts",
+          "description": "Advanced prompting frameworks that organize reasoning into explicit structures such as trees, graphs, or multi-step plans.",
+          "matching_keywords": [
+            "tree-of-thought",
+            "ToT",
+            "graph-of-thought",
+            "GoT",
+            "step-back prompting",
+            "decomposed prompting",
+            "least-to-most prompting",
+            "plan-and-solve"
+          ]
+        },
+        {
+          "id": "self_consistency_ensemble",
+          "name": "Self-Consistency and Ensemble Methods",
+          "description": "Generating multiple reasoning paths and aggregating answers via majority voting or other ensemble techniques to improve reliability.",
+          "matching_keywords": [
+            "self-consistency",
+            "majority voting",
+            "reasoning ensemble",
+            "multiple reasoning paths",
+            "sample-and-vote",
+            "diverse reasoning",
+            "answer aggregation"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "chain-of-thought",
+        "CoT",
+        "prompting for reasoning",
+        "reasoning elicitation",
+        "tree-of-thought",
+        "ToT",
+        "graph-of-thought",
+        "self-consistency",
+        "step-by-step reasoning",
+        "structured prompting",
+        "decomposed prompting",
+        "least-to-most",
+        "step-back prompting",
+        "plan-and-solve",
+        "reasoning prompt"
+      ]
+    },
+    {
+      "id": "training_for_reasoning",
+      "name": "Training for Reasoning",
+      "description": "Methods that improve LLM reasoning through training, including reinforcement learning with reasoning rewards, supervised fine-tuning on reasoning traces, and distilling reasoning abilities from stronger models.",
+      "sub_topics": [
+        {
+          "id": "rl_based_reasoning",
+          "name": "RL-based Reasoning Training",
+          "description": "Using reinforcement learning to train models to produce better reasoning, including PPO, GRPO, and other RL algorithms applied to reasoning tasks.",
+          "matching_keywords": [
+            "reinforcement learning reasoning",
+            "RL reasoning",
+            "GRPO",
+            "PPO reasoning",
+            "DeepSeek-R1",
+            "reward-based reasoning training",
+            "RL-only reasoning",
+            "RLHF reasoning"
+          ]
+        },
+        {
+          "id": "sft_reasoning_traces",
+          "name": "SFT on Reasoning Traces",
+          "description": "Supervised fine-tuning on curated reasoning traces to teach models to reason step-by-step during generation.",
+          "matching_keywords": [
+            "supervised fine-tuning reasoning",
+            "SFT reasoning",
+            "reasoning traces",
+            "reasoning annotations",
+            "thought supervision",
+            "reasoning SFT data",
+            "fine-tune reasoning"
+          ]
+        },
+        {
+          "id": "reasoning_distillation",
+          "name": "Reasoning Distillation",
+          "description": "Transferring reasoning capabilities from larger or more capable models to smaller models through distillation of reasoning traces and strategies.",
+          "matching_keywords": [
+            "reasoning distillation",
+            "distill reasoning",
+            "teacher-student reasoning",
+            "small model reasoning",
+            "reasoning transfer",
+            "knowledge distillation reasoning",
+            "chain-of-thought distillation"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "training for reasoning",
+        "reasoning training",
+        "reinforcement learning reasoning",
+        "RL reasoning",
+        "GRPO",
+        "PPO reasoning",
+        "DeepSeek-R1",
+        "supervised fine-tuning reasoning",
+        "SFT reasoning",
+        "reasoning distillation",
+        "reasoning traces",
+        "reasoning data",
+        "post-training reasoning",
+        "reasoning fine-tuning"
+      ]
+    },
+    {
+      "id": "test_time_compute",
+      "name": "Test-time Compute and Search",
+      "description": "Techniques that allocate additional computation at inference time to improve reasoning quality, including search-based methods, adaptive compute, and extended thinking.",
+      "sub_topics": [
+        {
+          "id": "search_based_methods",
+          "name": "Search-based Methods",
+          "description": "Using tree search, beam search, or Monte Carlo Tree Search (MCTS) at inference time to explore reasoning paths and select the best solution.",
+          "matching_keywords": [
+            "MCTS reasoning",
+            "Monte Carlo Tree Search",
+            "beam search reasoning",
+            "tree search reasoning",
+            "Best-of-N",
+            "search-based reasoning",
+            "reasoning path search",
+            "solution search"
+          ]
+        },
+        {
+          "id": "adaptive_compute",
+          "name": "Adaptive Compute",
+          "description": "Dynamically adjusting the amount of computation based on problem difficulty, spending more tokens or inference steps on harder problems.",
+          "matching_keywords": [
+            "adaptive compute",
+            "test-time compute scaling",
+            "compute-optimal reasoning",
+            "dynamic computation",
+            "difficulty-aware inference",
+            "scaling inference compute",
+            "compute allocation"
+          ]
+        },
+        {
+          "id": "extended_thinking",
+          "name": "Extended Thinking",
+          "description": "Allowing models to generate longer internal reasoning chains or 'thinking' tokens before producing a final answer.",
+          "matching_keywords": [
+            "extended thinking",
+            "thinking tokens",
+            "long reasoning chain",
+            "reasoning budget",
+            "thinking mode",
+            "internal monologue",
+            "deliberative reasoning"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "test-time compute",
+        "inference-time compute",
+        "search-based reasoning",
+        "MCTS",
+        "Monte Carlo Tree Search",
+        "beam search reasoning",
+        "Best-of-N",
+        "adaptive compute",
+        "compute scaling",
+        "extended thinking",
+        "thinking tokens",
+        "reasoning budget",
+        "inference scaling",
+        "test-time scaling"
+      ]
+    },
+    {
+      "id": "reasoning_verification",
+      "name": "Reasoning Verification and Reward Models",
+      "description": "Methods for verifying the correctness of reasoning steps and training reward models that evaluate reasoning quality, including process-level and outcome-level supervision.",
+      "sub_topics": [
+        {
+          "id": "process_reward_models",
+          "name": "Process Reward Models",
+          "description": "Reward models that evaluate the correctness of individual reasoning steps rather than just the final answer.",
+          "matching_keywords": [
+            "process reward model",
+            "PRM",
+            "step-level reward",
+            "stepwise verification",
+            "process supervision",
+            "step-level feedback",
+            "Step-KTO"
+          ]
+        },
+        {
+          "id": "outcome_reward_models",
+          "name": "Outcome Reward Models",
+          "description": "Reward models that evaluate reasoning based on the correctness of the final outcome or answer.",
+          "matching_keywords": [
+            "outcome reward model",
+            "ORM",
+            "outcome-based reward",
+            "result verification",
+            "answer verification",
+            "outcome supervision"
+          ]
+        },
+        {
+          "id": "self_correction",
+          "name": "Self-Correction",
+          "description": "Techniques enabling models to identify and fix errors in their own reasoning through iterative refinement.",
+          "matching_keywords": [
+            "self-correction",
+            "self-refine",
+            "self-debug",
+            "iterative refinement",
+            "reasoning correction",
+            "error correction",
+            "self-repair"
+          ]
+        },
+        {
+          "id": "critic_verifier",
+          "name": "Critic and Verifier Models",
+          "description": "Separate models or components that act as critics or verifiers to evaluate and filter reasoning outputs.",
+          "matching_keywords": [
+            "critic model",
+            "verifier",
+            "reasoning verification",
+            "solution verification",
+            "math verifier",
+            "proof checker",
+            "reasoning critic"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "reward model reasoning",
+        "process reward model",
+        "PRM",
+        "outcome reward model",
+        "ORM",
+        "reasoning verification",
+        "step-level reward",
+        "self-correction",
+        "self-refine",
+        "critic model",
+        "verifier",
+        "Step-KTO",
+        "process supervision",
+        "reasoning feedback"
+      ]
+    },
+    {
+      "id": "latent_reasoning",
+      "name": "Latent and Non-verbal Reasoning",
+      "description": "Approaches that enable reasoning in continuous latent space rather than through explicit natural language tokens, including continuous thought representations and compressed reasoning.",
+      "sub_topics": [
+        {
+          "id": "continuous_thought",
+          "name": "Continuous Thought Representations",
+          "description": "Reasoning in continuous embedding space rather than discrete token space, enabling richer and more efficient reasoning representations.",
+          "matching_keywords": [
+            "continuous thought",
+            "COCONUT",
+            "latent thought",
+            "embedding-space reasoning",
+            "non-verbal reasoning",
+            "continuous reasoning",
+            "hidden reasoning"
+          ]
+        },
+        {
+          "id": "recursive_layer_reasoning",
+          "name": "Recursive Layer Reasoning",
+          "description": "Architectures that perform reasoning by recursively applying transformer layers, allowing variable-depth computation.",
+          "matching_keywords": [
+            "recursive reasoning",
+            "layer recursion",
+            "ETD",
+            "recursive transformer",
+            "depth-adaptive reasoning",
+            "looped transformer",
+            "iterative layer processing"
+          ]
+        },
+        {
+          "id": "compressed_reasoning",
+          "name": "Compressed Reasoning",
+          "description": "Methods that compress reasoning chains into fewer tokens or latent representations while preserving reasoning quality.",
+          "matching_keywords": [
+            "compressed reasoning",
+            "reasoning compression",
+            "implicit reasoning",
+            "shortcut reasoning",
+            "reasoning efficiency",
+            "token-efficient reasoning",
+            "compact reasoning"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "latent reasoning",
+        "non-verbal reasoning",
+        "continuous thought",
+        "COCONUT",
+        "implicit reasoning",
+        "embedding-space reasoning",
+        "recursive reasoning",
+        "ETD",
+        "compressed reasoning",
+        "reasoning compression",
+        "hidden reasoning",
+        "latent space reasoning",
+        "non-token reasoning"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "mathematical_reasoning",
+      "name": "Mathematical Reasoning",
+      "description": "Papers focused on mathematical problem solving, theorem proving, and numerical reasoning capabilities of LLMs.",
+      "matching_keywords": [
+        "mathematical reasoning",
+        "math reasoning",
+        "theorem proving",
+        "arithmetic reasoning",
+        "numerical reasoning",
+        "math problem solving",
+        "GSM8K",
+        "MATH benchmark",
+        "mathematical problem"
+      ]
+    },
+    {
+      "id": "logical_reasoning",
+      "name": "Logical Reasoning",
+      "description": "Papers addressing formal logic, deductive reasoning, inductive reasoning, and logical inference in LLMs.",
+      "matching_keywords": [
+        "logical reasoning",
+        "deductive reasoning",
+        "inductive reasoning",
+        "abductive reasoning",
+        "formal logic",
+        "logical inference",
+        "propositional logic",
+        "syllogistic reasoning"
+      ]
+    },
+    {
+      "id": "commonsense_reasoning",
+      "name": "Commonsense Reasoning",
+      "description": "Papers on reasoning about everyday knowledge, physical intuition, and social understanding.",
+      "matching_keywords": [
+        "commonsense reasoning",
+        "common sense",
+        "physical reasoning",
+        "social reasoning",
+        "intuitive reasoning",
+        "world knowledge reasoning",
+        "everyday reasoning",
+        "commonsense QA"
+      ]
+    },
+    {
+      "id": "code_reasoning",
+      "name": "Code Reasoning",
+      "description": "Papers on reasoning about code, program synthesis, debugging, and algorithmic problem solving.",
+      "matching_keywords": [
+        "code reasoning",
+        "program synthesis",
+        "code generation reasoning",
+        "algorithmic reasoning",
+        "program verification",
+        "debugging reasoning",
+        "competitive programming",
+        "code problem solving"
+      ]
+    },
+    {
+      "id": "causal_reasoning",
+      "name": "Causal Reasoning",
+      "description": "Papers on understanding cause-and-effect relationships, counterfactual reasoning, and causal inference with LLMs.",
+      "matching_keywords": [
+        "causal reasoning",
+        "causal inference",
+        "counterfactual reasoning",
+        "cause and effect",
+        "causal discovery",
+        "causal understanding",
+        "interventional reasoning"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

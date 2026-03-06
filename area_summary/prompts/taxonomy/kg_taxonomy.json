@@ -1,0 +1,474 @@
+{
+  "area": "kg",
+  "area_description": "Knowledge Graphs and LLMs encompasses techniques at the intersection of structured knowledge representations and large language models, including using LLMs to construct and complete knowledge graphs, augmenting LLMs with knowledge graph grounding, graph-based question answering, and aligning heterogeneous knowledge sources.",
+  "categories": [
+    {
+      "id": "kg_construction_with_llms",
+      "name": "KG Construction with LLMs",
+      "description": "Methods that leverage LLMs to automatically build knowledge graphs from unstructured or semi-structured text, including extracting entities, relations, events, and learning ontological structures.",
+      "sub_topics": [
+        {
+          "id": "entity_extraction",
+          "name": "Entity Extraction",
+          "description": "Using LLMs to identify and classify named entities and concepts from text for knowledge graph population.",
+          "matching_keywords": [
+            "entity extraction",
+            "named entity recognition",
+            "NER",
+            "entity detection",
+            "entity typing",
+            "entity mention",
+            "LLM-based NER",
+            "concept extraction"
+          ]
+        },
+        {
+          "id": "relation_extraction",
+          "name": "Relation Extraction",
+          "description": "Extracting semantic relationships between entities from text using LLMs, including open and closed information extraction.",
+          "matching_keywords": [
+            "relation extraction",
+            "relationship extraction",
+            "triple extraction",
+            "knowledge triple",
+            "open information extraction",
+            "OpenIE",
+            "relation classification",
+            "knowledge extraction"
+          ]
+        },
+        {
+          "id": "ontology_learning",
+          "name": "Ontology Learning",
+          "description": "Using LLMs to discover and organize ontological structures, including class hierarchies, property definitions, and taxonomic relations.",
+          "matching_keywords": [
+            "ontology learning",
+            "ontology construction",
+            "taxonomy induction",
+            "schema induction",
+            "concept hierarchy",
+            "type hierarchy",
+            "ontology generation"
+          ]
+        },
+        {
+          "id": "event_extraction",
+          "name": "Event Extraction",
+          "description": "Identifying event triggers, arguments, and temporal structures from text using LLMs for event-centric knowledge graphs.",
+          "matching_keywords": [
+            "event extraction",
+            "event detection",
+            "event argument extraction",
+            "event graph",
+            "event knowledge graph",
+            "temporal event extraction",
+            "event trigger"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "knowledge graph construction",
+        "KG construction",
+        "entity extraction",
+        "relation extraction",
+        "named entity recognition",
+        "NER",
+        "triple extraction",
+        "ontology learning",
+        "event extraction",
+        "information extraction",
+        "OpenIE",
+        "knowledge extraction",
+        "KG population",
+        "knowledge triple",
+        "graph construction from text"
+      ]
+    },
+    {
+      "id": "kg_enhanced_llms",
+      "name": "KG-enhanced LLMs",
+      "description": "Approaches that integrate knowledge graph information into LLMs to improve generation quality, factual grounding, and reasoning capabilities, including retrieval-augmented and pretraining-based methods.",
+      "sub_topics": [
+        {
+          "id": "kg_augmented_generation",
+          "name": "KG-Augmented Generation",
+          "description": "Retrieving structured knowledge from knowledge graphs at inference time to augment LLM generation with factual and relational context.",
+          "matching_keywords": [
+            "KG-augmented generation",
+            "knowledge-augmented generation",
+            "graph-augmented generation",
+            "KG retrieval",
+            "structured knowledge retrieval",
+            "knowledge graph retrieval-augmented generation",
+            "KGRAG",
+            "graph-enhanced generation"
+          ]
+        },
+        {
+          "id": "kg_grounded_reasoning",
+          "name": "KG-Grounded Reasoning",
+          "description": "Using knowledge graph structure and paths to ground and constrain LLM reasoning, reducing hallucination and improving faithfulness.",
+          "matching_keywords": [
+            "KG-grounded reasoning",
+            "knowledge-grounded reasoning",
+            "graph-grounded reasoning",
+            "faithful reasoning",
+            "knowledge-constrained generation",
+            "graph path reasoning",
+            "structured reasoning with KG"
+          ]
+        },
+        {
+          "id": "entity_aware_pretraining",
+          "name": "Entity-Aware Pretraining",
+          "description": "Incorporating entity and relational knowledge from knowledge graphs into LLM pretraining or continued training to improve knowledge representation.",
+          "matching_keywords": [
+            "entity-aware pretraining",
+            "knowledge-enhanced pretraining",
+            "ERNIE",
+            "KEPLER",
+            "KG-enhanced pretraining",
+            "entity embedding pretraining",
+            "knowledge injection",
+            "knowledge-infused pretraining"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "KG-enhanced LLM",
+        "knowledge graph enhanced",
+        "KG-augmented generation",
+        "KG-grounded reasoning",
+        "entity-aware pretraining",
+        "knowledge-augmented LLM",
+        "graph-enhanced LLM",
+        "knowledge injection",
+        "KG retrieval",
+        "ERNIE",
+        "KEPLER",
+        "knowledge-grounded generation",
+        "structured knowledge for LLM",
+        "knowledge graph for language model",
+        "KG-integrated LLM"
+      ]
+    },
+    {
+      "id": "kg_completion_and_reasoning",
+      "name": "KG Completion and Reasoning",
+      "description": "Techniques for predicting missing facts, learning graph embeddings, and discovering logical rules in knowledge graphs, increasingly leveraging LLMs for textual understanding and inductive generalization.",
+      "sub_topics": [
+        {
+          "id": "link_prediction_with_llms",
+          "name": "Link Prediction with LLMs",
+          "description": "Using LLMs to predict missing links in knowledge graphs by leveraging textual descriptions, entity names, and contextual information.",
+          "matching_keywords": [
+            "link prediction",
+            "knowledge graph completion",
+            "KGC",
+            "missing link prediction",
+            "triple classification",
+            "LLM link prediction",
+            "tail prediction",
+            "relation prediction"
+          ]
+        },
+        {
+          "id": "kg_embedding_llm",
+          "name": "KG Embedding with LLM",
+          "description": "Combining knowledge graph embedding methods with LLM representations to learn richer entity and relation embeddings.",
+          "matching_keywords": [
+            "KG embedding",
+            "knowledge graph embedding",
+            "KGE",
+            "TransE",
+            "RotatE",
+            "text-enhanced KG embedding",
+            "LLM-based KG embedding",
+            "entity representation learning"
+          ]
+        },
+        {
+          "id": "rule_learning",
+          "name": "Rule Learning",
+          "description": "Discovering logical rules and inference patterns from knowledge graphs, optionally using LLMs for rule verbalization and induction.",
+          "matching_keywords": [
+            "rule learning",
+            "rule mining",
+            "logical rule induction",
+            "knowledge graph rules",
+            "inductive logic programming",
+            "rule-based reasoning",
+            "graph rule learning"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "knowledge graph completion",
+        "KGC",
+        "link prediction",
+        "KG embedding",
+        "KGE",
+        "rule learning",
+        "knowledge graph reasoning",
+        "graph completion",
+        "triple prediction",
+        "relation prediction",
+        "TransE",
+        "RotatE",
+        "inductive KG completion",
+        "missing fact prediction",
+        "KG inference"
+      ]
+    },
+    {
+      "id": "kg_question_answering",
+      "name": "KG Question Answering",
+      "description": "Methods for answering natural language questions by querying and reasoning over knowledge graphs, including semantic parsing, multi-hop reasoning, and hybrid LLM-KG approaches.",
+      "sub_topics": [
+        {
+          "id": "kgqa_with_llms",
+          "name": "KGQA with LLMs",
+          "description": "Using LLMs to interpret questions and retrieve or reason over knowledge graph subgraphs to produce answers.",
+          "matching_keywords": [
+            "KGQA",
+            "knowledge graph question answering",
+            "KG-based QA",
+            "graph-based QA",
+            "LLM KGQA",
+            "KG question answering with LLM",
+            "structured QA"
+          ]
+        },
+        {
+          "id": "text_to_sparql",
+          "name": "Text-to-SPARQL",
+          "description": "Translating natural language questions into SPARQL or other graph query languages using LLMs for precise knowledge graph querying.",
+          "matching_keywords": [
+            "text-to-SPARQL",
+            "natural language to SPARQL",
+            "SPARQL generation",
+            "semantic parsing",
+            "NL-to-query",
+            "text-to-Cypher",
+            "graph query generation",
+            "knowledge graph querying"
+          ]
+        },
+        {
+          "id": "multi_hop_kgqa",
+          "name": "Multi-hop KGQA",
+          "description": "Answering complex questions that require traversing multiple edges in a knowledge graph, combining multi-step reasoning with graph navigation.",
+          "matching_keywords": [
+            "multi-hop KGQA",
+            "multi-hop question answering",
+            "multi-hop reasoning over KG",
+            "complex KGQA",
+            "multi-step graph reasoning",
+            "compositional question answering",
+            "reasoning chain over KG"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "knowledge graph question answering",
+        "KGQA",
+        "KG-based QA",
+        "text-to-SPARQL",
+        "semantic parsing",
+        "SPARQL generation",
+        "multi-hop KGQA",
+        "graph-based question answering",
+        "complex question answering over KG",
+        "NL-to-query",
+        "structured question answering",
+        "graph query",
+        "knowledge base question answering",
+        "KBQA"
+      ]
+    },
+    {
+      "id": "kg_alignment_and_integration",
+      "name": "KG Alignment and Integration",
+      "description": "Techniques for matching, aligning, and merging entities and schemas across heterogeneous knowledge graphs and data sources, often using LLM-based semantic matching.",
+      "sub_topics": [
+        {
+          "id": "entity_alignment",
+          "name": "Entity Alignment",
+          "description": "Identifying equivalent entities across different knowledge graphs using LLM-based textual similarity and structural features.",
+          "matching_keywords": [
+            "entity alignment",
+            "entity matching",
+            "entity resolution",
+            "record linkage",
+            "cross-KG entity alignment",
+            "entity deduplication",
+            "coreference resolution across KGs"
+          ]
+        },
+        {
+          "id": "schema_matching",
+          "name": "Schema Matching",
+          "description": "Aligning ontological schemas and relation types across knowledge graphs using LLMs for semantic correspondence.",
+          "matching_keywords": [
+            "schema matching",
+            "ontology matching",
+            "ontology alignment",
+            "schema alignment",
+            "relation alignment",
+            "cross-ontology mapping",
+            "schema integration"
+          ]
+        },
+        {
+          "id": "knowledge_fusion",
+          "name": "Knowledge Fusion",
+          "description": "Merging and reconciling information from multiple knowledge sources, resolving conflicts, and producing unified knowledge representations.",
+          "matching_keywords": [
+            "knowledge fusion",
+            "knowledge integration",
+            "knowledge merging",
+            "KG fusion",
+            "data fusion",
+            "conflict resolution",
+            "knowledge consolidation",
+            "multi-source knowledge integration"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "knowledge graph alignment",
+        "KG alignment",
+        "entity alignment",
+        "entity matching",
+        "entity resolution",
+        "schema matching",
+        "ontology matching",
+        "ontology alignment",
+        "knowledge fusion",
+        "knowledge integration",
+        "data integration",
+        "record linkage",
+        "cross-KG alignment",
+        "knowledge merging",
+        "schema integration"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "biomedical_knowledge_graphs",
+      "name": "Biomedical Knowledge Graphs",
+      "description": "Papers focused on biomedical and clinical knowledge graphs, including drug-gene interactions, disease ontologies, and medical knowledge extraction.",
+      "matching_keywords": [
+        "biomedical knowledge graph",
+        "medical knowledge graph",
+        "drug knowledge graph",
+        "clinical knowledge graph",
+        "biomedical ontology",
+        "disease ontology",
+        "drug-gene interaction",
+        "PrimeKG",
+        "UMLS",
+        "biomedical KG"
+      ]
+    },
+    {
+      "id": "commonsense_knowledge",
+      "name": "Commonsense Knowledge",
+      "description": "Papers addressing commonsense knowledge graphs and reasoning, including everyday world knowledge and social norms.",
+      "matching_keywords": [
+        "commonsense knowledge graph",
+        "commonsense knowledge",
+        "ConceptNet",
+        "ATOMIC",
+        "commonsense reasoning",
+        "world knowledge",
+        "everyday knowledge",
+        "social commonsense",
+        "commonsense KG"
+      ]
+    },
+    {
+      "id": "temporal_knowledge",
+      "name": "Temporal Knowledge",
+      "description": "Papers on temporal knowledge graphs, including time-aware reasoning, event ordering, and dynamic knowledge graph updates.",
+      "matching_keywords": [
+        "temporal knowledge graph",
+        "temporal KG",
+        "time-aware knowledge graph",
+        "dynamic knowledge graph",
+        "temporal reasoning",
+        "event ordering",
+        "knowledge graph evolution",
+        "time-stamped knowledge",
+        "temporal link prediction"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

@@ -89,7 +89,7 @@ def sample_paper_text() -> str:
 
     Abstract
     We explore a general-purpose fine-tuning recipe for retrieval-augmented
-    generation (RAG) — models which combine pre-trained parametric and
+    generation (RAG) -- models which combine pre-trained parametric and
     non-parametric memory for language generation.
 
     1 Introduction

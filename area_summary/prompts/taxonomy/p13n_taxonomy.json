@@ -1,0 +1,262 @@
+{
+  "area": "p13n",
+  "area_description": "Personalization (P13N) in LLMs focuses on adapting model behavior to individual users' preferences, needs, and contexts.",
+  "categories": [
+    {
+      "id": "conversational_personalization",
+      "name": "Conversational Personalization",
+      "description": "Adapting the model's behavior to the user's conversational style, preferences, and context, generating personalized responses based on user history and profiles.",
+      "sub_topics": [
+        {
+          "id": "rag_based_personalization",
+          "name": "RAG-based Personalization",
+          "description": "Retrieving relevant memories from the user's history, including logs and multi-modal memory, to generate personalized responses.",
+          "matching_keywords": [
+            "RAG personalization",
+            "retrieval-augmented personalization",
+            "memory retrieval",
+            "user history retrieval",
+            "personalized retrieval",
+            "conversation memory",
+            "multi-modal memory",
+            "personal memory retrieval"
+          ]
+        },
+        {
+          "id": "user_profile_based_personalization",
+          "name": "User-Profile Based Personalization",
+          "description": "Learning user profiles, which can be text-based or embedding-based, and using them to generate personalized responses.",
+          "matching_keywords": [
+            "user profile",
+            "profile-based personalization",
+            "user preference learning",
+            "preference profile",
+            "personal preference",
+            "user persona",
+            "personalized generation",
+            "profile-guided generation"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "conversational personalization",
+        "personalized conversation",
+        "personalized response",
+        "personalized dialogue",
+        "user preference",
+        "conversational style",
+        "user history",
+        "memory retrieval",
+        "user profile",
+        "personalized generation",
+        "adaptive conversation",
+        "personal assistant",
+        "personalized chatbot",
+        "dialogue personalization"
+      ]
+    },
+    {
+      "id": "recommendation_personalization",
+      "name": "Recommendation Personalization",
+      "description": "Recommending a list of items to the user, ranking items based on their preferences, using LLM-based approaches, LLM signals, and diversity strategies.",
+      "sub_topics": [
+        {
+          "id": "llm_based_recommendation",
+          "name": "LLM-based Recommendation",
+          "description": "Using LLMs directly for recommendation through prompt-based methods, post-training fine-tuning or RL, and generative recommendation with mid-training for sequential and contrastive learning.",
+          "matching_keywords": [
+            "LLM recommendation",
+            "LLM-based recommendation",
+            "prompt-based recommendation",
+            "generative recommendation",
+            "sequential recommendation",
+            "recommendation fine-tuning",
+            "recommendation post-training",
+            "contrastive learning recommendation"
+          ]
+        },
+        {
+          "id": "leveraging_llm_signals",
+          "name": "Leveraging LLM Signals",
+          "description": "Enhancing existing recommendation techniques using LLM-generated signals including item and user descriptions, embeddings, and synthetic training data.",
+          "matching_keywords": [
+            "LLM signals",
+            "LLM embeddings recommendation",
+            "item description",
+            "user description",
+            "synthetic training data",
+            "LLM-enhanced recommendation",
+            "recommendation augmentation",
+            "LLM features"
+          ]
+        },
+        {
+          "id": "recommendation_diversity_serendipity",
+          "name": "Recommendation Diversity and Serendipity",
+          "description": "Ensuring recommendation results are diverse and can include related but surprising items to enhance user experience.",
+          "matching_keywords": [
+            "recommendation diversity",
+            "serendipity",
+            "diverse recommendations",
+            "recommendation novelty",
+            "surprising recommendations",
+            "exploration-exploitation",
+            "recommendation fairness",
+            "beyond-accuracy"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "recommendation",
+        "recommender system",
+        "recommendation system",
+        "item recommendation",
+        "collaborative filtering",
+        "LLM recommendation",
+        "sequential recommendation",
+        "generative recommendation",
+        "recommendation diversity",
+        "serendipity",
+        "LLM signals",
+        "item ranking",
+        "user preference ranking",
+        "recommendation personalization",
+        "personalized recommendation"
+      ]
+    },
+    {
+      "id": "user_modeling",
+      "name": "User Modeling",
+      "description": "Building user models that capture preferences and interests, using text profiles, embedding profiles, or graph and concept-net based profiles, orthogonal to specific personalization tasks.",
+      "sub_topics": [
+        {
+          "id": "text_profiles",
+          "name": "Text Profiles",
+          "description": "User profiles represented as text summaries of user preferences, interests, and behavioral patterns.",
+          "matching_keywords": [
+            "text profile",
+            "text-based profile",
+            "user summary",
+            "preference summary",
+            "natural language profile",
+            "user description",
+            "profile summarization"
+          ]
+        },
+        {
+          "id": "embedding_profiles",
+          "name": "Embedding Profiles",
+          "description": "User profiles represented as dense vector embeddings capturing user preferences in a continuous latent space.",
+          "matching_keywords": [
+            "embedding profile",
+            "user embedding",
+            "embedding-based profile",
+            "user representation",
+            "dense user profile",
+            "latent user representation",
+            "user vector"
+          ]
+        },
+        {
+          "id": "graph_concept_net_profiles",
+          "name": "Graph and Concept-Net Profiles",
+          "description": "User profiles structured as graphs or concept networks, capturing interesting concepts and their relationships that represent user interests.",
+          "matching_keywords": [
+            "graph profile",
+            "concept-net profile",
+            "knowledge graph profile",
+            "concept network",
+            "interest graph",
+            "user knowledge graph",
+            "structured user profile",
+            "concept-based profile"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "user modeling",
+        "user model",
+        "user profile",
+        "user representation",
+        "user embedding",
+        "text profile",
+        "embedding profile",
+        "graph profile",
+        "concept-net",
+        "user interest",
+        "preference modeling",
+        "user understanding",
+        "persona modeling",
+        "user characterization"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

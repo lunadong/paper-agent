@@ -57,9 +57,9 @@ def parse_email_date(date_str: str) -> str:
     Parse various date formats to YYYY-MM-DD (sortable format).
 
     Handles:
-    - "Thu, 14 Dec 2023 15:27:28 -0800" → "2023-12-14"
-    - "2/3/2026" or "12/14/2023" (M/D/YYYY) → "2026-02-03"
-    - Already "2023-12-14" → unchanged
+    - "Thu, 14 Dec 2023 15:27:28 -0800" -> "2023-12-14"
+    - "2/3/2026" or "12/14/2023" (M/D/YYYY) -> "2026-02-03"
+    - Already "2023-12-14" -> unchanged
 
     Args:
         date_str: Date string in various formats

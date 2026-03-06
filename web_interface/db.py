@@ -455,7 +455,10 @@ def filter_papers_by_date(papers, date_from, date_to):
 
     filtered = []
     for paper in papers:
-        recomm_date = paper.get("recomm_date", "")
+        recomm_date = paper.get("recomm_date") or ""
+        # Skip papers with no recommendation date when filtering by date
+        if not recomm_date:
+            continue
         if date_from and recomm_date < date_from:
             continue
         if date_to and recomm_date > date_to:

@@ -1,0 +1,603 @@
+{
+  "area": "mm",
+  "area_description": "Multi-Modal LLMs encompass techniques for integrating visual, auditory, and other modalities with large language models, spanning vision-language architectures, multimodal pretraining and alignment, video understanding, multimodal generation, multimodal reasoning, and efficient architecture design.",
+  "categories": [
+    {
+      "id": "vision_language_models",
+      "name": "Vision-Language Models",
+      "description": "Models that jointly process visual and textual inputs to perform tasks such as image understanding, visual question answering, image captioning, and visual grounding, typically by connecting a visual encoder with an LLM backbone.",
+      "sub_topics": [
+        {
+          "id": "image_understanding",
+          "name": "Image Understanding",
+          "description": "Methods for enabling LLMs to perceive and interpret image content, including scene recognition, object detection, and visual attribute extraction.",
+          "matching_keywords": [
+            "image understanding",
+            "visual perception",
+            "scene understanding",
+            "image recognition",
+            "visual comprehension",
+            "image interpretation",
+            "visual scene analysis"
+          ]
+        },
+        {
+          "id": "visual_question_answering",
+          "name": "Visual Question Answering",
+          "description": "Approaches for answering natural language questions about images by combining visual and linguistic reasoning.",
+          "matching_keywords": [
+            "visual question answering",
+            "VQA",
+            "image QA",
+            "visual QA",
+            "multimodal QA",
+            "visual dialogue"
+          ]
+        },
+        {
+          "id": "image_captioning",
+          "name": "Image Captioning",
+          "description": "Generating natural language descriptions of images using vision-language models, including detailed and region-specific captioning.",
+          "matching_keywords": [
+            "image captioning",
+            "visual captioning",
+            "image description",
+            "caption generation",
+            "dense captioning",
+            "region captioning"
+          ]
+        },
+        {
+          "id": "visual_grounding",
+          "name": "Visual Grounding",
+          "description": "Localizing objects, regions, or visual elements in images based on natural language descriptions, including referring expression comprehension and phrase grounding.",
+          "matching_keywords": [
+            "visual grounding",
+            "referring expression",
+            "phrase grounding",
+            "object localization",
+            "region grounding",
+            "grounded understanding",
+            "referring expression comprehension",
+            "bounding box prediction"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "vision-language model",
+        "VLM",
+        "visual language model",
+        "image understanding",
+        "visual question answering",
+        "VQA",
+        "image captioning",
+        "visual grounding",
+        "LLaVA",
+        "GPT-4V",
+        "GPT-4o",
+        "multimodal LLM",
+        "MLLM",
+        "visual instruction following",
+        "image-text model"
+      ]
+    },
+    {
+      "id": "multimodal_pretraining",
+      "name": "Multimodal Pretraining and Alignment",
+      "description": "Pretraining and alignment strategies that learn joint representations across visual and textual modalities, including contrastive learning, generative pretraining, vision-language alignment, and multimodal instruction tuning.",
+      "sub_topics": [
+        {
+          "id": "contrastive_learning",
+          "name": "Contrastive Learning",
+          "description": "Learning aligned visual and textual representations by contrasting matched and unmatched image-text pairs, exemplified by CLIP-style approaches.",
+          "matching_keywords": [
+            "contrastive learning",
+            "CLIP",
+            "image-text contrastive",
+            "contrastive pretraining",
+            "vision-language contrastive",
+            "SigLIP",
+            "OpenCLIP",
+            "dual encoder"
+          ]
+        },
+        {
+          "id": "generative_pretraining",
+          "name": "Generative Pretraining",
+          "description": "Pretraining multimodal models with generative objectives such as next-token prediction or masked region prediction across vision and language.",
+          "matching_keywords": [
+            "generative pretraining",
+            "multimodal pretraining",
+            "next-token prediction",
+            "masked image modeling",
+            "image-text pretraining",
+            "vision-language pretraining",
+            "autoregressive pretraining"
+          ]
+        },
+        {
+          "id": "alignment_training",
+          "name": "Alignment Training",
+          "description": "Techniques for aligning visual features with the language model embedding space, including linear projection training, cross-modal alignment, and feature bridging.",
+          "matching_keywords": [
+            "alignment training",
+            "vision-language alignment",
+            "cross-modal alignment",
+            "feature alignment",
+            "modality alignment",
+            "projection training",
+            "bridge module",
+            "visual tokenizer"
+          ]
+        },
+        {
+          "id": "multimodal_instruction_tuning",
+          "name": "Multimodal Instruction Tuning",
+          "description": "Fine-tuning multimodal models on instruction-following datasets to improve task generalization and user interaction quality.",
+          "matching_keywords": [
+            "multimodal instruction tuning",
+            "visual instruction tuning",
+            "instruction following",
+            "multimodal SFT",
+            "multimodal fine-tuning",
+            "visual instruction data",
+            "multimodal RLHF",
+            "multimodal chat"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "multimodal pretraining",
+        "contrastive learning",
+        "CLIP",
+        "vision-language pretraining",
+        "alignment training",
+        "multimodal instruction tuning",
+        "visual instruction tuning",
+        "cross-modal alignment",
+        "SigLIP",
+        "image-text pretraining",
+        "multimodal fine-tuning",
+        "generative pretraining",
+        "multimodal RLHF",
+        "visual tokenizer",
+        "modality alignment"
+      ]
+    },
+    {
+      "id": "video_understanding",
+      "name": "Video Understanding",
+      "description": "Methods for processing and comprehending video content with LLMs, including video captioning, video question answering, temporal reasoning, and action recognition.",
+      "sub_topics": [
+        {
+          "id": "video_captioning",
+          "name": "Video Captioning",
+          "description": "Generating natural language descriptions of video content, including dense video captioning and temporally grounded narration.",
+          "matching_keywords": [
+            "video captioning",
+            "video description",
+            "dense video captioning",
+            "video narration",
+            "video summarization",
+            "video-to-text"
+          ]
+        },
+        {
+          "id": "video_qa",
+          "name": "Video Question Answering",
+          "description": "Answering natural language questions about video content by jointly reasoning over visual frames and temporal dynamics.",
+          "matching_keywords": [
+            "video question answering",
+            "video QA",
+            "VideoQA",
+            "video dialogue",
+            "video conversation",
+            "movie QA"
+          ]
+        },
+        {
+          "id": "temporal_reasoning",
+          "name": "Temporal Reasoning",
+          "description": "Understanding temporal relationships, event ordering, and temporal dynamics in videos using LLMs.",
+          "matching_keywords": [
+            "temporal reasoning",
+            "temporal understanding",
+            "temporal grounding",
+            "event ordering",
+            "temporal localization",
+            "video temporal",
+            "moment retrieval"
+          ]
+        },
+        {
+          "id": "action_recognition_llm",
+          "name": "Action Recognition with LLMs",
+          "description": "Leveraging LLMs for recognizing and classifying human actions and activities in video, including zero-shot and open-vocabulary action recognition.",
+          "matching_keywords": [
+            "action recognition LLM",
+            "activity recognition",
+            "video action understanding",
+            "action classification",
+            "zero-shot action recognition",
+            "open-vocabulary action"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "video understanding",
+        "video LLM",
+        "video captioning",
+        "video question answering",
+        "video QA",
+        "temporal reasoning",
+        "action recognition",
+        "video-language model",
+        "video comprehension",
+        "long video understanding",
+        "video conversation",
+        "video analysis",
+        "multimodal video",
+        "video foundation model"
+      ]
+    },
+    {
+      "id": "multimodal_generation",
+      "name": "Multimodal Generation",
+      "description": "Techniques that use LLMs to generate or manipulate visual content, including text-to-image synthesis, text-to-video generation, LLM-guided image editing, and layout generation.",
+      "sub_topics": [
+        {
+          "id": "text_to_image",
+          "name": "Text-to-Image Generation",
+          "description": "Generating images from textual descriptions using LLM-integrated approaches, including diffusion model integration and autoregressive visual generation.",
+          "matching_keywords": [
+            "text-to-image",
+            "image generation",
+            "text-to-image generation",
+            "image synthesis",
+            "visual generation",
+            "autoregressive image generation",
+            "LLM image generation",
+            "unified generation"
+          ]
+        },
+        {
+          "id": "text_to_video",
+          "name": "Text-to-Video Generation",
+          "description": "Generating video sequences from textual descriptions, leveraging LLMs for planning, layout, or direct autoregressive video generation.",
+          "matching_keywords": [
+            "text-to-video",
+            "video generation",
+            "video synthesis",
+            "text-to-video generation",
+            "video diffusion",
+            "video prediction"
+          ]
+        },
+        {
+          "id": "image_editing_llm",
+          "name": "Image Editing with LLMs",
+          "description": "Using LLMs to perform or guide image editing operations through natural language instructions, including instruction-based editing and inpainting.",
+          "matching_keywords": [
+            "image editing",
+            "instruction-based editing",
+            "LLM image editing",
+            "visual editing",
+            "image manipulation",
+            "text-guided editing",
+            "inpainting"
+          ]
+        },
+        {
+          "id": "layout_generation",
+          "name": "Layout Generation",
+          "description": "Generating spatial layouts, UI designs, or scene compositions using LLMs, including document layout and 3D scene layout from text.",
+          "matching_keywords": [
+            "layout generation",
+            "scene layout",
+            "layout planning",
+            "spatial layout",
+            "UI generation",
+            "scene composition",
+            "3D layout"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "multimodal generation",
+        "text-to-image",
+        "text-to-video",
+        "image generation",
+        "video generation",
+        "image editing",
+        "layout generation",
+        "visual generation",
+        "image synthesis",
+        "visual content creation",
+        "unified generation model",
+        "autoregressive visual generation",
+        "any-to-any generation",
+        "omni model"
+      ]
+    },
+    {
+      "id": "multimodal_reasoning",
+      "name": "Multimodal Reasoning",
+      "description": "Techniques for complex reasoning over visual and textual inputs, including visual reasoning, chart and document understanding, spatial reasoning, and scientific figure interpretation.",
+      "sub_topics": [
+        {
+          "id": "visual_reasoning",
+          "name": "Visual Reasoning",
+          "description": "Complex multi-step reasoning over visual inputs, including compositional reasoning, visual logic, and visual chain-of-thought approaches.",
+          "matching_keywords": [
+            "visual reasoning",
+            "visual chain-of-thought",
+            "visual CoT",
+            "compositional visual reasoning",
+            "visual logic",
+            "multimodal reasoning",
+            "visual inference"
+          ]
+        },
+        {
+          "id": "chart_document_understanding",
+          "name": "Chart and Document Understanding",
+          "description": "Understanding and extracting information from charts, tables, documents, and infographics using multimodal models.",
+          "matching_keywords": [
+            "chart understanding",
+            "document understanding",
+            "table understanding",
+            "infographic understanding",
+            "chart QA",
+            "document QA",
+            "OCR-free",
+            "structured document"
+          ]
+        },
+        {
+          "id": "spatial_reasoning",
+          "name": "Spatial Reasoning",
+          "description": "Understanding spatial relationships, positions, orientations, and 3D structure from visual inputs using multimodal models.",
+          "matching_keywords": [
+            "spatial reasoning",
+            "spatial understanding",
+            "3D understanding",
+            "spatial relationship",
+            "depth estimation",
+            "spatial awareness",
+            "geometric reasoning"
+          ]
+        },
+        {
+          "id": "scientific_figure_understanding",
+          "name": "Scientific Figure Understanding",
+          "description": "Interpreting and reasoning about scientific figures, diagrams, plots, and technical illustrations using multimodal models.",
+          "matching_keywords": [
+            "scientific figure",
+            "diagram understanding",
+            "plot understanding",
+            "scientific visual reasoning",
+            "technical diagram",
+            "figure QA",
+            "scientific image"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "multimodal reasoning",
+        "visual reasoning",
+        "chart understanding",
+        "document understanding",
+        "spatial reasoning",
+        "scientific figure understanding",
+        "visual chain-of-thought",
+        "visual CoT",
+        "multimodal chain-of-thought",
+        "visual logic",
+        "diagram understanding",
+        "table understanding",
+        "math visual reasoning",
+        "visual problem solving"
+      ]
+    },
+    {
+      "id": "architecture_design",
+      "name": "Architecture Design",
+      "description": "Architectural innovations for multimodal models, including visual encoder design, projection layers connecting vision and language, token merging strategies, and efficient multimodal architectures.",
+      "sub_topics": [
+        {
+          "id": "visual_encoders",
+          "name": "Visual Encoders",
+          "description": "Design and selection of visual encoders (e.g., ViT, convolution-based, hybrid) for extracting visual features in multimodal models.",
+          "matching_keywords": [
+            "visual encoder",
+            "vision encoder",
+            "ViT",
+            "vision transformer",
+            "image encoder",
+            "visual backbone",
+            "visual feature extraction",
+            "DINOv2"
+          ]
+        },
+        {
+          "id": "projection_layers",
+          "name": "Projection Layers",
+          "description": "Modules that bridge visual encoder outputs to LLM input space, including linear projectors, cross-attention connectors, Q-Former, and other bridging architectures.",
+          "matching_keywords": [
+            "projection layer",
+            "visual projector",
+            "Q-Former",
+            "cross-attention connector",
+            "MLP projector",
+            "bridge module",
+            "visual adapter",
+            "Perceiver Resampler"
+          ]
+        },
+        {
+          "id": "token_merging",
+          "name": "Token Merging and Compression",
+          "description": "Strategies for reducing the number of visual tokens to improve efficiency, including token merging, pruning, pooling, and dynamic resolution approaches.",
+          "matching_keywords": [
+            "token merging",
+            "token compression",
+            "visual token reduction",
+            "token pruning",
+            "token pooling",
+            "dynamic resolution",
+            "visual token efficiency",
+            "token selection"
+          ]
+        },
+        {
+          "id": "efficient_multimodal_architectures",
+          "name": "Efficient Multimodal Architectures",
+          "description": "Designing lightweight and computationally efficient multimodal architectures, including parameter-efficient tuning, adapter-based approaches, and model compression for multimodal systems.",
+          "matching_keywords": [
+            "efficient multimodal",
+            "parameter-efficient",
+            "multimodal adapter",
+            "LoRA multimodal",
+            "lightweight multimodal",
+            "model compression multimodal",
+            "efficient VLM",
+            "small multimodal model"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "architecture design",
+        "visual encoder",
+        "projection layer",
+        "token merging",
+        "efficient multimodal",
+        "Q-Former",
+        "visual projector",
+        "ViT",
+        "vision transformer",
+        "cross-attention connector",
+        "token compression",
+        "multimodal architecture",
+        "visual adapter",
+        "Perceiver Resampler",
+        "dynamic resolution"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "hallucination_multimodal",
+      "name": "Hallucination in Multimodal Models",
+      "description": "Papers addressing object hallucination, factual inconsistency, and faithfulness issues in multimodal models, including detection and mitigation strategies.",
+      "matching_keywords": [
+        "multimodal hallucination",
+        "object hallucination",
+        "visual hallucination",
+        "hallucination detection",
+        "hallucination mitigation",
+        "faithfulness",
+        "factual consistency",
+        "hallucination evaluation",
+        "CHAIR metric"
+      ]
+    },
+    {
+      "id": "embodied_ai",
+      "name": "Embodied AI",
+      "description": "Papers on grounding multimodal LLMs in physical environments for robotics, navigation, manipulation, and embodied reasoning tasks.",
+      "matching_keywords": [
+        "embodied AI",
+        "embodied agent",
+        "robot learning",
+        "visual navigation",
+        "manipulation",
+        "embodied reasoning",
+        "robotics LLM",
+        "vision-language-action",
+        "VLA"
+      ]
+    },
+    {
+      "id": "document_understanding",
+      "name": "Document Understanding",
+      "description": "Papers focused on end-to-end understanding of documents including OCR, layout analysis, document parsing, and information extraction from visually rich documents.",
+      "matching_keywords": [
+        "document understanding",
+        "document parsing",
+        "OCR",
+        "document AI",
+        "visually rich document",
+        "document layout",
+        "information extraction",
+        "PDF understanding",
+        "document intelligence"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

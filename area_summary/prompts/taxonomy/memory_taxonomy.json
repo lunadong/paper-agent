@@ -1,0 +1,260 @@
+{
+  "area": "memory",
+  "area_description": "Memory in LLMs addresses the challenge of maintaining and utilizing information across interactions, and helps users recall past multi-modal memories. Research spans two key aspects: memory recall (retrieving from past interactions and logs to answer recall questions) and memory organization (determining the best way to organize past memory for recall QA and personalized conversation).",
+  "categories": [
+    {
+      "id": "memory_recall",
+      "name": "Memory Recall",
+      "description": "Retrieving from past interactions and logs to answer users' recall questions, addressing challenges of answer generation across different memories.",
+      "sub_topics": [
+        {
+          "id": "sparse_memory_qa",
+          "name": "Sparse Memory QA",
+          "description": "Recall over fairly sparse past memory, where generating answers across different memories can still be challenging despite low volume.",
+          "matching_keywords": [
+            "sparse memory",
+            "memory QA",
+            "memory question answering",
+            "recall question",
+            "cross-memory answer generation",
+            "sparse retrieval",
+            "memory-grounded QA",
+            "conversational memory recall"
+          ]
+        },
+        {
+          "id": "dense_memory_qa",
+          "name": "Dense Memory QA",
+          "description": "Recall over dense past memory with high similarity and many duplicates, making retrieval and noise reduction even more challenging.",
+          "matching_keywords": [
+            "dense memory",
+            "duplicate memory",
+            "noise reduction",
+            "memory deduplication",
+            "similar memory retrieval",
+            "dense retrieval memory",
+            "memory filtering",
+            "redundant memory"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "memory recall",
+        "memory retrieval",
+        "memory QA",
+        "memory question answering",
+        "recall question",
+        "sparse memory",
+        "dense memory",
+        "past interaction retrieval",
+        "conversational memory recall",
+        "memory-grounded QA",
+        "cross-memory answer generation",
+        "noise reduction",
+        "memory deduplication",
+        "duplicate memory"
+      ]
+    },
+    {
+      "id": "memory_organization",
+      "name": "Memory Organization",
+      "description": "Determining the best way to organize past memory for recall QA and personalized conversation, spanning linear, layered, graph-based, and internalization approaches.",
+      "sub_topics": [
+        {
+          "id": "linear_memory",
+          "name": "Linear Memory",
+          "description": "Organizing memory linearly with focus on when to discard and update memory, potentially leveraging RL to maintain a clean and compact memory.",
+          "matching_keywords": [
+            "linear memory",
+            "memory update",
+            "memory discard",
+            "memory compaction",
+            "memory management",
+            "RL memory",
+            "reinforcement learning memory",
+            "memory eviction"
+          ]
+        },
+        {
+          "id": "layered_memory",
+          "name": "Layered Memory",
+          "description": "Multi-layer memory organization such as core (profile), semantic (factual), and episodic (time/location-associated) layers, with retrieval granularity at session-level, turn-level, and topic-level.",
+          "matching_keywords": [
+            "layered memory",
+            "multi-layer memory",
+            "core memory",
+            "semantic memory",
+            "episodic memory",
+            "memory profile",
+            "session-level memory",
+            "turn-level memory",
+            "topic-level memory",
+            "memory granularity"
+          ]
+        },
+        {
+          "id": "tree_graph_memory",
+          "name": "Tree/Graph-based Memory",
+          "description": "Memory structures that mimic human associative memory using trees or graphs, enabling hopping from one memory to another related by topic, location, event, or person.",
+          "matching_keywords": [
+            "graph memory",
+            "tree memory",
+            "associative memory",
+            "memory graph",
+            "knowledge graph memory",
+            "memory network",
+            "structured memory",
+            "memory association"
+          ]
+        },
+        {
+          "id": "memory_internalization",
+          "name": "Memory Internalization",
+          "description": "Storing personal memories into model parameters through techniques such as LoRA, embedding feeding, and other parameter-based approaches.",
+          "matching_keywords": [
+            "memory internalization",
+            "parametric memory",
+            "LoRA memory",
+            "memory fine-tuning",
+            "embedding memory",
+            "parameter memory",
+            "memory injection",
+            "personalized model parameters"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "memory organization",
+        "memory structure",
+        "memory architecture",
+        "linear memory",
+        "layered memory",
+        "graph memory",
+        "tree memory",
+        "associative memory",
+        "memory internalization",
+        "parametric memory",
+        "memory management",
+        "memory update",
+        "episodic memory",
+        "semantic memory",
+        "memory compaction",
+        "structured memory"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "personalization",
+      "name": "Personalization",
+      "description": "Papers focused on leveraging memory for personalized conversations, user modeling, and adapting responses based on user history and preferences.",
+      "matching_keywords": [
+        "personalization",
+        "personalized conversation",
+        "user modeling",
+        "user preference",
+        "user history",
+        "personal assistant",
+        "adaptive response",
+        "user profile",
+        "personalized generation"
+      ]
+    },
+    {
+      "id": "multi_modal_memory",
+      "name": "Multi-modal Memory",
+      "description": "Papers addressing memory that spans multiple modalities including text, images, audio, and video from past interactions.",
+      "matching_keywords": [
+        "multi-modal memory",
+        "multimodal memory",
+        "visual memory",
+        "image memory",
+        "audio memory",
+        "video memory",
+        "cross-modal memory",
+        "multi-modal recall"
+      ]
+    },
+    {
+      "id": "long_term_memory",
+      "name": "Long-term Memory",
+      "description": "Papers focused on maintaining and utilizing information over extended periods and many interactions, addressing challenges of long-horizon memory persistence.",
+      "matching_keywords": [
+        "long-term memory",
+        "persistent memory",
+        "long-horizon memory",
+        "memory persistence",
+        "lifetime memory",
+        "extended memory",
+        "memory longevity",
+        "long-context memory"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics for memory systems.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply memory techniques to a specific domain or task, highlighting strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art in memory, including taxonomy, advantages, and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

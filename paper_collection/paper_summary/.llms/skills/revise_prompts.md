@@ -135,7 +135,7 @@ When revising, go through EACH section in user_instructions.md:
 | Specific Issues | **FIX each listed issue** |
 | Examples | Follow good examples, avoid bad patterns |
 
-**⚠️ Every specific issue listed in user_instructions.md MUST be addressed in the revision.**
+**[!] Every specific issue listed in user_instructions.md MUST be addressed in the revision.**
 
 ---
 
@@ -215,8 +215,8 @@ prompt_optimization/revised_prompts/summary_example.json
     "good_and_keep_preserved": ["<item preserved>", "..."]
   },
   "issues_addressed": {
-    "beginner": ["<issue> → <fix>"],
-    "expert": ["<issue> → <fix>"]
+"beginner": ["<issue> -> <fix>"],
+    "expert": ["<issue> -> <fix>"]
   }
 }
 ```
@@ -233,13 +233,13 @@ After completing all revisions, check if ALL points in `user_instructions.md` ha
 
 #### 8.1 Verify All Instructions Fixed
 
-Review `revision_metadata.json` → `user_instructions_addressed.specific_issues_fixed` to confirm every item from `user_instructions.md` has been addressed.
+Review `revision_metadata.json` -> `user_instructions_addressed.specific_issues_fixed` to confirm every item from `user_instructions.md` has been addressed.
 
 **If any items remain unaddressed:** Stop here and continue revising until all are fixed.
 
-#### 8.2 If All Instructions Fixed → Ask User Two Questions
+#### 8.2 If All Instructions Fixed -> Ask User Two Questions
 
-> 🛑 **MANDATORY USER CONFIRMATION**
+> [STOP] **MANDATORY USER CONFIRMATION**
 >
 > When ALL user_instructions are fixed, you MUST ask the user these two questions before proceeding.
 
@@ -269,7 +269,7 @@ ask_user_question(
 )
 ```
 
-#### 8.3 If User Confirms "Update Critics" → Update analyze_summary.md
+#### 8.3 If User Confirms "Update Critics" -> Update analyze_summary.md
 
 Add the fixed issues as new criteria checks in `analyze_summary.md`:
 
@@ -278,7 +278,7 @@ Add the fixed issues as new criteria checks in `analyze_summary.md`:
 3. Add `USER_INSTRUCTION:` annotations to relevant criteria
 4. Save the updated file
 
-#### 8.4 If User Confirms "Clear Instructions" → Clear user_instructions.md
+#### 8.4 If User Confirms "Clear Instructions" -> Clear user_instructions.md
 
 **IMPORTANT:** Do NOT delete the file or empty it completely. Keep the skeleton structure.
 
@@ -402,7 +402,7 @@ Important guidelines:
 3. Maintain backward compatibility where possible
 4. Make changes to ALL THREE files as a coordinated set
 5. Ensure the example demonstrates all template fields properly
-6. **Every factual claim in summary_example.json must be verified against the original paper** — remove or correct any unverified venue, numerical result, confidence interval, hyperparameter, or model detail
+6. **Every factual claim in summary_example.json must be verified against the original paper** -- remove or correct any unverified venue, numerical result, confidence interval, hyperparameter, or model detail
 7. Add instructions to prompt.txt requiring the LLM to only include facts stated in the source paper (no fabrication of statistical tests, confidence intervals, or other details)
 ~~~
 
@@ -519,13 +519,13 @@ Revised files saved to prompt_optimization/revised_prompts/:
 - revision_metadata.json: Updated with pass details
 
 User Instructions Addressed:
-✓ Core section: Avoided long texts and specific tech details
-✓ Don't give metric numbers in one_sentence_thesis
-✓ why_it_matters contains only motivation
+[OK] Core section: Avoided long texts and specific tech details
+[OK] Don't give metric numbers in one_sentence_thesis
+[OK] why_it_matters contains only motivation
 
 Analysis Issues Addressed:
-- Beginner jargon_handling (7 → target 8.0)
-- Expert technical_precision (7 → target 8.0)
+- Beginner jargon_handling (7 -> target 8.0)
+- Expert technical_precision (7 -> target 8.0)
 ```
 
 ---

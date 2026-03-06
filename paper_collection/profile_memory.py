@@ -169,8 +169,8 @@ def run_with_profiling():
 
             # Flag potential issues
             if peak > 500 * 1024 * 1024:  # 500 MB
-                print("\n⚠️  WARNING: Peak memory exceeded 500 MB!")
-                log_file.write("\n⚠️  WARNING: Peak memory exceeded 500 MB!\n")
+                print("\n[!]  WARNING: Peak memory exceeded 500 MB!")
+                log_file.write("\n[!]  WARNING: Peak memory exceeded 500 MB!\n")
 
         except Exception as e:
             log_file.write(f"\nERROR: {e}\n")

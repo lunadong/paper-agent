@@ -1,0 +1,555 @@
+{
+  "area": "rl",
+  "area_description": "Reinforcement Learning for LLMs encompasses techniques for post-training alignment of large language models using human feedback, preference optimization, reward modeling, and iterative self-improvement, spanning the full RLHF pipeline, direct preference methods, RL algorithm design, alignment strategies, and self-play approaches.",
+  "categories": [
+    {
+      "id": "rlhf_pipeline",
+      "name": "RLHF Pipeline",
+      "description": "The classical Reinforcement Learning from Human Feedback pipeline, including collecting human preference data, training reward models from comparisons, and optimizing language model policies using RL algorithms such as PPO against learned reward signals.",
+      "sub_topics": [
+        {
+          "id": "reward_modeling",
+          "name": "Reward Modeling",
+          "description": "Training reward models from human preference comparisons to serve as proxy objectives for RL-based policy optimization.",
+          "matching_keywords": [
+            "reward model",
+            "reward modeling",
+            "preference model",
+            "Bradley-Terry model",
+            "comparison-based reward",
+            "reward function learning",
+            "learned reward"
+          ]
+        },
+        {
+          "id": "ppo_training",
+          "name": "PPO-based Policy Training",
+          "description": "Using Proximal Policy Optimization to fine-tune language models against a learned reward model, with KL-divergence constraints to prevent reward hacking.",
+          "matching_keywords": [
+            "PPO training",
+            "proximal policy optimization",
+            "policy optimization",
+            "KL penalty",
+            "KL divergence constraint",
+            "reward hacking",
+            "policy gradient LLM"
+          ]
+        },
+        {
+          "id": "human_preference_collection",
+          "name": "Human Preference Collection",
+          "description": "Methods for efficiently collecting, curating, and scaling human preference annotations for training reward models and alignment objectives.",
+          "matching_keywords": [
+            "human preference",
+            "preference data",
+            "human annotation",
+            "comparison data",
+            "pairwise comparison",
+            "preference collection",
+            "crowdsourced feedback",
+            "human feedback"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "RLHF",
+        "reinforcement learning from human feedback",
+        "reward model",
+        "reward modeling",
+        "PPO training",
+        "proximal policy optimization",
+        "human preference",
+        "preference data",
+        "KL penalty",
+        "KL divergence",
+        "policy optimization",
+        "reward hacking",
+        "InstructGPT",
+        "human feedback pipeline",
+        "preference learning"
+      ]
+    },
+    {
+      "id": "direct_preference_optimization",
+      "name": "Direct Preference Optimization",
+      "description": "Methods that optimize language models directly from preference data without training a separate reward model, including DPO and its variants that reparameterize the RLHF objective into a supervised learning loss.",
+      "sub_topics": [
+        {
+          "id": "dpo_variants",
+          "name": "DPO Variants",
+          "description": "Extensions and modifications of the original DPO algorithm, including IPO, KTO, SLiC-HF, and other preference-based losses that improve upon the standard DPO formulation.",
+          "matching_keywords": [
+            "DPO",
+            "direct preference optimization",
+            "IPO",
+            "identity preference optimization",
+            "KTO",
+            "Kahneman-Tversky optimization",
+            "SLiC-HF",
+            "sequence likelihood calibration"
+          ]
+        },
+        {
+          "id": "reference_free_methods",
+          "name": "Reference-Free Methods",
+          "description": "Preference optimization approaches that eliminate the need for a reference policy model, simplifying training and reducing memory requirements.",
+          "matching_keywords": [
+            "reference-free",
+            "reference model free",
+            "SimPO",
+            "ORPO",
+            "odds ratio preference",
+            "length-normalized reward",
+            "no reference policy"
+          ]
+        },
+        {
+          "id": "online_dpo",
+          "name": "Online DPO",
+          "description": "Extensions of DPO that use online-generated data rather than static offline datasets, enabling iterative improvement through on-policy sampling.",
+          "matching_keywords": [
+            "online DPO",
+            "on-policy DPO",
+            "iterative DPO",
+            "online preference optimization",
+            "self-generated preferences",
+            "on-policy preference learning"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "DPO",
+        "direct preference optimization",
+        "IPO",
+        "KTO",
+        "SLiC-HF",
+        "SimPO",
+        "ORPO",
+        "reference-free alignment",
+        "preference optimization",
+        "offline preference learning",
+        "contrastive preference",
+        "pairwise preference loss",
+        "implicit reward",
+        "online DPO",
+        "on-policy DPO"
+      ]
+    },
+    {
+      "id": "reward_model_design",
+      "name": "Reward Model Design",
+      "description": "Architectural and methodological innovations in reward model design, including process-level supervision, outcome-based rewards, implicit reward extraction, and AI-generated constitutions for scalable oversight.",
+      "sub_topics": [
+        {
+          "id": "outcome_reward_models",
+          "name": "Outcome Reward Models",
+          "description": "Reward models that evaluate the quality of final outputs or answers, providing sparse but definitive feedback signals for policy training.",
+          "matching_keywords": [
+            "outcome reward model",
+            "ORM",
+            "outcome-based reward",
+            "result-based reward",
+            "final answer reward",
+            "outcome supervision"
+          ]
+        },
+        {
+          "id": "process_reward_models",
+          "name": "Process Reward Models",
+          "description": "Reward models that provide step-level feedback on intermediate reasoning or generation steps, enabling fine-grained credit assignment.",
+          "matching_keywords": [
+            "process reward model",
+            "PRM",
+            "step-level reward",
+            "process supervision",
+            "stepwise reward",
+            "intermediate reward",
+            "step-level verification"
+          ]
+        },
+        {
+          "id": "implicit_rewards",
+          "name": "Implicit Rewards",
+          "description": "Methods that derive reward signals implicitly from model behavior, log-probabilities, or self-evaluation without training an explicit reward model.",
+          "matching_keywords": [
+            "implicit reward",
+            "self-reward",
+            "LLM-as-a-judge",
+            "self-evaluation reward",
+            "log-probability reward",
+            "intrinsic reward",
+            "reward-free alignment"
+          ]
+        },
+        {
+          "id": "constitutional_ai",
+          "name": "Constitutional AI",
+          "description": "Using AI-generated principles and constitutions to provide scalable oversight and reward signals, reducing dependence on human annotators.",
+          "matching_keywords": [
+            "constitutional AI",
+            "CAI",
+            "AI feedback",
+            "RLAIF",
+            "reinforcement learning from AI feedback",
+            "principle-based alignment",
+            "scalable oversight"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "reward model design",
+        "reward architecture",
+        "outcome reward model",
+        "ORM",
+        "process reward model",
+        "PRM",
+        "implicit reward",
+        "self-reward",
+        "LLM-as-a-judge",
+        "constitutional AI",
+        "RLAIF",
+        "AI feedback",
+        "scalable oversight",
+        "reward signal",
+        "reward shaping"
+      ]
+    },
+    {
+      "id": "rl_algorithms_for_llms",
+      "name": "RL Algorithms for LLMs",
+      "description": "Reinforcement learning algorithms specifically designed or adapted for fine-tuning large language models, including policy gradient methods, group-relative optimization, and actor-critic architectures scaled to LLM training.",
+      "sub_topics": [
+        {
+          "id": "ppo_for_llms",
+          "name": "PPO for LLMs",
+          "description": "Adaptations and improvements of Proximal Policy Optimization for stable and efficient language model fine-tuning at scale.",
+          "matching_keywords": [
+            "PPO",
+            "proximal policy optimization",
+            "clipped objective",
+            "PPO-clip",
+            "PPO-max",
+            "trust region LLM",
+            "stable policy gradient"
+          ]
+        },
+        {
+          "id": "grpo",
+          "name": "GRPO",
+          "description": "Group Relative Policy Optimization, which normalizes rewards within groups of sampled outputs to reduce variance and eliminate the need for a critic model.",
+          "matching_keywords": [
+            "GRPO",
+            "group relative policy optimization",
+            "group normalization reward",
+            "DeepSeek GRPO",
+            "critic-free RL",
+            "group-based reward"
+          ]
+        },
+        {
+          "id": "reinforce_variants",
+          "name": "REINFORCE Variants",
+          "description": "Adaptations of the REINFORCE algorithm and its variants for language model training, including baseline subtraction and variance reduction techniques.",
+          "matching_keywords": [
+            "REINFORCE",
+            "REINFORCE baseline",
+            "REINFORCE leave-one-out",
+            "RLOO",
+            "policy gradient",
+            "variance reduction",
+            "ReMax"
+          ]
+        },
+        {
+          "id": "actor_critic_methods",
+          "name": "Actor-Critic Methods",
+          "description": "Actor-critic architectures adapted for LLM alignment, where a separate value network provides advantage estimates for policy updates.",
+          "matching_keywords": [
+            "actor-critic",
+            "value function",
+            "advantage estimation",
+            "GAE",
+            "generalized advantage estimation",
+            "critic network",
+            "value head"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "RL algorithm",
+        "reinforcement learning algorithm",
+        "PPO",
+        "GRPO",
+        "REINFORCE",
+        "RLOO",
+        "policy gradient",
+        "actor-critic",
+        "value function",
+        "advantage estimation",
+        "variance reduction",
+        "ReMax",
+        "trust region",
+        "on-policy RL",
+        "off-policy RL"
+      ]
+    },
+    {
+      "id": "alignment_techniques",
+      "name": "Alignment Techniques",
+      "description": "Techniques for aligning LLM behavior with human values, safety requirements, and instruction-following capabilities, including safety training, red teaming, and multi-objective alignment approaches.",
+      "sub_topics": [
+        {
+          "id": "safety_alignment",
+          "name": "Safety Alignment",
+          "description": "Methods for training models to refuse harmful requests, avoid generating toxic or dangerous content, and maintain safe behavior under adversarial conditions.",
+          "matching_keywords": [
+            "safety alignment",
+            "safety training",
+            "harm avoidance",
+            "refusal training",
+            "safe RLHF",
+            "toxicity reduction",
+            "guardrails",
+            "safety fine-tuning"
+          ]
+        },
+        {
+          "id": "instruction_following",
+          "name": "Instruction Following",
+          "description": "Training models to accurately follow user instructions, including complex multi-step instructions and constraint satisfaction.",
+          "matching_keywords": [
+            "instruction following",
+            "instruction tuning",
+            "instruction alignment",
+            "instruction compliance",
+            "controllable generation",
+            "constraint following"
+          ]
+        },
+        {
+          "id": "value_alignment",
+          "name": "Value Alignment",
+          "description": "Approaches for ensuring LLMs internalize and act according to human values, ethical principles, and societal norms.",
+          "matching_keywords": [
+            "value alignment",
+            "human values",
+            "ethical AI",
+            "moral reasoning",
+            "value learning",
+            "normative alignment",
+            "AI ethics alignment"
+          ]
+        },
+        {
+          "id": "red_teaming",
+          "name": "Red Teaming",
+          "description": "Adversarial testing and automated attack methods to discover and mitigate alignment failures, jailbreaks, and unsafe behaviors.",
+          "matching_keywords": [
+            "red teaming",
+            "adversarial testing",
+            "jailbreak",
+            "prompt injection",
+            "adversarial attacks",
+            "safety evaluation",
+            "alignment robustness",
+            "attack defense"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "alignment",
+        "safety alignment",
+        "instruction following",
+        "value alignment",
+        "red teaming",
+        "jailbreak",
+        "safety training",
+        "harm avoidance",
+        "refusal training",
+        "ethical AI",
+        "adversarial testing",
+        "guardrails",
+        "alignment robustness",
+        "human alignment",
+        "AI safety"
+      ]
+    },
+    {
+      "id": "self_play_iterative_training",
+      "name": "Self-Play and Iterative Training",
+      "description": "Training paradigms where models generate their own training data, compete against themselves, or iteratively refine their alignment through multiple rounds of feedback and optimization.",
+      "sub_topics": [
+        {
+          "id": "self_play_fine_tuning",
+          "name": "Self-Play Fine-Tuning",
+          "description": "Methods where LLMs improve by generating and evaluating their own responses, using self-play dynamics inspired by game-theoretic frameworks.",
+          "matching_keywords": [
+            "self-play",
+            "SPIN",
+            "self-play fine-tuning",
+            "self-competition",
+            "game-theoretic alignment",
+            "self-generated training data"
+          ]
+        },
+        {
+          "id": "iterative_rlhf",
+          "name": "Iterative RLHF",
+          "description": "Multi-round RLHF approaches where reward models and policies are alternately updated, enabling progressive improvement in alignment quality.",
+          "matching_keywords": [
+            "iterative RLHF",
+            "multi-round RLHF",
+            "iterative alignment",
+            "progressive alignment",
+            "curriculum RLHF",
+            "staged alignment"
+          ]
+        },
+        {
+          "id": "online_learning",
+          "name": "Online Learning and Exploration",
+          "description": "Online RL methods that balance exploration and exploitation during LLM training, continuously improving policies with fresh on-policy data.",
+          "matching_keywords": [
+            "online learning",
+            "online RL",
+            "exploration-exploitation",
+            "on-policy learning",
+            "active learning alignment",
+            "continual alignment",
+            "online feedback"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "self-play",
+        "SPIN",
+        "iterative RLHF",
+        "iterative alignment",
+        "self-improvement",
+        "online learning",
+        "on-policy learning",
+        "self-generated data",
+        "self-training alignment",
+        "multi-round training",
+        "progressive alignment",
+        "exploration-exploitation",
+        "continual alignment",
+        "self-play fine-tuning"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "safety_and_harmlessness",
+      "name": "Safety and Harmlessness",
+      "description": "Papers focused on ensuring model outputs are safe, non-toxic, and avoid harmful content generation across alignment methods.",
+      "matching_keywords": [
+        "safety",
+        "harmlessness",
+        "harm avoidance",
+        "toxicity",
+        "safe generation",
+        "content safety",
+        "unsafe behavior",
+        "safe RLHF",
+        "harm reduction"
+      ]
+    },
+    {
+      "id": "helpfulness_optimization",
+      "name": "Helpfulness Optimization",
+      "description": "Papers addressing how to maximize the helpfulness and usefulness of model responses through alignment training.",
+      "matching_keywords": [
+        "helpfulness",
+        "helpful responses",
+        "usefulness",
+        "response quality",
+        "helpful and harmless",
+        "HH",
+        "assistance quality",
+        "user satisfaction"
+      ]
+    },
+    {
+      "id": "multi_objective_alignment",
+      "name": "Multi-objective Alignment",
+      "description": "Papers dealing with balancing multiple alignment objectives such as helpfulness, harmlessness, and honesty simultaneously.",
+      "matching_keywords": [
+        "multi-objective",
+        "Pareto alignment",
+        "reward balancing",
+        "multi-dimensional alignment",
+        "helpfulness-harmlessness tradeoff",
+        "objective tradeoff",
+        "constrained optimization alignment",
+        "multi-reward"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics for alignment and RLHF.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply RL-based alignment techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art in RL for LLMs, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

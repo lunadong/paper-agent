@@ -8,7 +8,7 @@ oncalls:
 
 Run a single optimization pass: fetch summaries if needed, analyze from both perspectives, and revise prompts based on feedback.
 
-## 🛑 CRITICAL: User Confirmation Required
+## [STOP] CRITICAL: User Confirmation Required
 
 **Before launching any analysis sub-agents, you MUST:**
 1. Use `ask_user_question` tool to ask about summary source (A/B/C)
@@ -21,16 +21,16 @@ Run a single optimization pass: fetch summaries if needed, analyze from both per
 
 ```
 "Optimize prompts"
-→ Analyze example, revise based on feedback
+-> Analyze example, revise based on feedback
 
 "Optimize prompts for paper 50"
-→ Fetch paper 50 if needed, analyze, revise
+-> Fetch paper 50 if needed, analyze, revise
 
 "Optimize prompts for papers 50, 3569, 3584"
-→ Fetch all papers, analyze all, revise based on aggregated feedback
+-> Fetch all papers, analyze all, revise based on aggregated feedback
 
 "Optimize the example with threshold 8.5"
-→ Analyze example, revise to target 8.5
+-> Analyze example, revise to target 8.5
 ```
 
 ## When to Use
@@ -52,7 +52,7 @@ Run a single optimization pass: fetch summaries if needed, analyze from both per
 
 ## Single-Pass Workflow
 
-> **🛑 STOP: Before running ANY analysis, you MUST ask the user to confirm the summary source option using `ask_user_question`. Do NOT proceed to Step 3 without explicit user confirmation.**
+> **[STOP] STOP: Before running ANY analysis, you MUST ask the user to confirm the summary source option using `ask_user_question`. Do NOT proceed to Step 3 without explicit user confirmation.**
 
 ### Step 1: Determine What to Analyze
 
@@ -62,7 +62,7 @@ Check inputs:
 
 ### Step 2: Get Summaries Based on Source Option (MANDATORY USER CONFIRMATION)
 
-**⚠️ CRITICAL: You MUST ask the user to confirm the summary source before proceeding. Do NOT skip this step.**
+**[!] CRITICAL: You MUST ask the user to confirm the summary source before proceeding. Do NOT skip this step.**
 
 Use the `ask_user_question` tool to confirm:
 
@@ -130,12 +130,12 @@ task(subagent="general-purpose", prompt="Analyze paper_{id}.json, perspective=ex
 **Output Files (for example + paper 50):**
 ```
 analysis_critics/
-├── analysis_example_beginner.json   # Beginner analysis of example
-├── analysis_example_expert.json     # Expert analysis of example
-├── analysis_example.json            # Combined (aggregated in main context)
-├── analysis_50_beginner.json        # Beginner analysis of paper 50
-├── analysis_50_expert.json          # Expert analysis of paper 50
-└── analysis_50.json                 # Combined (aggregated in main context)
+|-- analysis_example_beginner.json   # Beginner analysis of example
+|-- analysis_example_expert.json     # Expert analysis of example
+|-- analysis_example.json            # Combined (aggregated in main context)
+|-- analysis_50_beginner.json        # Beginner analysis of paper 50
+|-- analysis_50_expert.json          # Expert analysis of paper 50
+`-- analysis_50.json                 # Combined (aggregated in main context)
 ```
 ```
 
@@ -152,10 +152,10 @@ avg_expert = mean([s["expert_score"] for s in results])
 avg_combined = (avg_beginner + avg_expert) / 2
 
 if avg_combined >= threshold:
-    print(f"✅ PASSED: Combined score {avg_combined:.2f} >= {threshold}")
+    print(f"[OK] PASSED: Combined score {avg_combined:.2f} >= {threshold}")
     # Still save analysis, but skip revision
 else:
-    print(f"❌ BELOW THRESHOLD: Combined score {avg_combined:.2f} < {threshold}")
+    print(f"[X] BELOW THRESHOLD: Combined score {avg_combined:.2f} < {threshold}")
     # Proceed to revision
 ```
 
@@ -195,7 +195,7 @@ Average Scores:
 - Combined: 7.22
 
 Threshold: 8.0
-Status: ❌ BELOW THRESHOLD
+Status: [X] BELOW THRESHOLD
 
 Revisions Applied:
 - prompt.txt: Added accessibility requirements, technical precision requirements

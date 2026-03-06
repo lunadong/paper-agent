@@ -1,0 +1,581 @@
+{
+  "area": "pretraining",
+  "area_description": "LLM pretraining encompasses the methods, architectures, data strategies, and optimization techniques used to train large language models from scratch on massive corpora, covering data curation, model architecture design, training recipes, scaling laws, tokenization, and efficiency improvements.",
+  "categories": [
+    {
+      "id": "data_curation_and_processing",
+      "name": "Data Curation and Processing",
+      "description": "Techniques for collecting, filtering, deduplicating, mixing, and scheduling pretraining data, including synthetic data generation and multilingual corpus construction.",
+      "sub_topics": [
+        {
+          "id": "data_filtering_and_deduplication",
+          "name": "Data Filtering and Deduplication",
+          "description": "Methods for filtering low-quality text, removing duplicates, and cleaning web-scraped corpora to improve pretraining data quality.",
+          "matching_keywords": [
+            "data filtering",
+            "deduplication",
+            "data cleaning",
+            "quality filtering",
+            "near-duplicate detection",
+            "MinHash",
+            "perplexity filtering",
+            "data selection"
+          ]
+        },
+        {
+          "id": "data_mixing_and_scheduling",
+          "name": "Data Mixing and Scheduling",
+          "description": "Strategies for determining the proportions of different data sources and scheduling their presentation during pretraining.",
+          "matching_keywords": [
+            "data mixing",
+            "data scheduling",
+            "domain weighting",
+            "data proportion",
+            "data composition",
+            "training data mix",
+            "data blending",
+            "domain reweighting"
+          ]
+        },
+        {
+          "id": "synthetic_data_for_pretraining",
+          "name": "Synthetic Data for Pretraining",
+          "description": "Generating synthetic training data using language models or other methods to augment or replace web-scraped pretraining corpora.",
+          "matching_keywords": [
+            "synthetic pretraining data",
+            "synthetic data generation",
+            "textbook-quality data",
+            "Phi",
+            "data augmentation pretraining",
+            "LLM-generated data",
+            "rephrased data",
+            "cosmopedia"
+          ]
+        },
+        {
+          "id": "multilingual_data_curation",
+          "name": "Multilingual Data Curation",
+          "description": "Methods for curating, balancing, and processing multilingual corpora for pretraining language models across many languages.",
+          "matching_keywords": [
+            "multilingual data",
+            "multilingual corpus",
+            "language balance",
+            "cross-lingual data",
+            "low-resource language data",
+            "multilingual curation",
+            "parallel corpus",
+            "language sampling"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "data curation",
+        "data processing",
+        "data filtering",
+        "deduplication",
+        "data quality",
+        "data mixing",
+        "data scheduling",
+        "synthetic data",
+        "pretraining data",
+        "web scraping",
+        "corpus construction",
+        "data cleaning",
+        "multilingual data",
+        "training data",
+        "data pipeline"
+      ]
+    },
+    {
+      "id": "architecture_design",
+      "name": "Architecture Design",
+      "description": "Novel model architectures and architectural modifications for language model pretraining, including attention variants, mixture of experts, state space models, and hybrid designs.",
+      "sub_topics": [
+        {
+          "id": "attention_variants",
+          "name": "Attention Variants",
+          "description": "Modifications to the standard transformer attention mechanism to improve efficiency, context length, or model quality, including linear attention, sparse attention, and multi-query attention.",
+          "matching_keywords": [
+            "attention mechanism",
+            "multi-head attention",
+            "multi-query attention",
+            "grouped-query attention",
+            "GQA",
+            "linear attention",
+            "sparse attention",
+            "flash attention",
+            "sliding window attention"
+          ]
+        },
+        {
+          "id": "mixture_of_experts",
+          "name": "Mixture of Experts",
+          "description": "Architectures that route inputs to a subset of specialized expert modules, enabling larger model capacity with reduced compute per token.",
+          "matching_keywords": [
+            "mixture of experts",
+            "MoE",
+            "sparse MoE",
+            "expert routing",
+            "top-k routing",
+            "load balancing",
+            "gating network",
+            "DeepSeekMoE",
+            "Switch Transformer"
+          ]
+        },
+        {
+          "id": "state_space_models",
+          "name": "State Space Models",
+          "description": "Non-transformer architectures based on state space models that offer linear-time sequence modeling as alternatives to attention-based models.",
+          "matching_keywords": [
+            "state space model",
+            "SSM",
+            "Mamba",
+            "S4",
+            "selective state space",
+            "linear recurrence",
+            "structured state space",
+            "RWKV",
+            "RetNet"
+          ]
+        },
+        {
+          "id": "hybrid_architectures",
+          "name": "Hybrid Architectures",
+          "description": "Architectures that combine multiple paradigms such as attention with state space models, or convolution with attention, to leverage the strengths of each approach.",
+          "matching_keywords": [
+            "hybrid architecture",
+            "hybrid model",
+            "attention-SSM hybrid",
+            "Jamba",
+            "Zamba",
+            "convolution-attention hybrid",
+            "recurrent-attention hybrid",
+            "Griffin"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "architecture",
+        "model architecture",
+        "transformer",
+        "attention mechanism",
+        "mixture of experts",
+        "MoE",
+        "state space model",
+        "SSM",
+        "Mamba",
+        "hybrid architecture",
+        "linear attention",
+        "sparse attention",
+        "model design",
+        "architectural innovation",
+        "RWKV"
+      ]
+    },
+    {
+      "id": "training_methods_and_optimization",
+      "name": "Training Methods and Optimization",
+      "description": "Techniques for training large language models, including training recipes, hyperparameter optimization, distributed training strategies, continual pretraining, and curriculum learning.",
+      "sub_topics": [
+        {
+          "id": "training_recipes_and_hyperparameters",
+          "name": "Training Recipes and Hyperparameters",
+          "description": "Empirical strategies for configuring learning rates, batch sizes, warmup schedules, and other hyperparameters for effective pretraining.",
+          "matching_keywords": [
+            "training recipe",
+            "hyperparameter tuning",
+            "learning rate schedule",
+            "warmup",
+            "cosine schedule",
+            "WSD schedule",
+            "batch size scaling",
+            "weight decay"
+          ]
+        },
+        {
+          "id": "distributed_training",
+          "name": "Distributed Training",
+          "description": "Methods for parallelizing pretraining across multiple GPUs, nodes, and clusters, including data, tensor, pipeline, and expert parallelism.",
+          "matching_keywords": [
+            "distributed training",
+            "data parallelism",
+            "tensor parallelism",
+            "pipeline parallelism",
+            "model parallelism",
+            "FSDP",
+            "ZeRO",
+            "3D parallelism",
+            "expert parallelism"
+          ]
+        },
+        {
+          "id": "continual_pretraining",
+          "name": "Continual Pretraining",
+          "description": "Techniques for continuing pretraining on new data or domains without catastrophic forgetting of previously learned knowledge.",
+          "matching_keywords": [
+            "continual pretraining",
+            "continued pretraining",
+            "domain-adaptive pretraining",
+            "catastrophic forgetting",
+            "incremental pretraining",
+            "knowledge retention",
+            "model adaptation",
+            "warm-starting"
+          ]
+        },
+        {
+          "id": "curriculum_learning",
+          "name": "Curriculum Learning",
+          "description": "Organizing training data in a meaningful order, such as easy-to-hard or by domain sequence, to improve pretraining efficiency and model quality.",
+          "matching_keywords": [
+            "curriculum learning",
+            "data ordering",
+            "easy-to-hard",
+            "training curriculum",
+            "data scheduling",
+            "annealing",
+            "staged training"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "training method",
+        "optimization",
+        "training recipe",
+        "hyperparameter",
+        "learning rate",
+        "distributed training",
+        "continual pretraining",
+        "curriculum learning",
+        "training strategy",
+        "parallelism",
+        "data parallelism",
+        "model parallelism",
+        "training stability",
+        "loss spikes",
+        "gradient accumulation"
+      ]
+    },
+    {
+      "id": "scaling_laws_and_efficiency",
+      "name": "Scaling Laws and Efficiency",
+      "description": "Understanding and exploiting the relationships between model size, data size, and compute budget, as well as techniques for making pretraining more compute- and memory-efficient.",
+      "sub_topics": [
+        {
+          "id": "scaling_laws",
+          "name": "Scaling Laws",
+          "description": "Empirical and theoretical studies of how language model performance scales with model parameters, dataset size, and compute budget.",
+          "matching_keywords": [
+            "scaling law",
+            "Chinchilla",
+            "compute-optimal",
+            "neural scaling",
+            "power law",
+            "scaling exponent",
+            "Kaplan scaling",
+            "scaling prediction"
+          ]
+        },
+        {
+          "id": "efficient_pretraining",
+          "name": "Efficient Pretraining",
+          "description": "Methods to reduce the compute, memory, or time required for pretraining, including mixed precision, gradient checkpointing, and architectural efficiency improvements.",
+          "matching_keywords": [
+            "efficient pretraining",
+            "mixed precision",
+            "FP8 training",
+            "BF16",
+            "gradient checkpointing",
+            "memory efficiency",
+            "compute efficiency",
+            "training speedup"
+          ]
+        },
+        {
+          "id": "model_compression_during_training",
+          "name": "Model Compression During Training",
+          "description": "Techniques that incorporate pruning, distillation, or quantization directly into the pretraining process to produce smaller or more efficient models.",
+          "matching_keywords": [
+            "pruning during training",
+            "pretraining distillation",
+            "structured pruning",
+            "training-time compression",
+            "progressive shrinking",
+            "layer dropping",
+            "quantization-aware pretraining",
+            "model growing"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "scaling law",
+        "scaling",
+        "Chinchilla",
+        "compute-optimal",
+        "efficiency",
+        "efficient pretraining",
+        "mixed precision",
+        "FP8",
+        "model compression",
+        "pruning",
+        "distillation",
+        "training efficiency",
+        "compute budget",
+        "parameter efficiency",
+        "memory efficiency"
+      ]
+    },
+    {
+      "id": "tokenization_and_vocabulary",
+      "name": "Tokenization and Vocabulary",
+      "description": "Methods for designing tokenizers and vocabularies that affect how text is represented and processed during pretraining, including subword methods and multimodal tokenization.",
+      "sub_topics": [
+        {
+          "id": "tokenizer_design",
+          "name": "Tokenizer Design",
+          "description": "Algorithms and strategies for building tokenizers, including BPE, unigram, and byte-level methods, and their impact on model performance.",
+          "matching_keywords": [
+            "tokenizer",
+            "BPE",
+            "byte pair encoding",
+            "unigram model",
+            "SentencePiece",
+            "vocabulary size",
+            "subword tokenization",
+            "byte-level tokenizer"
+          ]
+        },
+        {
+          "id": "multimodal_tokenization",
+          "name": "Multimodal Tokenization",
+          "description": "Tokenization approaches for handling non-text modalities such as images, audio, and video within the pretraining framework.",
+          "matching_keywords": [
+            "multimodal tokenization",
+            "visual tokenizer",
+            "image tokenization",
+            "VQ-VAE",
+            "audio tokenization",
+            "discrete tokens",
+            "visual codebook",
+            "cross-modal tokenization"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "tokenization",
+        "tokenizer",
+        "vocabulary",
+        "BPE",
+        "byte pair encoding",
+        "subword",
+        "SentencePiece",
+        "multimodal tokenization",
+        "visual tokenizer",
+        "vocabulary size",
+        "token representation"
+      ]
+    },
+    {
+      "id": "pretraining_objectives",
+      "name": "Pretraining Objectives",
+      "description": "Different training objectives and loss functions used during pretraining, including causal language modeling, masked language modeling, and alternative objectives.",
+      "sub_topics": [
+        {
+          "id": "causal_language_modeling",
+          "name": "Causal Language Modeling",
+          "description": "Autoregressive next-token prediction as the primary pretraining objective for decoder-only language models.",
+          "matching_keywords": [
+            "causal language modeling",
+            "next-token prediction",
+            "autoregressive",
+            "CLM",
+            "decoder-only",
+            "GPT-style",
+            "left-to-right"
+          ]
+        },
+        {
+          "id": "masked_and_denoising_objectives",
+          "name": "Masked and Denoising Objectives",
+          "description": "Objectives that mask or corrupt portions of input text and train the model to reconstruct them, including masked language modeling and span corruption.",
+          "matching_keywords": [
+            "masked language modeling",
+            "MLM",
+            "BERT-style",
+            "span corruption",
+            "denoising",
+            "T5",
+            "encoder-decoder",
+            "fill-in-the-middle"
+          ]
+        },
+        {
+          "id": "alternative_objectives",
+          "name": "Alternative Objectives",
+          "description": "Novel pretraining objectives beyond standard language modeling, including contrastive learning, replaced token detection, and multi-task pretraining.",
+          "matching_keywords": [
+            "contrastive pretraining",
+            "replaced token detection",
+            "ELECTRA",
+            "multi-task pretraining",
+            "auxiliary loss",
+            "next sentence prediction",
+            "prefix language modeling",
+            "UL2"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "pretraining objective",
+        "training objective",
+        "loss function",
+        "causal language modeling",
+        "masked language modeling",
+        "next-token prediction",
+        "autoregressive",
+        "denoising",
+        "span corruption",
+        "fill-in-the-middle",
+        "contrastive pretraining",
+        "ELECTRA",
+        "multi-task pretraining",
+        "UL2"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "long_context",
+      "name": "Long Context",
+      "description": "Papers focused on extending context window length during pretraining or enabling models to process longer sequences efficiently.",
+      "matching_keywords": [
+        "long context",
+        "context length",
+        "context window",
+        "long-range dependencies",
+        "position encoding",
+        "RoPE",
+        "ALiBi",
+        "context extension",
+        "length generalization",
+        "long sequence"
+      ]
+    },
+    {
+      "id": "multilingual",
+      "name": "Multilingual",
+      "description": "Papers addressing pretraining of multilingual models, cross-lingual transfer, and low-resource language coverage.",
+      "matching_keywords": [
+        "multilingual",
+        "multilingual pretraining",
+        "cross-lingual",
+        "low-resource language",
+        "language transfer",
+        "polyglot",
+        "multilingual LLM",
+        "language diversity",
+        "mGPT",
+        "BLOOM"
+      ]
+    },
+    {
+      "id": "code_pretraining",
+      "name": "Code Pretraining",
+      "description": "Papers on pretraining language models specifically for code understanding and generation, including code-specific data and objectives.",
+      "matching_keywords": [
+        "code pretraining",
+        "code LLM",
+        "code generation pretraining",
+        "CodeLlama",
+        "StarCoder",
+        "code corpus",
+        "programming language model",
+        "code-specific pretraining",
+        "source code pretraining"
+      ]
+    },
+    {
+      "id": "scientific_pretraining",
+      "name": "Scientific Pretraining",
+      "description": "Papers on pretraining language models for scientific domains, including biomedical, chemistry, mathematics, and other specialized scientific corpora.",
+      "matching_keywords": [
+        "scientific pretraining",
+        "biomedical pretraining",
+        "domain-specific pretraining",
+        "scientific LLM",
+        "medical pretraining",
+        "chemistry LLM",
+        "scientific corpus",
+        "PubMed pretraining",
+        "academic pretraining"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

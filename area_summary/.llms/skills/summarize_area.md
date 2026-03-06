@@ -9,10 +9,10 @@ oncalls:
 **Input:**
 - **area**: The research area name (e.g., rag, factuality, agents, memory, p13n, benchmark)
 - **papers_file**: Path to papers.txt or pre-parsed JSON with paper summaries (default: `prompt_optimization/area_summaries/{area}/papers.txt`)
-- **taxonomy_json**: Path to prompts/taxonomy/{area}_taxonomy.json from extract_topic_taxonomy skill (optional — will run extraction if missing)
+- **taxonomy_json**: Path to prompts/taxonomy/{area}_taxonomy.json from extract_topic_taxonomy skill (optional -- will run extraction if missing)
 
 **Output:**
-- **area_summary_html**: prompt_optimization/area_summaries/{area}/area_summary.html — self-contained HTML report with topic-grouped progress summaries
+- **area_summary_html**: prompt_optimization/area_summaries/{area}/area_summary.html -- self-contained HTML report with topic-grouped progress summaries
 
 Generate a comprehensive, self-contained HTML summary report for a research area by:
 1. Grouping papers by topic taxonomy from background files
@@ -36,7 +36,7 @@ Generate a comprehensive, self-contained HTML summary report for a research area
 
 Before starting the area summary generation, ensure the following files exist. **Skip any step where the file already exists.**
 
-> 🛑 **NEVER use files from `old*/` subdirectories.** Always use files at the top level of `prompt_optimization/area_summaries/{area}/`. If a required file only exists inside an `old*/` folder, treat it as missing and regenerate it from scratch.
+> [STOP] **NEVER use files from `old*/` subdirectories.** Always use files at the top level of `prompt_optimization/area_summaries/{area}/`. If a required file only exists inside an `old*/` folder, treat it as missing and regenerate it from scratch.
 
 ### 1. Export Papers (if `prompt_optimization/area_summaries/{area}/papers.txt` does not exist)
 
@@ -65,7 +65,7 @@ fi
 
 ### 3. Extract Topic Taxonomy (ALWAYS rerun)
 
-**ALWAYS run the `extract_topic_taxonomy.md` skill** — do NOT reuse a taxonomy JSON from a previous run, `old*/` folder, or any other cached source. The taxonomy must be freshly generated from the background file.
+**ALWAYS run the `extract_topic_taxonomy.md` skill** -- do NOT reuse a taxonomy JSON from a previous run, `old*/` folder, or any other cached source. The taxonomy must be freshly generated from the background file.
 
 ```bash
 cd area_summary
@@ -88,9 +88,9 @@ fi
 
 This step reads `papers_parsed.json` (from step 2) and groups papers by the taxonomy (from step 3). It produces:
 - **Formatted paper files** for each sub-agent:
-  - `subtopic_{st_id}_papers.txt` — papers for each sub-topic
-  - `category_{cat_id}_general_papers.txt` — papers in category but NOT matching any sub-topic within that category
-  - `theme_{theme_id}_papers.txt` — papers matching each theme
+  - `subtopic_{st_id}_papers.txt` -- papers for each sub-topic
+  - `category_{cat_id}_general_papers.txt` -- papers in category but NOT matching any sub-topic within that category
+  - `theme_{theme_id}_papers.txt` -- papers matching each theme
 - **Grouping summary** (`paper_groups.json`) with counts and file paths
 
 **Grouping Logic**:
@@ -106,7 +106,7 @@ This step reads `papers_parsed.json` (from step 2) and groups papers by the taxo
 |------|--------|-------|
 | `prompt_optimization/area_summaries/{area}/papers.txt` | `export_papers.py` via `get_paper_summaries.md` skill | Skip export if exists |
 | `prompt_optimization/area_summaries/{area}/papers_parsed.json` | `parse_papers.py` | Skip parsing if exists |
-| `prompts/taxonomy/{area}_taxonomy.json` | `extract_topic_taxonomy.md` skill | **Always rerun** — never reuse |
+| `prompts/taxonomy/{area}_taxonomy.json` | `extract_topic_taxonomy.md` skill | **Always rerun** -- never reuse |
 | `prompt_optimization/area_summaries/{area}/paper_groups.json` | `group_papers.py` | Skip grouping if exists |
 | `paper_collection/paper_summary/prompts/background_{area}.txt` | Manual/pre-existing | Required |
 | `style.css` | Pre-existing (shared CSS) | Required for HTML generation |
@@ -263,7 +263,7 @@ for t in subagent_tasks:
 **Single batch rule:** Launch ALL sub-agents in ONE parallel call. Do NOT split into multiple batches.
 
 ```
-# Example: 15 tasks total — launch ALL in the SAME message
+# Example: 15 tasks total -- launch ALL in the SAME message
 
 task(title="Summarize RAG Triggering (subtopic)", ...)
 task(title="Summarize Query Rewriting (subtopic)", ...)
@@ -281,7 +281,7 @@ task(title="Summarize Benchmark (theme)", ...)
 task(title="Summarize Application (theme)", ...)
 task(title="Summarize Survey (theme)", ...)
 
-# All 15 tasks launched in parallel — wait for ALL to complete
+# All 15 tasks launched in parallel -- wait for ALL to complete
 ```
 
 Each sub-agent task call should use:
@@ -444,8 +444,8 @@ mkdir -p prompt_optimization/area_summaries/rag
 #   1. Load parsed papers from prompt_optimization/area_summaries/rag/papers_parsed.json
 #   2. Load taxonomy from prompts/taxonomy/rag_taxonomy.json
 #   3. Group papers by topic (group_papers.py)
-#   4. Launch parallel sub-agents for topic summaries → subtopic_*_summary.json
-#   5. Generate cross-topic analysis → cross_topic_analysis.json
+#   4. Launch parallel sub-agents for topic summaries -> subtopic_*_summary.json
+#   5. Generate cross-topic analysis -> cross_topic_analysis.json
 #   6. Run generate_html.py to assemble the HTML report deterministically
 #   7. Save to prompt_optimization/area_summaries/rag/area_summary.html
 
@@ -474,39 +474,39 @@ cp prompt_optimization/area_summaries/rag/area_summary.html ../web_interface/htm
 ## HTML Report Structure
 
 ```
-📄 prompt_optimization/area_summaries/{area}/area_summary.html
-├── <link> to style.css (shared stylesheet)
-├── Header (gradient, stats banner)
-├── Area Overview (definition, scope, field timeline)
-├── Table of Contents (clickable links to each topic)
-├── Topic Cards (one per topic, in taxonomy order)
-│   ├── Brief (always visible)
-│   │   ├── Basics Box (What / Why / Baseline / Challenges)
-│   │   ├── Running Example (query → baseline → challenge → solutions)
-│   │   └── Key Insights (bullet list)
-│   ├── Cross-Topic Transition (between adjacent topics, if available)
-│   └── Full Analysis (<details>/<summary> "Show full analysis ▶")
-│       ├── Topic Timeline (periods with milestones)
-│       ├── Sub-topics Grid (cards with paper counts)
-│       ├── Methods Table (name, description, paper links)
-│       ├── Benchmark Results (per-benchmark tables with scores)
-│       ├── Limitations (categorized list)
-│       └── Paper List (all papers with links, in a collapsible <details>)
-├── Practical Recommendations (priority-coded table)
-├── Key Takeaways (grid with emojis)
-├── Emerging Trends (with paper citations)
-├── Research Opportunities
-├── Benchmark Leaderboard (top results across all topics)
-├── Topic Distribution Chart (CSS bars)
-├── Glossary (merged from all topics)
-└── Footer (timestamp, metadata)
+Document area_summary.html
+|-- <link> to style.css (shared stylesheet)
+|-- Header (gradient, stats banner)
+|-- Area Overview (definition, scope, field timeline)
+|-- Table of Contents (clickable links to each topic)
+|-- Topic Cards (one per topic, in taxonomy order)
+|   |-- Brief (always visible)
+|   |   |-- Basics Box (What / Why / Baseline / Challenges)
+|   |   |-- Running Example (query -> baseline -> challenge -> solutions)
+|   |   `-- Key Insights (bullet list)
+|   |-- Cross-Topic Transition (between adjacent topics, if available)
+|   `-- Full Analysis (<details>/<summary> "Show full analysis >")
+|       |-- Topic Timeline (periods with milestones)
+|       |-- Sub-topics Grid (cards with paper counts)
+|       |-- Methods Table (name, description, paper links)
+|       |-- Benchmark Results (per-benchmark tables with scores)
+|       |-- Limitations (categorized list)
+|       `-- Paper List (all papers with links, in a collapsible <details>)
+|-- Practical Recommendations (priority-coded table)
+|-- Key Takeaways (grid with emojis)
+|-- Emerging Trends (with paper citations)
+|-- Research Opportunities
+|-- Benchmark Leaderboard (top results across all topics)
+|-- Topic Distribution Chart (CSS bars)
+|-- Glossary (merged from all topics)
+`-- Footer (timestamp, metadata)
 ```
 
 ## Paper Link Format
 
 All paper references in the HTML report use clickable links:
 - Format: `https://papers.lunadong.com/paper/{paper_id}`
-- Example: Paper ID 52 → `https://papers.lunadong.com/paper/52`
+- Example: Paper ID 52 -> `https://papers.lunadong.com/paper/52`
 
 ## Writing Style Guidelines
 

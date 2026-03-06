@@ -6,9 +6,9 @@ oncalls:
 
 # Single-Pass Area Prompt Optimization Skill
 
-Run a single optimization pass: select area → get outputs → analyze from 3 perspectives → revise prompts if below threshold.
+Run a single optimization pass: select area -> get outputs -> analyze from 3 perspectives -> revise prompts if below threshold.
 
-## 🛑 CRITICAL: User Confirmation Required
+## [STOP] CRITICAL: User Confirmation Required
 
 **Before launching any analysis sub-agents, you MUST:**
 1. Use `ask_user_question` tool to confirm the output source
@@ -23,13 +23,13 @@ Run a single optimization pass: select area → get outputs → analyze from 3 p
 
 ```
 "Optimize area prompts for RAG"
-→ Analyze RAG area summary, revise based on feedback
+-> Analyze RAG area summary, revise based on feedback
 
 "Optimize prompts for agents area with threshold 8.5"
-→ Analyze agents, revise to target 8.5
+-> Analyze agents, revise to target 8.5
 
 "Optimize RAG from expert perspective only"
-→ Run only expert analysis, revise based on expert feedback
+-> Run only expert analysis, revise based on expert feedback
 ```
 
 ---
@@ -56,7 +56,7 @@ Run a single optimization pass: select area → get outputs → analyze from 3 p
 
 ## Single-Pass Workflow
 
-> **🛑 STOP: Before running ANY analysis, you MUST ask the user to confirm the output source using `ask_user_question`. Do NOT proceed to Step 3 without explicit user confirmation.**
+> **[STOP] STOP: Before running ANY analysis, you MUST ask the user to confirm the output source using `ask_user_question`. Do NOT proceed to Step 3 without explicit user confirmation.**
 
 ### Step 1: Determine What to Analyze
 
@@ -66,7 +66,7 @@ Check inputs:
 
 ### Step 2: Get Outputs Based on Source Option (MANDATORY USER CONFIRMATION)
 
-**⚠️ CRITICAL: You MUST ask the user to confirm the output source before proceeding. Do NOT skip this step.**
+**[!] CRITICAL: You MUST ask the user to confirm the output source before proceeding. Do NOT skip this step.**
 
 Use the `ask_user_question` tool to confirm:
 
@@ -168,10 +168,10 @@ task(
 **Output Files:**
 ```
 prompt_optimization/analysis_critics/
-├── analysis_{area}_beginner.json   # Beginner analysis
-├── analysis_{area}_expert.json     # Expert analysis
-├── analysis_{area}_presenter.json  # Presenter analysis
-└── analysis_{area}.json            # Combined (aggregated in main context)
+|-- analysis_{area}_beginner.json   # Beginner analysis
+|-- analysis_{area}_expert.json     # Expert analysis
+|-- analysis_{area}_presenter.json  # Presenter analysis
+`-- analysis_{area}.json            # Combined (aggregated in main context)
 ```
 
 Aggregate results:
@@ -190,10 +190,10 @@ presenter_score = results["presenter"]["presenter_score"]
 combined_score = (beginner_score + expert_score + presenter_score) / 3
 
 if combined_score >= threshold:
-    print(f"✅ PASSED: Combined score {combined_score:.2f} >= {threshold}")
+    print(f"[OK] PASSED: Combined score {combined_score:.2f} >= {threshold}")
     # Still save analysis, but skip revision
 else:
-    print(f"❌ BELOW THRESHOLD: Combined score {combined_score:.2f} < {threshold}")
+    print(f"[X] BELOW THRESHOLD: Combined score {combined_score:.2f} < {threshold}")
     # Proceed to revision
 ```
 
@@ -201,7 +201,7 @@ else:
 
 Load and run revise_area_prompts skill:
 
-> **Note:** The revision step includes the user-instructions-to-critics integration flow (Steps 8.2–8.4 in `revise_area_prompts.md`). After revising, it will ask the user whether to update `analyze_area_summary.md` with fixed issues and whether to clear `user_instructions.md`.
+> **Note:** The revision step includes the user-instructions-to-critics integration flow (Steps 8.2-8.4 in `revise_area_prompts.md`). After revising, it will ask the user whether to update `analyze_area_summary.md` with fixed issues and whether to clear `user_instructions.md`.
 
 ```
 Load skill: .llms/skills/revise_area_prompts.md
@@ -213,9 +213,9 @@ Aggregate all issues from analyses:
 - Presenter issues (sorted by severity)
 
 Map issues to prompts:
-- Topic-level issues → topic_summary_prompt.txt
-- Cross-topic issues → cross_topic_analysis_prompt.txt
-- HTML/visual issues → html_generation_prompt.txt
+- Topic-level issues -> topic_summary_prompt.txt
+- Cross-topic issues -> cross_topic_analysis_prompt.txt
+- HTML/visual issues -> html_generation_prompt.txt
 
 Revise all three files:
 - topic_summary_prompt.txt
@@ -240,7 +240,7 @@ Scores:
 - Combined: 7.17
 
 Threshold: 8.0
-Status: ❌ BELOW THRESHOLD
+Status: [X] BELOW THRESHOLD
 
 Revisions Applied:
 - topic_summary_prompt.txt: Added jargon handling requirements, paper citation instructions

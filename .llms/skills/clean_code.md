@@ -160,7 +160,7 @@ Working directory: (project root)"
 
 After parallel tasks complete, run linting and FIX all issues:
 
-**⚠️ CRITICAL - BLACK FORMATTING ERRORS ⚠️**
+**[!] CRITICAL - BLACK FORMATTING ERRORS [!]**
 
 BLACK formatting errors are a common source of persistent lint issues. Here's why they often remain unfixed:
 
@@ -199,7 +199,7 @@ BLACK formatting errors are a common source of persistent lint issues. Here's wh
    cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/paper_collection/paper_db.py
    ```
 
-3. **⚠️ RE-RUN `arc lint -a` UNTIL NO BLACK ERRORS REMAIN**:
+3. **[!] RE-RUN `arc lint -a` UNTIL NO BLACK ERRORS REMAIN**:
    ```bash
    # First run - may only partially fix BLACK errors
    cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/path/to/file.py
@@ -223,7 +223,7 @@ BLACK formatting errors are a common source of persistent lint issues. Here's wh
    - If validation still shows BLACK errors, run `arc lint -a` again from fbsource root
    - Re-run `validate_changes` until no errors from your changes remain
 
-**🚫 DO NOT use `format_document` for BLACK errors - it will NOT fix them reliably!**
+**[X] DO NOT use `format_document` for BLACK errors - it will NOT fix them reliably!**
 
 ## Example Usage
 
@@ -253,9 +253,9 @@ task(
 )
 
 # Step 5: After parallel tasks complete
-# ⚠️ CRITICAL: Run arc lint from fbsource root, not from project directory!
+# [!] CRITICAL: Run arc lint from fbsource root, not from project directory!
 # This is required for Black formatting to be properly detected.
-# ⚠️ DO NOT use format_document - it will NOT fix BLACK errors reliably!
+# [!] DO NOT use format_document - it will NOT fix BLACK errors reliably!
 
 # First run - may only partially fix BLACK errors
 execute_command(
@@ -263,7 +263,7 @@ execute_command(
     summary="Run arc lint from fbsource root for proper Black detection"
 )
 
-# ⚠️ CRITICAL: Re-run until NO BLACK errors remain!
+# [!] CRITICAL: Re-run until NO BLACK errors remain!
 # arc lint -a may need multiple runs to fix all BLACK formatting issues
 execute_command(
     command="cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/",
@@ -324,30 +324,30 @@ Before starting, examine the environment_details and report:
 ### Example Environment Report
 
 ```
-📋 ENVIRONMENT CHECK
-━━━━━━━━━━━━━━━━━━━━
+[INFO] ENVIRONMENT CHECK
+====================
 
-📁 Target Folder: paper_collection/paper_summary
+[DIR] Target Folder: paper_collection/paper_summary
 
-⚠️  Files Changed Externally (need re-read):
+[!]  Files Changed Externally (need re-read):
    - paper_collection/paper_summary/compare_models.py
 
-📊 Working Stack:
+[STACK] Working Stack:
    - 1 commit ahead of master
    - Most recent: "prompt engineering for better paper summarization"
 
-📂 Open Tabs (potential cleanup targets):
+[TABS] Open Tabs (potential cleanup targets):
    - summary_generation.py
    - prompt.txt
    - summary_example.json
    - paper_detail.html
 
-🔧 Config Files Found:
+[CFG] Config Files Found:
    - pytest.ini (for running tests)
    - ruff.toml (for linting)
    - requirements.txt
 
-📖 README Files to Check:
+[README] README Files to Check:
    - README.md (root)
    - paper_collection/paper_summary/ (check if exists)
 ```

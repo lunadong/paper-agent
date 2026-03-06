@@ -452,7 +452,7 @@ class TestCategorizeOrderedTopics:
 
     def test_categorize_category_general_topics(self):
         """Test categorization of category_general topics."""
-        ordered_topics = [("category_general", "retrieval", "📚")]
+        ordered_topics = [("category_general", "retrieval", "[C]")]
         # Note: summary_file_key removes underscores, so "category_general" -> "category_retrieval"
         topic_summaries = {
             "category_retrieval": {
@@ -462,13 +462,13 @@ class TestCategorizeOrderedTopics:
         }
         cats, subs, themes = _categorize_ordered_topics(ordered_topics, topic_summaries)
         assert len(cats) == 1
-        assert cats[0] == ("📚", "Retrieval", "retrieval")
+        assert cats[0] == ("[C]", "Retrieval", "retrieval")
         assert len(subs) == 0
         assert len(themes) == 0
 
     def test_categorize_sub_topic_topics(self):
         """Test categorization of sub_topic topics."""
-        ordered_topics = [("sub_topic", "dense_retrieval", "🔍")]
+        ordered_topics = [("sub_topic", "dense_retrieval", "[S]")]
         # Note: summary_file_key removes underscores, so "sub_topic" -> "subtopic_dense_retrieval"
         topic_summaries = {
             "subtopic_dense_retrieval": {
@@ -479,12 +479,12 @@ class TestCategorizeOrderedTopics:
         cats, subs, themes = _categorize_ordered_topics(ordered_topics, topic_summaries)
         assert len(cats) == 0
         assert len(subs) == 1
-        assert subs[0] == ("🔍", "Dense Retrieval", "dense_retrieval")
+        assert subs[0] == ("[S]", "Dense Retrieval", "dense_retrieval")
         assert len(themes) == 0
 
     def test_categorize_theme_topics(self):
         """Test categorization of theme topics (default category)."""
-        ordered_topics = [("theme", "efficiency", "⚡")]
+        ordered_topics = [("theme", "efficiency", "[T]")]
         topic_summaries = {
             "theme_efficiency": {
                 "topic_name": "Efficiency",
@@ -495,11 +495,11 @@ class TestCategorizeOrderedTopics:
         assert len(cats) == 0
         assert len(subs) == 0
         assert len(themes) == 1
-        assert themes[0] == ("⚡", "Efficiency", "efficiency")
+        assert themes[0] == ("[T]", "Efficiency", "efficiency")
 
     def test_skip_topics_not_in_summaries(self):
         """Test that topics not found in topic_summaries are skipped."""
-        ordered_topics = [("category_general", "missing", "❓")]
+        ordered_topics = [("category_general", "missing", "[?]")]
         topic_summaries = {}
         cats, subs, themes = _categorize_ordered_topics(ordered_topics, topic_summaries)
         assert len(cats) == 0
@@ -509,9 +509,9 @@ class TestCategorizeOrderedTopics:
     def test_categorize_multiple_topics(self):
         """Test categorization of multiple topics of different types."""
         ordered_topics = [
-            ("category_general", "retrieval", "📚"),
-            ("sub_topic", "dense", "🔍"),
-            ("theme", "efficiency", "⚡"),
+            ("category_general", "retrieval", "[C]"),
+            ("sub_topic", "dense", "[S]"),
+            ("theme", "efficiency", "[T]"),
         ]
         # Keys use the actual summary_file_key format
         topic_summaries = {
@@ -530,19 +530,19 @@ class TestFindMatchingCatEntry:
 
     def test_exact_match(self):
         """Test finding exact match for cat_id."""
-        cats = [("📚", "Retrieval", "retrieval")]
+        cats = [("[C]", "Retrieval", "retrieval")]
         result = _find_matching_cat_entry(cats, "retrieval")
-        assert result == ("📚", "Retrieval", "retrieval")
+        assert result == ("[C]", "Retrieval", "retrieval")
 
     def test_partial_match(self):
         """Test finding partial match (cat_id in anchor)."""
-        cats = [("📚", "Retrieval Methods", "retrieval_methods")]
+        cats = [("[C]", "Retrieval Methods", "retrieval_methods")]
         result = _find_matching_cat_entry(cats, "retrieval")
-        assert result == ("📚", "Retrieval Methods", "retrieval_methods")
+        assert result == ("[C]", "Retrieval Methods", "retrieval_methods")
 
     def test_no_match_returns_none(self):
         """Test that non-matching cat_id returns None."""
-        cats = [("📚", "Retrieval", "retrieval")]
+        cats = [("[C]", "Retrieval", "retrieval")]
         result = _find_matching_cat_entry(cats, "generation")
         assert result is None
 
@@ -558,15 +558,15 @@ class TestBuildThemeSection:
     def test_build_section_with_themes(self):
         """Test building theme section with multiple themes."""
         themes = [
-            ("⚡", "Efficiency", "efficiency"),
-            ("🔒", "Safety", "safety"),
+            ("[T]", "Efficiency", "efficiency"),
+            ("[T]", "Safety", "safety"),
         ]
         result = _build_theme_section(themes)
         assert "Research Themes" in result
         assert "efficiency" in result
         assert "safety" in result
-        assert "⚡" in result
-        assert "🔒" in result
+        assert "[T]" in result
+        assert "[T]" in result
 
     def test_empty_themes_returns_empty_string(self):
         """Test that empty themes list returns empty string."""
@@ -594,7 +594,7 @@ class TestBuildPipelineSection:
 
     def test_build_section_with_categories(self):
         """Test building pipeline section with categories."""
-        cats = [("📚", "Retrieval", "retrieval")]
+        cats = [("[C]", "Retrieval", "retrieval")]
         subs = []
         taxonomy = {"categories": [{"id": "retrieval", "sub_topics": []}]}
         result = _build_pipeline_section(cats, subs, taxonomy)
@@ -603,8 +603,8 @@ class TestBuildPipelineSection:
 
     def test_build_section_with_subs(self):
         """Test building pipeline section with sub-topics."""
-        cats = [("📚", "Retrieval", "retrieval")]
-        subs = [("🔍", "Dense Retrieval", "dense_retrieval")]
+        cats = [("[C]", "Retrieval", "retrieval")]
+        subs = [("[S]", "Dense Retrieval", "dense_retrieval")]
         taxonomy = {
             "categories": [
                 {"id": "retrieval", "sub_topics": [{"id": "dense_retrieval"}]}

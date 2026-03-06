@@ -885,9 +885,9 @@ def render_benchmark_leaderboard(benchmarks):
                 val_nums = set(re.findall(r"[\d.]+%?", value))
                 rel_nums = set(re.findall(r"[\d.]+%?", rel_clean))
                 if val_nums and val_nums == rel_nums:
-                    pass  # duplicate — skip
+                    pass  # duplicate -- skip
                 elif rel_clean.strip() in value:
-                    pass  # substring — skip
+                    pass  # substring -- skip
                 else:
                     score_cell += f" \u2014 {rel_clean}"
             pid = r.get("paper_id", "")
@@ -1440,7 +1440,7 @@ def generate_html(area, input_dir, taxonomy_path, output_path):
 
     ordered = get_topic_order(taxonomy, paper_groups)
 
-    # Use list accumulation instead of string concatenation to avoid O(n²) memory
+    # Use list accumulation instead of string concatenation to avoid O(n^2) memory
     topic_parts = []
     prev_name = None
     for topic_type, topic_id, emoji_icon in ordered:

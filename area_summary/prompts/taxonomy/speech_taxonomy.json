@@ -1,0 +1,609 @@
+{
+  "area": "speech",
+  "area_description": "Speech and Audio LLMs encompass techniques for understanding, generating, and processing speech and audio signals using large language models, spanning speech recognition, synthesis, speech-text joint modeling, audio understanding, translation, and signal enhancement.",
+  "categories": [
+    {
+      "id": "speech_understanding",
+      "name": "Speech Understanding",
+      "description": "Methods for extracting linguistic and paralinguistic information from speech signals, including transcription, intent recognition, speaker characteristics, and emotional state detection.",
+      "sub_topics": [
+        {
+          "id": "automatic_speech_recognition",
+          "name": "Automatic Speech Recognition",
+          "description": "Converting spoken language into text, including end-to-end ASR models, attention-based encoder-decoders, and CTC-based approaches.",
+          "matching_keywords": [
+            "automatic speech recognition",
+            "ASR",
+            "speech-to-text",
+            "speech recognition",
+            "CTC",
+            "Whisper",
+            "end-to-end ASR",
+            "speech transcription"
+          ]
+        },
+        {
+          "id": "spoken_language_understanding",
+          "name": "Spoken Language Understanding",
+          "description": "Extracting semantic meaning, intent, and structured information directly from speech signals, including slot filling and intent classification from audio.",
+          "matching_keywords": [
+            "spoken language understanding",
+            "SLU",
+            "speech intent",
+            "spoken dialogue understanding",
+            "speech-based NLU",
+            "spoken question answering",
+            "voice command understanding"
+          ]
+        },
+        {
+          "id": "speaker_identification",
+          "name": "Speaker Identification",
+          "description": "Recognizing and verifying speaker identity from speech, including speaker diarization, verification, and embedding extraction.",
+          "matching_keywords": [
+            "speaker identification",
+            "speaker recognition",
+            "speaker verification",
+            "speaker diarization",
+            "speaker embedding",
+            "voiceprint",
+            "speaker clustering"
+          ]
+        },
+        {
+          "id": "emotion_recognition",
+          "name": "Emotion Recognition",
+          "description": "Detecting emotional states and sentiment from speech signals, leveraging prosodic, spectral, and linguistic cues.",
+          "matching_keywords": [
+            "speech emotion recognition",
+            "SER",
+            "emotion detection from speech",
+            "sentiment analysis speech",
+            "affective computing speech",
+            "vocal emotion",
+            "paralinguistic analysis"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "speech understanding",
+        "automatic speech recognition",
+        "ASR",
+        "speech-to-text",
+        "spoken language understanding",
+        "SLU",
+        "speaker identification",
+        "speaker recognition",
+        "speaker diarization",
+        "speech emotion recognition",
+        "speech perception",
+        "speech analysis",
+        "Whisper",
+        "CTC",
+        "voice activity detection"
+      ]
+    },
+    {
+      "id": "speech_generation",
+      "name": "Speech Generation",
+      "description": "Techniques for synthesizing speech from text or other conditioning signals, including neural TTS, voice cloning, controllable synthesis, and prosody modeling.",
+      "sub_topics": [
+        {
+          "id": "text_to_speech",
+          "name": "Text-to-Speech Synthesis",
+          "description": "Converting text into natural-sounding speech using neural network architectures including autoregressive, non-autoregressive, and diffusion-based models.",
+          "matching_keywords": [
+            "text-to-speech",
+            "TTS",
+            "speech synthesis",
+            "neural TTS",
+            "Tacotron",
+            "VITS",
+            "FastSpeech",
+            "WaveNet"
+          ]
+        },
+        {
+          "id": "voice_cloning",
+          "name": "Voice Cloning",
+          "description": "Replicating a target speaker's voice characteristics from limited reference audio, enabling zero-shot and few-shot speaker adaptation.",
+          "matching_keywords": [
+            "voice cloning",
+            "speaker adaptation",
+            "zero-shot TTS",
+            "few-shot voice cloning",
+            "voice conversion TTS",
+            "speaker cloning",
+            "target speaker synthesis"
+          ]
+        },
+        {
+          "id": "speech_synthesis_control",
+          "name": "Speech Synthesis Control",
+          "description": "Controlling attributes of generated speech such as style, emotion, speaking rate, and emphasis through conditioning mechanisms.",
+          "matching_keywords": [
+            "controllable speech synthesis",
+            "style control TTS",
+            "speech attribute control",
+            "emotion-controllable TTS",
+            "speaking style transfer",
+            "speech generation control"
+          ]
+        },
+        {
+          "id": "prosody_modeling",
+          "name": "Prosody Modeling",
+          "description": "Modeling and generating natural prosodic patterns including intonation, rhythm, stress, and phrasing in synthesized speech.",
+          "matching_keywords": [
+            "prosody modeling",
+            "prosody prediction",
+            "intonation modeling",
+            "rhythm modeling",
+            "pitch modeling",
+            "speech prosody",
+            "prosodic features"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "speech generation",
+        "speech synthesis",
+        "text-to-speech",
+        "TTS",
+        "voice cloning",
+        "neural TTS",
+        "prosody modeling",
+        "controllable synthesis",
+        "voice generation",
+        "Tacotron",
+        "VITS",
+        "FastSpeech",
+        "WaveNet",
+        "vocoder",
+        "waveform generation"
+      ]
+    },
+    {
+      "id": "speech_language_models",
+      "name": "Speech-Language Models",
+      "description": "Architectures and methods that integrate speech and language modalities within large language models, including speech tokenization strategies, joint speech-text training, and spoken dialogue systems.",
+      "sub_topics": [
+        {
+          "id": "speech_tokenization",
+          "name": "Speech Tokenization",
+          "description": "Converting continuous speech signals into discrete token sequences suitable for language model processing, including neural codec models and self-supervised speech tokens.",
+          "matching_keywords": [
+            "speech tokenization",
+            "speech tokens",
+            "speech discretization",
+            "neural audio codec",
+            "EnCodec",
+            "SoundStream",
+            "speech quantization",
+            "audio tokens"
+          ]
+        },
+        {
+          "id": "speech_text_joint_models",
+          "name": "Speech-Text Joint Models",
+          "description": "Models trained jointly on speech and text data to learn shared representations and enable cross-modal transfer between modalities.",
+          "matching_keywords": [
+            "speech-text joint model",
+            "joint speech-text",
+            "cross-modal speech-text",
+            "unified speech-text",
+            "multimodal speech model",
+            "speech-text alignment",
+            "speech-text pre-training"
+          ]
+        },
+        {
+          "id": "audio_llms",
+          "name": "Audio LLMs",
+          "description": "Large language models extended to process and generate audio inputs and outputs, enabling instruction-following and general-purpose audio understanding.",
+          "matching_keywords": [
+            "audio LLM",
+            "speech LLM",
+            "audio language model",
+            "speech foundation model",
+            "SALMONN",
+            "Qwen-Audio",
+            "AudioPaLM",
+            "audio-text LLM"
+          ]
+        },
+        {
+          "id": "spoken_dialogue_models",
+          "name": "Spoken Dialogue Models",
+          "description": "Models designed for real-time spoken conversation, supporting turn-taking, backchanneling, and full-duplex speech-to-speech interaction.",
+          "matching_keywords": [
+            "spoken dialogue",
+            "speech-to-speech",
+            "voice assistant",
+            "spoken conversation",
+            "dialogue speech model",
+            "turn-taking",
+            "full-duplex speech",
+            "GPT-4o voice"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "speech language model",
+        "audio LLM",
+        "speech LLM",
+        "speech tokenization",
+        "speech tokens",
+        "neural audio codec",
+        "speech-text joint model",
+        "spoken dialogue",
+        "speech foundation model",
+        "speech-to-speech",
+        "EnCodec",
+        "SoundStream",
+        "SALMONN",
+        "Qwen-Audio",
+        "AudioPaLM"
+      ]
+    },
+    {
+      "id": "audio_understanding",
+      "name": "Audio Understanding",
+      "description": "Methods for analyzing and interpreting non-speech audio signals, including environmental sounds, music, and general audio events, often leveraging large-scale pre-training.",
+      "sub_topics": [
+        {
+          "id": "audio_captioning",
+          "name": "Audio Captioning",
+          "description": "Generating natural language descriptions of audio content, bridging the gap between audio perception and language generation.",
+          "matching_keywords": [
+            "audio captioning",
+            "automated audio captioning",
+            "audio description",
+            "audio-to-text",
+            "sound captioning",
+            "audio caption generation"
+          ]
+        },
+        {
+          "id": "sound_event_detection",
+          "name": "Sound Event Detection",
+          "description": "Detecting, classifying, and localizing sound events within audio streams, including polyphonic event detection and audio tagging.",
+          "matching_keywords": [
+            "sound event detection",
+            "audio event detection",
+            "audio tagging",
+            "audio classification",
+            "AudioSet",
+            "sound classification",
+            "acoustic event detection"
+          ]
+        },
+        {
+          "id": "music_understanding",
+          "name": "Music Understanding",
+          "description": "Analyzing musical content including genre classification, instrument recognition, music transcription, and music-language models.",
+          "matching_keywords": [
+            "music understanding",
+            "music information retrieval",
+            "music classification",
+            "music transcription",
+            "music-language model",
+            "music captioning",
+            "music tagging"
+          ]
+        },
+        {
+          "id": "environmental_audio",
+          "name": "Environmental Audio Analysis",
+          "description": "Understanding and classifying ambient and environmental sounds, including acoustic scene classification and audio scene understanding.",
+          "matching_keywords": [
+            "environmental audio",
+            "acoustic scene classification",
+            "ambient sound",
+            "environmental sound",
+            "soundscape analysis",
+            "audio scene recognition"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "audio understanding",
+        "audio captioning",
+        "sound event detection",
+        "audio classification",
+        "music understanding",
+        "environmental audio",
+        "audio tagging",
+        "acoustic scene classification",
+        "AudioSet",
+        "audio perception",
+        "general audio",
+        "non-speech audio",
+        "music information retrieval",
+        "sound recognition"
+      ]
+    },
+    {
+      "id": "speech_translation",
+      "name": "Speech Translation",
+      "description": "Techniques for translating speech from one language to another, including end-to-end approaches, cascaded pipelines, simultaneous translation, and handling of code-switching scenarios.",
+      "sub_topics": [
+        {
+          "id": "end_to_end_speech_translation",
+          "name": "End-to-End Speech Translation",
+          "description": "Directly translating speech in one language to text or speech in another language without intermediate ASR output, using single unified models.",
+          "matching_keywords": [
+            "end-to-end speech translation",
+            "direct speech translation",
+            "speech-to-text translation",
+            "S2TT",
+            "end-to-end ST",
+            "direct ST"
+          ]
+        },
+        {
+          "id": "cascaded_systems",
+          "name": "Cascaded Translation Systems",
+          "description": "Multi-stage speech translation pipelines combining ASR and machine translation components, with techniques to mitigate error propagation.",
+          "matching_keywords": [
+            "cascaded speech translation",
+            "pipeline speech translation",
+            "ASR-MT cascade",
+            "two-stage translation",
+            "cascaded ST",
+            "error propagation speech translation"
+          ]
+        },
+        {
+          "id": "simultaneous_translation",
+          "name": "Simultaneous Speech Translation",
+          "description": "Translating speech in real-time as it is being spoken, balancing translation quality with latency constraints.",
+          "matching_keywords": [
+            "simultaneous speech translation",
+            "simultaneous interpretation",
+            "real-time translation",
+            "streaming translation",
+            "online speech translation",
+            "low-latency translation",
+            "SimulST"
+          ]
+        },
+        {
+          "id": "code_switching",
+          "name": "Code-Switching in Speech",
+          "description": "Handling speech that alternates between two or more languages within a single utterance, including recognition and translation of code-mixed speech.",
+          "matching_keywords": [
+            "code-switching",
+            "code-mixing",
+            "multilingual speech mixing",
+            "language switching",
+            "code-switched ASR",
+            "code-mixed speech"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "speech translation",
+        "end-to-end speech translation",
+        "simultaneous translation",
+        "cascaded translation",
+        "code-switching",
+        "speech-to-text translation",
+        "spoken language translation",
+        "cross-lingual speech",
+        "S2TT",
+        "S2ST",
+        "speech-to-speech translation",
+        "SimulST",
+        "multilingual translation",
+        "interpretation"
+      ]
+    },
+    {
+      "id": "speech_enhancement_processing",
+      "name": "Speech Enhancement and Processing",
+      "description": "Signal processing and deep learning techniques for improving speech quality, including separating mixed audio sources, reducing noise, extending bandwidth, and converting voice characteristics.",
+      "sub_topics": [
+        {
+          "id": "speech_separation",
+          "name": "Speech Separation",
+          "description": "Separating individual speech sources from mixed audio signals, including the cocktail party problem and multi-talker scenarios.",
+          "matching_keywords": [
+            "speech separation",
+            "source separation",
+            "cocktail party problem",
+            "multi-talker separation",
+            "blind source separation",
+            "speaker separation",
+            "audio source separation"
+          ]
+        },
+        {
+          "id": "noise_reduction",
+          "name": "Noise Reduction",
+          "description": "Removing background noise and interference from speech signals using deep learning-based and traditional signal processing methods.",
+          "matching_keywords": [
+            "speech denoising",
+            "noise reduction",
+            "speech enhancement",
+            "noise suppression",
+            "noise removal",
+            "deep noise suppression",
+            "DNS"
+          ]
+        },
+        {
+          "id": "bandwidth_extension",
+          "name": "Bandwidth Extension",
+          "description": "Extending the frequency bandwidth of narrowband speech to wideband or super-wideband, improving perceived audio quality.",
+          "matching_keywords": [
+            "bandwidth extension",
+            "audio super-resolution",
+            "speech super-resolution",
+            "frequency extension",
+            "upsampling speech",
+            "wideband extension"
+          ]
+        },
+        {
+          "id": "voice_conversion",
+          "name": "Voice Conversion",
+          "description": "Transforming speech from one speaker's voice to sound like another speaker while preserving linguistic content.",
+          "matching_keywords": [
+            "voice conversion",
+            "speaker conversion",
+            "voice transformation",
+            "VC",
+            "any-to-any voice conversion",
+            "zero-shot voice conversion",
+            "voice morphing"
+          ]
+        }
+      ],
+      "matching_keywords": [
+        "speech enhancement",
+        "speech separation",
+        "source separation",
+        "noise reduction",
+        "speech denoising",
+        "bandwidth extension",
+        "voice conversion",
+        "audio super-resolution",
+        "speech processing",
+        "speech quality improvement",
+        "noise suppression",
+        "signal enhancement",
+        "cocktail party",
+        "speech restoration"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "id": "multilingual_speech",
+      "name": "Multilingual Speech",
+      "description": "Papers addressing speech processing across multiple languages, including multilingual pre-training, cross-lingual transfer, and polyglot models.",
+      "matching_keywords": [
+        "multilingual speech",
+        "cross-lingual speech",
+        "multilingual ASR",
+        "multilingual TTS",
+        "polyglot speech",
+        "cross-lingual transfer",
+        "language-agnostic speech",
+        "massively multilingual"
+      ]
+    },
+    {
+      "id": "low_resource_languages",
+      "name": "Low-resource Languages",
+      "description": "Papers focusing on speech technologies for under-resourced and endangered languages with limited training data.",
+      "matching_keywords": [
+        "low-resource language",
+        "low-resource speech",
+        "under-resourced language",
+        "endangered language",
+        "few-shot speech",
+        "data-scarce speech",
+        "zero-resource speech",
+        "self-supervised low-resource"
+      ]
+    },
+    {
+      "id": "real_time_processing",
+      "name": "Real-time Processing",
+      "description": "Papers addressing latency constraints and streaming architectures for real-time speech and audio processing.",
+      "matching_keywords": [
+        "real-time speech",
+        "streaming speech",
+        "low-latency speech",
+        "online processing",
+        "streaming ASR",
+        "real-time inference",
+        "edge deployment speech",
+        "on-device speech"
+      ]
+    },
+    {
+      "id": "expressive_speech",
+      "name": "Expressive Speech",
+      "description": "Papers on generating and understanding expressive speech with rich emotional, stylistic, and paralinguistic variations.",
+      "matching_keywords": [
+        "expressive speech",
+        "expressive TTS",
+        "emotional speech",
+        "speech style",
+        "expressive synthesis",
+        "natural speech",
+        "human-like speech",
+        "speech expressiveness"
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "description": "Papers where experiments are conducted to evaluate the performance of baseline solutions, showing gaps and future directions.",
+      "matching_keywords": [
+        "analysis",
+        "evaluation",
+        "experiments",
+        "baseline",
+        "comparison",
+        "gaps",
+        "limitations",
+        "future directions",
+        "empirical study",
+        "performance evaluation"
+      ]
+    },
+    {
+      "id": "benchmark",
+      "name": "Benchmark",
+      "description": "Papers that introduce new benchmark datasets and evaluation metrics.",
+      "matching_keywords": [
+        "benchmark",
+        "dataset",
+        "evaluation metrics",
+        "test suite",
+        "evaluation framework",
+        "leaderboard",
+        "standardized evaluation",
+        "test set",
+        "evaluation dataset"
+      ]
+    },
+    {
+      "id": "application",
+      "name": "Application",
+      "description": "Papers that show how to apply the techniques to a specific domain or task, highlighting its strengths and gaps.",
+      "matching_keywords": [
+        "application",
+        "case study",
+        "domain-specific",
+        "real-world",
+        "deployment",
+        "production",
+        "industry",
+        "practical",
+        "use case",
+        "applied"
+      ]
+    },
+    {
+      "id": "survey",
+      "name": "Survey",
+      "description": "Papers that provide a comprehensive overview of the current state of the art, including its taxonomy, advantages and limitations.",
+      "matching_keywords": [
+        "survey",
+        "review",
+        "overview",
+        "taxonomy",
+        "state of the art",
+        "comprehensive",
+        "literature review",
+        "systematic review",
+        "meta-analysis"
+      ]
+    }
+  ]
+}

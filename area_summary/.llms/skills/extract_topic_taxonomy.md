@@ -1,5 +1,5 @@
 ---
-description: Load a background file for a research area and extract a structured topic taxonomy for paper grouping
+description: Extract a hierarchical topic taxonomy for a research area. If background file exists, parse it. Otherwise, research via web search to build the taxonomy.
 oncalls:
   - paper_agent
 ---
@@ -10,12 +10,12 @@ oncalls:
 - **area**: The research area name (e.g., rag, factuality, agents, memory, p13n, benchmark), or "all" to process every area in parallel
 
 **Output:**
-- **taxonomy_json**: prompts/taxonomy/{area}_taxonomy.json — hierarchical topic taxonomy with categories, sub_topics, theme (each with matching_keywords), and category-level matching_keywords (one file per area)
+- **taxonomy_json**: prompts/taxonomy/{area}_taxonomy.json -- hierarchical topic taxonomy with categories, sub_topics, theme (each with matching_keywords), and category-level matching_keywords (one file per area)
 
-Load `background_{area}.txt` and extract a hierarchical topic taxonomy with matching keywords for downstream paper grouping. This includes:
-- **Categories** (disjoint) — each paper belongs to exactly one category
-- **Themes** (overlapping) — papers can match multiple themes across all categories
-- **Sub-topics** (overlapping within category) — papers can match multiple sub-topics within their assigned category
+Extract a hierarchical topic taxonomy for a research area. If `background_{area}.txt` exists, parse it. Otherwise, research the area via web search (`knowledge_search`, `knowledge_load`) to build the taxonomy. The taxonomy includes:
+- **Categories** (disjoint) -- each paper belongs to exactly one category
+- **Themes** (overlapping) -- papers can match multiple themes across all categories
+- **Sub-topics** (overlapping within category) -- papers can match multiple sub-topics within their assigned category
 
 ## Example Commands
 
@@ -35,8 +35,10 @@ Load `background_{area}.txt` and extract a hierarchical topic taxonomy with matc
 
 ## Prerequisites
 
-- Background file must exist at `paper_summary/prompts/background_{area}.txt`
-- Available areas: `rag`, `factuality`, `agents`, `memory`, `p13n`, `benchmark`
+- If `background_{area}.txt` exists, it will be used as the primary source
+- If no background file exists, the agent will research the area via web search to build the taxonomy
+- Known areas with background files: `rag`, `factuality`, `agents`, `memory`, `p13n`, `benchmark`
+- Any area name can be provided -- new areas will use the web search fallback
 
 ## Instructions
 
@@ -79,10 +81,11 @@ task(
 
     Extract the topic taxonomy for area: {area}
 
-    1. Read the background file at:
+    1. Check if background file exists at:
        /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/paper_summary/prompts/background_{area}.txt
 
-    2. Follow the skill instructions (Steps 1-5) for single-area mode.
+    2. If it exists, read it and follow Steps 2-5 for single-area mode.
+       If it does NOT exist, follow Step 2-alt (Research via Web Search), then continue with Steps 3-5.
 
     3. If a papers file exists at:
        /Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/area_summary/tmp_summary/{area}/papers.txt
@@ -128,9 +131,9 @@ After all sub-agents complete, print a combined summary table:
 
 ### Single Area Mode
 
-### Step 1: Validate Area Name
+### Step 1: Validate Area Name and Check Background File
 
-Check that the user-provided area name maps to an existing background file.
+Check whether the user-provided area name maps to an existing background file.
 
 ```python
 import os
@@ -142,13 +145,14 @@ area = "<user_provided_area>"  # e.g., "rag"
 bg_path = os.path.join(AREAS_DIR, f"background_{area}.txt")
 
 if not os.path.exists(bg_path):
-    available = [f.replace("background_", "").replace(".txt", "")
-                 for f in os.listdir(AREAS_DIR) if f.startswith("background_")]
-    print(f"Area '{area}' not found. Available areas: {available}")
-    # STOP and ask the user to pick a valid area
+    print(f"No background file for '{area}'. Using web search fallback.")
+    # Proceed to Step 2-alt
+else:
+    # Proceed to Step 2 (read background file)
+    pass
 ```
 
-If the area is invalid, list the available areas and ask the user to choose.
+If the background file exists, proceed to **Step 2**. If not, proceed to **Step 2-alt** (web search fallback).
 
 ### Step 2: Read the Background File
 
@@ -159,18 +163,57 @@ with open(bg_path, "r") as f:
     background_text = f.read()
 ```
 
+### Step 2-alt: Research Area via Web Search (No Background File)
+
+When no background file exists for the area, research the topic using available search tools to gather enough context to build a taxonomy.
+
+#### 2-alt.1: Search for survey papers and taxonomies
+
+Use `knowledge_search` with queries like:
+- Keywords: "{area} LLM survey taxonomy categories"
+- Natural language: "What are the main categories and taxonomy of {area} in large language models?"
+
+Also search for:
+- Keywords: "{area} large language models training methods approaches"
+- Natural language: "Survey of {area} approaches in LLMs including recent advances"
+
+#### 2-alt.2: Search for specific sub-topics
+
+Based on initial search results, run follow-up searches to identify sub-topics:
+- Keywords: specific method names, technique names, and variations discovered
+- Natural language: queries about specific categories found
+
+#### 2-alt.3: Load key references
+
+If survey paper URLs or wiki pages are found in search results, load them using `knowledge_load` to extract detailed taxonomy information.
+
+#### 2-alt.4: Synthesize into background context
+
+Combine all search results into a structured understanding of the area with:
+- Area description (1-2 sentences)
+- Major categories (disjoint approaches/techniques)
+- Sub-topics within each category
+- Cross-cutting themes
+
+Then proceed to Step 3 (Extract Taxonomy) using this synthesized context instead of a background file.
+
+**Important**: When building taxonomy from web search:
+- Organize categories by **approach/technique** (how), not by task type (what)
+- Task types (e.g., mathematical reasoning, commonsense reasoning) should be **themes**, not categories
+- Follow the same pattern as existing taxonomies (e.g., RAG organizes by pipeline stage, not by question type)
+
 ### Step 3: Extract Taxonomy
 
 Parse the background text into a structured taxonomy. The background files follow a semi-structured format with these patterns:
 
 #### Parsing Rules
 
-1. **Opening paragraph** (text before the first numbered item) → `area_description`
-2. **Numbered lines** (`1.`, `2.`, `3.`, etc.) → top-level `categories`
-3. **Dashed lines** (`- `) under a numbered item → `sub_topics` of that category
-4. **Sub-numbered lines** (`2.1`, `2.2`, etc.) → also `sub_topics`
-5. **"Specialized topics"** / **"Orthogonal to above"** sections → extract as **themes** (not categories)
-6. **"Special case"** lines → sub_topics under the current category
+1. **Opening paragraph** (text before the first numbered item) -> `area_description`
+2. **Numbered lines** (`1.`, `2.`, `3.`, etc.) -> top-level `categories`
+3. **Dashed lines** (`- `) under a numbered item -> `sub_topics` of that category
+4. **Sub-numbered lines** (`2.1`, `2.2`, etc.) -> also `sub_topics`
+5. **"Specialized topics"** / **"Orthogonal to above"** sections -> extract as **themes** (not categories)
+6. **"Special case"** lines -> sub_topics under the current category
 
 #### Output Schema
 
@@ -179,7 +222,7 @@ Generate a JSON object with this exact structure:
 ```json
 {
   "area": "rag",
-  "area_description": "First paragraph from the background file — 1-2 sentences describing the area.",
+  "area_description": "First paragraph from the background file -- 1-2 sentences describing the area.",
   "categories": [
     {
       "id": "snake_case_identifier",
@@ -249,11 +292,11 @@ For each category, generate **5-15 matching keywords** that include:
 3. **Method names** commonly associated with this topic (e.g., "GraphRAG", "ReAct")
 4. **Sub-topic terms** rolled up from child nodes
 
-These keywords will be matched against papers' `sub_topic`, `primary_focus`, and `problem_statement` fields by downstream skills. Aim for **recall over precision** — it's better to include a borderline keyword than miss papers.
+These keywords will be matched against papers' `sub_topic`, `primary_focus`, and `problem_statement` fields by downstream skills. Aim for **recall over precision** -- it's better to include a borderline keyword than miss papers.
 
 #### Theme Extraction Guidelines
 
-Themes are **orthogonal to categories** — papers can match multiple themes regardless of their category assignment. Extract themes in two ways:
+Themes are **orthogonal to categories** -- papers can match multiple themes regardless of their category assignment. Extract themes in two ways:
 
 ##### 1. Area-Specific Themes (from background file)
 
@@ -300,9 +343,9 @@ Look for cross-cutting concerns mentioned in the background text that apply acro
 ##### Theme Keyword Generation
 
 For each theme (both area-specific and standard), generate **5-10 matching keywords** that are:
-1. **Cross-cutting** — applicable across multiple categories
-2. **Methodology-focused** — describing approaches rather than topics
-3. **Distinct from category keywords** — themes should capture paper types, not content areas
+1. **Cross-cutting** -- applicable across multiple categories
+2. **Methodology-focused** -- describing approaches rather than topics
+3. **Distinct from category keywords** -- themes should capture paper types, not content areas
 
 ### Step 4: Save Taxonomy JSON
 
@@ -342,7 +385,7 @@ Output: prompts/taxonomy/{area}_taxonomy.json
 
 ## Reference: Expected Taxonomies
 
-Below are the expected top-level categories for each area, based on the current background files. Use these as a guide — the actual extraction should be driven by the file content.
+Below are the expected top-level categories for each area, based on the current background files. Use these as a guide -- the actual extraction should be driven by the file content.
 
 **Note**: Every taxonomy will also include the 4 standard themes (analysis, benchmark, application, survey), plus any area-specific themes extracted from the background file.
 
@@ -385,6 +428,21 @@ Below are the expected top-level categories for each area, based on the current 
 1. Benchmark Datasets (sub: task input/output, size, dimensions/distribution, generation method)
 2. Metrics and Evaluation (sub: what's evaluated, metric/range, answer labeling method)
 3. Analysis (sub: models compared, overall capability, fundamental deficiencies)
+
+### Reasoning (no background file -- uses web search)
+**Categories:**
+1. Reasoning Elicitation through Prompting (sub: chain_of_thought, structured_reasoning_prompts, self_consistency_ensemble)
+2. Training for Reasoning (sub: rl_based_reasoning, sft_reasoning_traces, reasoning_distillation)
+3. Test-time Compute and Search (sub: search_based_methods, adaptive_compute, extended_thinking)
+4. Reasoning Verification and Reward Models (sub: process_reward_models, outcome_reward_models, self_correction, critic_verifier)
+5. Latent and Non-verbal Reasoning (sub: continuous_thought, recursive_layer_reasoning, compressed_reasoning)
+
+**Area-specific Themes:**
+- Mathematical Reasoning
+- Logical Reasoning
+- Commonsense Reasoning
+- Code Reasoning
+- Causal Reasoning
 
 ## Related Skills
 
