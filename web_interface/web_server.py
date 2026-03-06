@@ -17,6 +17,7 @@ Then visit: http://localhost:5001 (or your configured port)
 """
 
 import argparse
+import html
 import os
 import re
 import sys
@@ -187,13 +188,17 @@ def extract_summary_preview(html_content: str) -> dict:
 
     title_match = re.search(r"<h1[^>]*>(.*?)</h1>", html_content, re.DOTALL)
     if title_match:
-        preview["title"] = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
+        preview["title"] = html.unescape(
+            re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
+        )
 
     subtitle_match = re.search(
         r'<p class="subtitle">(.*?)</p>', html_content, re.DOTALL
     )
     if subtitle_match:
-        preview["subtitle"] = re.sub(r"<[^>]+>", "", subtitle_match.group(1)).strip()
+        preview["subtitle"] = html.unescape(
+            re.sub(r"<[^>]+>", "", subtitle_match.group(1)).strip()
+        )
 
     stat_pattern = re.compile(
         r'<div class="stat-item">.*?<div class="stat-value">(.*?)</div>.*?'
@@ -207,15 +212,17 @@ def extract_summary_preview(html_content: str) -> dict:
 
     def_match = re.search(r'<p class="definition">(.*?)</p>', html_content, re.DOTALL)
     if def_match:
-        preview["definition"] = re.sub(r"<[^>]+>", "", def_match.group(1)).strip()
+        preview["definition"] = html.unescape(
+            re.sub(r"<[^>]+>", "", def_match.group(1)).strip()
+        )
 
     motivation_match = re.search(
         r'<p class="motivation"[^>]*>(.*?)</p>', html_content, re.DOTALL
     )
     if motivation_match:
-        preview["motivation"] = re.sub(
-            r"<[^>]+>", "", motivation_match.group(1)
-        ).strip()
+        preview["motivation"] = html.unescape(
+            re.sub(r"<[^>]+>", "", motivation_match.group(1)).strip()
+        )
 
     paradigm_pattern = re.compile(
         r'<div class="paradigm-card">\s*<strong>(.*?)</strong>\s*<p>(.*?)</p>',
@@ -224,8 +231,10 @@ def extract_summary_preview(html_content: str) -> dict:
     for match in paradigm_pattern.finditer(html_content):
         preview["paradigms"].append(
             {
-                "name": match.group(1).strip(),
-                "description": re.sub(r"<[^>]+>", "", match.group(2)).strip(),
+                "name": html.unescape(match.group(1).strip()),
+                "description": html.unescape(
+                    re.sub(r"<[^>]+>", "", match.group(2)).strip()
+                ),
             }
         )
 
