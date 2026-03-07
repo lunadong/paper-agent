@@ -34,7 +34,7 @@ if _paper_collection_dir not in sys.path:
     sys.path.insert(0, _paper_collection_dir)
 
 try:
-    from config import config as get_app_config, GeminiConfig
+    from core.config import config as get_app_config, GeminiConfig
 except ImportError:
     # Fallback: define minimal config loading if config.py not available
     GeminiConfig = None

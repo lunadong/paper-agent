@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-
 # Add project paths to avoid import issues with __init__.py
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "paper_summary" / "util"))

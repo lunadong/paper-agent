@@ -7,6 +7,15 @@ You are summarizing research papers in the topic: "{topic_name}"
 
 {papers_text}
 
+## Analysis Instructions
+
+You have {paper_count} papers in this group. Follow these guidelines:
+
+1. **Focus on impact**: Identify the most impactful and novel papers. Not every paper needs to be cited — prioritize quality over exhaustive coverage.
+2. **Cite selectively**: In your `methods`, `timeline`, and `significant_papers` sections, cite only papers that represent genuine advances or introduce distinct approaches. A typical group should cite 10-20 key papers even if the group contains many more.
+3. **Summary size consistency**: Your summary should be similar in depth and length regardless of whether the group has 20 or 200 papers. More papers means more to choose from, not more to write about.
+4. **Look for patterns**: With many papers, focus on identifying trends, paradigm shifts, and convergent ideas rather than describing each paper individually.
+
 ## Your Task
 
 Produce a JSON summary with these exact fields:

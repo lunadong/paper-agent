@@ -100,6 +100,12 @@ This step reads `papers_parsed.json` (from step 2) and groups papers by the taxo
 - **Category order**: Categories without sub-topics are checked first (more specific)
 - **Fallback matching**: If no category match, uses abstract to find closest category
 
+**Scalability for Large Groups**:
+- When a group exceeds 50 papers, `format_papers_for_prompt()` automatically filters out papers with breakthrough score < 7 to keep prompt sizes manageable
+- The filtered count is noted in the papers_text header (e.g., "Showing 78 of 100 papers (filtered 22 papers with breakthrough score < 7)")
+- All retained papers keep their full detail format (title, abstract, core problem, key novelty, evaluation highlights, breakthrough score)
+- The sub-agent prompt (`topic_summary_prompt.txt`) instructs the LLM to focus on the most impactful papers and cite selectively — summary size should remain consistent regardless of group size
+
 ### Required Files Summary
 
 | File | Source | Check |
@@ -355,6 +361,31 @@ else:
 After collecting all topic summaries, launch a sub-agent for cross-cutting analysis.
 
 **Cross-topic analysis prompt:** See `prompts/cross_topic_analysis_prompt.txt`
+
+**Pre-computed statistics:** The cross-topic analysis prompt contains template placeholders for deterministic statistics that must be injected before sending to the sub-agent. Read these values from `paper_groups.json` (produced in Step 1):
+
+| Placeholder | Source field in `paper_groups.json` | Example |
+|---|---|---|
+| `{avg_breakthrough_score}` | `avg_breakthrough_score` | `6.81` |
+| `{year_range}` | `year_range` | `"2020-2025"` |
+| `{total_papers}` | `total_papers` | `657` |
+
+These values are computed deterministically by `parse_papers.py` → propagated by `group_papers.py` → injected into the prompt template. Do **not** let the LLM estimate these — they must come from the data.
+
+**Area Cross-References (Temporary):** When generating the cross-topic analysis, the sub-agent should add `related_fields` entries to link related area summaries. These render as a "📚 Related Field" line below the paradigm cards.
+
+```json
+"related_fields": [
+  {"name": "Display Name", "href": "/area/{area}", "label": "comprehensive summary"}
+]
+```
+
+**Current cross-reference mappings:**
+
+| Area | Cross-reference | `related_fields` entry |
+|------|----------------|------------------------|
+| **rag** | → Factuality & Hallucination Detection | `{"name": "Factuality & Hallucination Detection", "href": "/area/factuality", "label": "comprehensive summary"}` |
+| **factuality** | → RAG | `{"name": "Retrieval-Augmented Generation (RAG)", "href": "/area/rag", "label": "comprehensive summary"}` |
 
 ### Step 4: Assemble HTML Report
 

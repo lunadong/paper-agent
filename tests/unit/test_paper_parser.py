@@ -19,7 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection"))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "paper_metadata"))
 
-from paper_parser_from_emails import (
+from paper_discovery.paper_parser_from_emails import (
     extract_acm_url_from_link,
     extract_arxiv_url_from_link,
     extract_url_from_scholar_link,
@@ -208,7 +208,7 @@ class TestExtractAcmUrl:
         # Setup: ACM Digital Library URL (mock the converter function)
         link = "https://dl.acm.org/doi/pdf/10.1145/3787466"
 
-        patch_target = "paper_parser_from_emails.convert_acm_pdf_to_abs"
+        patch_target = "paper_discovery.paper_parser_from_emails.convert_acm_pdf_to_abs"
         with patch(patch_target) as mock_convert:
             mock_convert.return_value = "https://dl.acm.org/doi/abs/10.1145/3787466"
 
@@ -229,7 +229,7 @@ class TestExtractAcmUrl:
             "url=https://dl.acm.org/doi/pdf/10.1145/1234567&hl=en"
         )
 
-        patch_target = "paper_parser_from_emails.convert_acm_pdf_to_abs"
+        patch_target = "paper_discovery.paper_parser_from_emails.convert_acm_pdf_to_abs"
         with patch(patch_target) as mock_convert:
             mock_convert.return_value = "https://dl.acm.org/doi/abs/10.1145/1234567"
 
@@ -278,7 +278,9 @@ class TestParseScholarPapers:
         </html>
         """
 
-        patch_target = "paper_parser_from_emails.enrich_paper_with_arxiv"
+        patch_target = (
+            "paper_discovery.paper_parser_from_emails.enrich_paper_with_arxiv"
+        )
         with patch(patch_target) as mock_enrich:
             # Make enrich return paper unchanged
             mock_enrich.side_effect = lambda p: p

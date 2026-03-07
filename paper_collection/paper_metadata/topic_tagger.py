@@ -38,7 +38,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PAPER_COLLECTION_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, PAPER_COLLECTION_DIR)
 
-from paper_db import PaperDB, TOPICS
+from core.paper_db import PaperDB, TOPICS
 
 # Search queries for each topic: tag -> (exact_match_queries, semantic_queries)
 # - exact_match_queries: case-insensitive substring match on title or abstract
@@ -326,6 +326,8 @@ def retag_single_topic(tag_to_retag):
 def set_primary_topic(paper_id: int, topic: Optional[str]):
     """Force set the primary_topic for a specific paper.
 
+    Also adds the topic to the topics list if not already present.
+
     Args:
         paper_id: The paper's database ID
         topic: The topic to set (must be a valid topic tag), or None to clear
@@ -349,16 +351,28 @@ def set_primary_topic(paper_id: int, topic: Optional[str]):
     # Show paper info
     title = paper.get("title", "N/A")[:60]
     current_primary = paper.get("primary_topic") or "(none)"
-    current_topics = paper.get("topics") or "(none)"
+    current_topics_str = paper.get("topics") or ""
 
     print(f"\nPaper ID: {paper_id}")
     print(f"Title: {title}...")
-    print(f"Current topics: {current_topics}")
+    print(f"Current topics: {current_topics_str or '(none)'}")
     print(f"Current primary_topic: {current_primary}")
+
+    # Parse current topics list
+    topics_list = [t.strip() for t in current_topics_str.split(",") if t.strip()]
 
     # Update primary_topic
     new_primary = topic if topic else None
-    if db.update_paper(paper_id, primary_topic=new_primary):
+    update_kwargs = {"primary_topic": new_primary}
+
+    # If setting a topic, ensure it's in the topics list
+    if new_primary and new_primary not in topics_list:
+        topics_list.insert(0, new_primary)  # Add at beginning
+        new_topics_str = ", ".join(topics_list)
+        update_kwargs["topics"] = new_topics_str
+        print(f"Adding '{new_primary}' to topics list -> {new_topics_str}")
+
+    if db.update_paper(paper_id, **update_kwargs):
         if new_primary:
             print(f"\n[OK] Set primary_topic to '{new_primary}'")
         else:

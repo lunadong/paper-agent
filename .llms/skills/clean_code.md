@@ -57,51 +57,101 @@ Before cleaning up code structure, first catch any bugs or logic errors:
 
 **CRITICAL**: Do NOT proceed to Step 2 until ALL bugs and errors from the code review are FIXED and validated. The purpose of this step is to catch and fix bugs BEFORE cleaning up code structure.
 
-### Step 2: Identify and FIX Unused/Duplicated Code
+### Step 2 & 3: Parallel Execution (Dedup Check + Memory Leak Check)
+
+Launch these two tasks **in parallel** using the `task` tool:
+
+#### Task A: Find and FIX Unused/Duplicated Code (use code_search subagent)
+
+```
+Prompt for subagent:
+"Analyze ALL Python files in {folder_path or project root} for code quality issues.
+
+Target folder: {folder_path or 'entire project'}
 
 **CRITICAL**: You MUST fix all issues found, not just report them. Analyze the ENTIRE target folder, not just recent changes.
 
-1. **Parse the folder_path argument** (if provided):
-   - If user provided a path like `/clean_code paper_collection/paper_summary`, use that folder
-   - If no path provided, use the entire project root
+Steps:
+1. Search for unused imports - imports that are never referenced in the file
+2. Search for unused functions/methods - functions defined but never called anywhere in the codebase
+3. Search for duplicated code patterns - similar function implementations that could be consolidated
+4. Search for dead code - code that cannot be reached or executed
+5. Search for export bugs - symbols in __all__ that are not actually defined/imported
 
-2. **Use code_search subagent to analyze the entire folder**:
-   ```
-   Use the task tool with subagent_name=code_search to comprehensively analyze the target folder:
+For each potential issue, verify by searching for usages across the codebase.
 
-   Prompt: "Analyze ALL Python files in {folder_path or project root} for:
-   1. Unused imports - imports that are never referenced in the file
-   2. Unused functions/methods - functions defined but never called anywhere in the codebase
-   3. Duplicated code patterns - similar function implementations that could be consolidated
-   4. Dead code - code that cannot be reached or executed
-   5. Export bugs - symbols in __all__ that are not actually defined/imported
+**For each issue found, IMMEDIATELY FIX IT**:
+- **Unused imports**: Remove them using str_replace_edit
+- **Unused functions/methods**: Delete them using str_replace_edit
+- **Duplicated code**: Consolidate into a single shared function, update all callers
+- **Export bugs**: Fix __all__ to only include symbols that actually exist
+- **Dead code**: Remove unreachable code blocks
 
-   Search the ENTIRE folder recursively, not just recent changes.
-   For each potential issue, verify by searching for usages across the codebase."
-   ```
+Fixing approach (DO NOT just report - FIX each issue):
+1. Read the file containing the issue
+2. Use str_replace_edit to remove/fix the problematic code
+3. If removing a function, search for any callers and update them
+4. If consolidating duplicates, create a shared utility and update imports
+5. Verify the fix doesn't break anything by checking for syntax errors"
+```
 
-3. **For each issue found, IMMEDIATELY FIX IT**:
-   - **Unused imports**: Remove them using `str_replace_edit`
-   - **Unused functions/methods**: Delete them using `str_replace_edit`
-   - **Duplicated code**: Consolidate into a single shared function, update all callers
-   - **Export bugs**: Fix `__all__` to only include symbols that actually exist
-   - **Dead code**: Remove unreachable code blocks
+#### Task B: Memory Leak Check (use code_search subagent)
 
-4. **Fixing approach** (DO NOT just report - FIX each issue):
-   ```
-   For each issue found:
-   1. Read the file containing the issue
-   2. Use str_replace_edit to remove/fix the problematic code
-   3. If removing a function, search for any callers and update them
-   4. If consolidating duplicates, create a shared utility and update imports
-   5. Verify the fix doesn't break anything by checking for syntax errors
-   ```
+```
+Prompt for subagent:
+"Analyze ALL Python files in {folder_path or project root} for memory leak patterns.
 
-5. **After fixing, verify**:
-   - Run `validate_changes` to ensure no new errors were introduced
-   - If validation fails, fix the errors immediately before proceeding
+Target folder: {folder_path or 'entire project'}
 
-### Step 3 & 4: Parallel Execution (README Update + Tests)
+Check for these memory leak patterns:
+
+1. **Unclosed resources**:
+   - File handles opened with `open()` without context managers (`with` statement)
+   - Database connections not closed (PaperDB() without db.close())
+   - Network connections, sockets not properly closed
+
+2. **Growing collections in loops**:
+   - Lists/dicts that append in loops without clearing (especially in long-running processes)
+   - Caches without size limits or expiration
+   - NOTE: Lists that are scoped locally to a function and bounded by input size are OK
+
+3. **Circular references**:
+   - Objects referencing each other preventing garbage collection
+   - Closures capturing large objects unnecessarily
+
+4. **Global state accumulation**:
+   - Module-level lists/dicts that grow unbounded across multiple calls
+   - Class-level caches without cleanup
+
+5. **Event handlers / callbacks**:
+   - Registered handlers not being unregistered
+   - Lambda callbacks holding references
+
+Search patterns to use:
+- '= open(' without 'with' context manager
+- 'PaperDB()' without corresponding 'db.close()'
+- '.append(' inside loops without bounds (in long-running processes)
+- Module-level 'cache = {}' or 'cache = []' that grow unbounded
+
+For each potential leak found:
+- Identify the exact file and line number
+- Explain why it's a potential leak (is it truly unbounded? is it in a long-running process?)
+- Verify it's a real leak before reporting (check scope, lifetime, and bounds)
+
+**For each CONFIRMED memory leak, FIX IT**:
+- Add context managers for file/db operations
+- Add proper `.close()` calls in finally blocks
+- Add cache size limits or periodic cleanup
+- Break circular references"
+```
+
+#### After both parallel tasks complete:
+
+- **Verify all fixes**:
+  - Run `validate_changes` to ensure no new errors were introduced
+  - If validation fails, fix the errors immediately before proceeding
+
+### Step 4 & 5: Parallel Execution (README Update + Tests)
 
 Launch these two tasks **in parallel** using the `task` tool:
 
@@ -156,7 +206,7 @@ CRITICAL: Do NOT just report failures - you MUST fix them and verify with anothe
 Working directory: (project root)"
 ```
 
-### Step 5: Run Lint and FIX All Issues (Especially BLACK Formatting)
+### Step 6: Run Lint and FIX All Issues (Especially BLACK Formatting)
 
 After parallel tasks complete, run linting and FIX all issues:
 
@@ -235,12 +285,21 @@ review_code(mode="quick", review_scope=["uncommitted changes"])
 # - Fix any errors found
 # - Re-validate after fixes
 
-# Step 2: Analyze and FIX unused code
-# - Search entire folder for unused functions, imports, duplicates
-# - FIX each issue immediately using str_replace_edit
+# Step 2 & 3: Launch dedup and memory leak check in parallel
+task(
+    config={"subagent_name": "code_search"},
+    title="Find and FIX unused/duplicated code",
+    prompt="Analyze ALL Python files for unused imports, functions, duplicates..."
+)
+task(
+    config={"subagent_name": "code_search"},
+    title="Memory leak check",
+    prompt="Check for memory leak patterns: unclosed files/db, growing collections..."
+)
+# - FIX each issue found using str_replace_edit
 # - Run validate_changes to verify fixes
 
-# Step 3 & 4: Launch in parallel
+# Step 4 & 5: Launch in parallel
 task(
     config={"subagent_name": "general-purpose"},
     title="Update README files",
@@ -252,7 +311,7 @@ task(
     prompt="Run tests. If any fail, FIX them and re-run until all pass..."
 )
 
-# Step 5: After parallel tasks complete
+# Step 6: After parallel tasks complete
 # [!] CRITICAL: Run arc lint from fbsource root, not from project directory!
 # This is required for Black formatting to be properly detected.
 # [!] DO NOT use format_document - it will NOT fix BLACK errors reliably!
@@ -279,11 +338,12 @@ execute_command(
 
 After completion, provide a summary showing:
 1. **Code review**: Issues found and fixed (errors/warnings/info counts)
-2. **Code cleaned**: List of removed unused/duplicated code (with file paths)
-3. **README updates**: Files updated (if any)
-4. **Tests**: Confirm ALL tests pass (include pass count)
-5. **Lint**: Confirm lint is clean (or list any unfixable warnings)
-6. **Validation**: Confirm `validate_changes` shows no new errors
+2. **Memory leaks**: Any leaks found and fixed (file handles, db connections, etc.)
+3. **Code cleaned**: List of removed unused/duplicated code (with file paths)
+4. **README updates**: Files updated (if any)
+5. **Tests**: Confirm ALL tests pass (include pass count)
+6. **Lint**: Confirm lint is clean (or list any unfixable warnings)
+7. **Validation**: Confirm `validate_changes` shows no new errors
 
 **IMPORTANT**: The output should confirm everything is FIXED and VALIDATED, not just reported.
 

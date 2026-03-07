@@ -14,7 +14,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/monitor_memory.sh</string>
+        <string>/Users/lunadong/fbsource/fbcode/assistant/research/paper-agent/paper_collection/cron_jobs/monitor_memory.sh</string>
     </array>
 
     <!-- Schedule: Run daily at 8:00 AM -->

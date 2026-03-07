@@ -24,8 +24,9 @@ PAPER_PARSE_DIR = os.path.join(SCRIPT_DIR, "paper_metadata")
 sys.path.insert(0, SCRIPT_DIR)
 sys.path.insert(0, PAPER_PARSE_DIR)
 
-from config import add_config_args, parse_email_date
-from gmail_client import (
+from core.config import add_config_args, parse_email_date
+from core.paper_db import PaperDB
+from paper_discovery.gmail_client import (
     get_gmail_service,
     get_message,
     get_message_headers,
@@ -33,8 +34,7 @@ from gmail_client import (
     list_messages,
     strip_html,
 )
-from paper_db import PaperDB
-from paper_parser_from_emails import parse_scholar_papers
+from paper_discovery.paper_parser_from_emails import parse_scholar_papers
 
 # Default query for fetching emails
 DEFAULT_QUERY = "from:scholaralerts-noreply@google.com"

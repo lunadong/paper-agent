@@ -17,7 +17,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, PARENT_DIR)
 
-from gmail_client import strip_html
+from paper_discovery.gmail_client import strip_html
 from paper_metadata.acm_fetcher import convert_acm_pdf_to_abs
 from paper_metadata.arxiv_fetcher import (
     extract_paper_info as extract_arxiv_paper_info,
@@ -224,6 +224,15 @@ def enrich_paper_with_arxiv(paper):
             paper["snippet"] = arxiv_info["abstract"]
 
         paper["venue"] = update_arxiv_venue(paper["venue"], arxiv_info["date"])
+
+        # Use arXiv authors (more accurate than Google Scholar parsing)
+        if arxiv_info.get("authors"):
+            paper["authors"] = arxiv_info["authors"]
+
+        # Store arXiv submission date as fallback for recomm_date
+        # (only used if email date is not available - see daily_update.py)
+        if arxiv_info.get("full_date"):
+            paper["arxiv_date"] = arxiv_info["full_date"]
 
         return paper
 

@@ -17,7 +17,9 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection"))
+sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "core"))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "paper_metadata"))
+sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "paper_discovery"))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection" / "paper_summary"))
 sys.path.insert(0, str(PROJECT_ROOT / "web_interface"))
 

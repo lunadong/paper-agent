@@ -394,7 +394,7 @@ def generate_summary_for_paper(
     import sys
 
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from paper_db import PaperDB
+    from core.paper_db import PaperDB
 
     if model_name is None:
         model_name = get_default_model()
@@ -960,7 +960,7 @@ def print_results_and_expectations_table(checkpoint, checkpoint_file=None):
     # Next run expectations
     will_skip = completed + abstract_only
     should_succeed = db_errors + rate_limit + api_errors + timeout
-    may_succeed = corrupt_pdf + json_parse
+    may_need_manual = corrupt_pdf + json_parse  # arXiv already tried and failed
     may_fail = other
 
     print("\nNext --resume Run:")
@@ -968,8 +968,10 @@ def print_results_and_expectations_table(checkpoint, checkpoint_file=None):
     print(f"  Process: {total_errors:>5}  (will retry)")
     if should_succeed > 0:
         print(f"           -> ~{should_succeed} should succeed (transient errors)")
-    if may_succeed > 0:
-        print(f"           -> ~{may_succeed} may succeed (try arXiv)")
+    if may_need_manual > 0:
+        print(
+            f"           -> ~{may_need_manual} may need manual links (PDF/JSON issues)"
+        )
     if may_fail > 0:
         print(f"           -> ~{may_fail} may need investigation")
     print("=" * 80)
@@ -1083,7 +1085,7 @@ def main():
         from concurrent.futures import as_completed, ThreadPoolExecutor
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
-        from paper_db import PaperDB
+        from core.paper_db import PaperDB
 
         # Set up signal handlers for graceful shutdown
         setup_signal_handlers()
@@ -1147,7 +1149,8 @@ def main():
                 print(
                     f"Skipping {skipped} papers: "
                     f"{summary.get('completed', 0)} completed, "
-                    f"{summary.get('permanent_errors', 0)} permanent errors"
+                    f"{summary.get('abstract_only', 0)} abstract-only, "
+                    f"{summary.get('skip_papers', 0)} skipped (permanent issues)"
                 )
         else:
             papers_to_process = papers
@@ -1270,6 +1273,8 @@ def main():
             summary = checkpoint.get_summary()
             print(
                 f"Progress: {summary['completed']}/{summary['total']} completed, "
+                f"{summary['abstract_only']} abstract-only, "
+                f"{summary['skip_papers']} skipped, "
                 f"{summary['failed']} failed, {summary['remaining']} remaining"
             )
             if is_shutdown_requested():

@@ -329,10 +329,10 @@ def store_figures_in_db(
     try:
         import sys
 
-        # Navigate up to paper_collection/ where paper_db.py is located
+        # Navigate up to paper_collection/ where util/paper_db.py is located
         # util/ -> paper_summary/ -> paper_collection/
         sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-        from paper_db import PaperDB
+        from core.paper_db import PaperDB
     except ImportError as e:
         print(f"  Could not import paper_db: {e}")
         return []

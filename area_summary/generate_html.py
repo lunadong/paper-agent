@@ -23,7 +23,6 @@ from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
 
-
 # ============================================================
 # Helpers
 # ============================================================
@@ -557,6 +556,17 @@ def render_area_overview(overview, area):
         paradigm_html += f"""
       <div class="paradigm-card"><strong>{name_html}</strong><p>{desc}</p></div>"""
 
+    related_fields = overview.get("related_fields", [])
+    related_html = ""
+    for rf in related_fields:
+        rf_name = e(rf.get("name", ""))
+        rf_href = rf.get("href", "")
+        rf_label = e(rf.get("label", "comprehensive summary"))
+        related_html += f"""
+  <div style="margin-top:32px;">
+    <h3 style="display:inline;">\U0001f4da Related Field: {rf_name}</h3> <span style="color:#2563eb;font-weight:600;font-size:1.15em;"><em>&mdash; See the <a href="{rf_href}" style="color:#1d4ed8;text-decoration:underline;">{rf_label}</a>.</em></span>
+  </div>"""
+
     return f"""
 <div class="container">
 <div class="area-overview-box">
@@ -566,7 +576,7 @@ def render_area_overview(overview, area):
   <p class="motivation" style="margin-bottom:24px;">{motivation}</p>
   <h3>\U0001f3af Key Paradigms</h3>
   <div class="paradigm-grid">{paradigm_html}
-  </div>
+  </div>{related_html}
 </div>
 </div>"""
 
@@ -919,7 +929,9 @@ def render_benchmark_leaderboard(benchmarks):
 </div>"""
 
 
-def render_distribution(paper_groups, taxonomy):  # noqa: unused taxonomy kept for future use
+def render_distribution(
+    paper_groups, taxonomy
+):  # noqa: unused taxonomy kept for future use
     files = paper_groups.get("files", [])
     if not files:
         return ""

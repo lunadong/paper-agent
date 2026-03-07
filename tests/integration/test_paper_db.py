@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -73,14 +72,14 @@ class TestPaperDBInit:
     def test_paper_db_init(self, mock_connection, mock_cursor):
         """Test: Initialize PaperDB with mocked connection."""
         # Setup: Patch psycopg2.connect to return mock connection
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
                 # Execute: Import and create PaperDB
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -91,8 +90,8 @@ class TestPaperDBInit:
     def test_paper_db_init_with_custom_url(self, mock_connection, mock_cursor):
         """Test: Initialize PaperDB with custom database URL."""
         # Setup: Patch psycopg2.connect
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            from paper_db import PaperDB
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            from core.paper_db import PaperDB
 
             # Execute: Create PaperDB with custom URL
             custom_url = "postgresql://custom:custom@localhost/custom"
@@ -104,10 +103,10 @@ class TestPaperDBInit:
     def test_paper_db_init_no_config_raises_error(self):
         """Test: Raise error when no database URL configured."""
         # Setup: Patch config to return empty config
-        with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.load_db_config") as mock_config:
             mock_config.return_value = {}
 
-            from paper_db import PaperDB
+            from core.paper_db import PaperDB
 
             # Execute & Assert: Should raise ValueError
             with pytest.raises(ValueError, match="PostgreSQL URL not configured"):
@@ -128,13 +127,13 @@ class TestAddPaper:
         # Setup: Configure mock to return new paper ID
         mock_cursor.fetchone.return_value = {"id": 1}
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -159,13 +158,13 @@ class TestAddPaper:
         # Setup: Configure mock to return None (duplicate case with ON CONFLICT DO NOTHING)
         mock_cursor.fetchone.return_value = None
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -198,13 +197,13 @@ class TestGetPaper:
         # Setup: Configure mock to return sample paper
         mock_cursor.fetchone.return_value = sample_paper_row
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -223,13 +222,13 @@ class TestGetPaper:
         # Setup: Configure mock to return None
         mock_cursor.fetchone.return_value = None
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -244,13 +243,13 @@ class TestGetPaper:
         # Setup: Configure mock to return list of papers
         mock_cursor.fetchall.return_value = [sample_paper_row, sample_paper_row]
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -276,13 +275,13 @@ class TestUpdatePaper:
         # Setup: Configure mock to indicate update success
         mock_cursor.rowcount = 1
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -303,13 +302,13 @@ class TestUpdatePaper:
         # Setup: Configure mock to indicate no rows updated
         mock_cursor.rowcount = 0
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -321,13 +320,13 @@ class TestUpdatePaper:
 
     def test_update_paper_no_valid_fields(self, mock_connection, mock_cursor):
         """Test: Return False when no valid fields provided."""
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
 
-                from paper_db import PaperDB
+                from core.paper_db import PaperDB
 
                 db = PaperDB()
 
@@ -354,15 +353,15 @@ class TestVectorSearch:
         search_result["similarity"] = 0.85
         mock_cursor.fetchall.return_value = [search_result]
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
-                with patch("paper_db.generate_openai_embedding") as mock_embed:
+                with patch("core.paper_db.generate_openai_embedding") as mock_embed:
                     mock_embed.return_value = [0.1] * 512
 
-                    from paper_db import PaperDB
+                    from core.paper_db import PaperDB
 
                     db = PaperDB()
 
@@ -392,15 +391,15 @@ class TestVectorSearch:
 
         mock_cursor.fetchall.return_value = [high_sim, low_sim]
 
-        with patch("paper_db.psycopg2.connect", return_value=mock_connection):
-            with patch("paper_db.load_db_config") as mock_config:
+        with patch("core.paper_db.psycopg2.connect", return_value=mock_connection):
+            with patch("core.paper_db.load_db_config") as mock_config:
                 mock_config.return_value = {
                     "database": {"url": "postgresql://test:test@localhost/test"}
                 }
-                with patch("paper_db.generate_openai_embedding") as mock_embed:
+                with patch("core.paper_db.generate_openai_embedding") as mock_embed:
                     mock_embed.return_value = [0.1] * 512
 
-                    from paper_db import PaperDB
+                    from core.paper_db import PaperDB
 
                     db = PaperDB()
 
@@ -428,7 +427,7 @@ class TestConnectionPoolSingleton:
     def test_connection_pool_singleton(self):
         """Test: Verify ConnectionPool follows singleton pattern."""
         # Setup: Import ConnectionPool
-        from paper_db import ConnectionPool
+        from core.paper_db import ConnectionPool
 
         # Execute: Create multiple instances
         pool1 = ConnectionPool()
@@ -439,7 +438,7 @@ class TestConnectionPoolSingleton:
 
     def test_connection_pool_thread_safety(self):
         """Test: Verify ConnectionPool is thread-safe."""
-        from paper_db import ConnectionPool
+        from core.paper_db import ConnectionPool
 
         # Setup: List to store instances from different threads
         instances: List[ConnectionPool] = []
@@ -466,7 +465,7 @@ class TestConnectionPoolSingleton:
 
     def test_get_connection_pool_returns_singleton(self):
         """Test: get_connection_pool returns singleton instance."""
-        from paper_db import get_connection_pool
+        from core.paper_db import get_connection_pool
 
         # Execute: Get pool multiple times
         pool1 = get_connection_pool()

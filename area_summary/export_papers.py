@@ -55,7 +55,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "paper_collection"))
 
-from paper_db import PaperDB
+from util.paper_db import PaperDB
 
 
 def get_all_topics() -> list:
@@ -63,15 +63,13 @@ def get_all_topics() -> list:
     db = PaperDB()
     try:
         cursor = db._get_cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT primary_topic, COUNT(*) as count
             FROM papers
             WHERE primary_topic IS NOT NULL
             GROUP BY primary_topic
             ORDER BY count DESC
-            """
-        )
+            """)
         return [dict(row) for row in cursor.fetchall()]
     finally:
         db.close()

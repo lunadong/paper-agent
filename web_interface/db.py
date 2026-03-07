@@ -273,7 +273,9 @@ def _execute_vector_search(embedding_str: str, top_k: int) -> list:
         SELECT id, title, authors, venue, year, abstract, link, recomm_date, topics,
                1 - (embedding <=> %s::vector) as similarity,
                CASE WHEN summary_generated_at IS NOT NULL THEN true ELSE false END as has_summary,
-               summary_core->>'topic_relevance' as topic_relevance_json,
+               CASE WHEN summary_core IS NOT NULL AND summary_core != ''
+                    THEN summary_core::jsonb->>'topic_relevance'
+                    ELSE NULL END as topic_relevance_json,
                primary_topic
         FROM papers
         WHERE embedding IS NOT NULL
@@ -408,15 +410,13 @@ def get_similar_papers(paper_id, limit=5):
 
 def get_stats() -> dict:
     """Get database and embedding statistics."""
-    cursor = execute_with_retry(
-        """
+    cursor = execute_with_retry("""
         SELECT
             COUNT(*) as total_papers,
             COUNT(embedding) as papers_with_embedding,
             COUNT(*) - COUNT(embedding) as papers_without_embedding
         FROM papers
-        """
-    )
+        """)
     row = cursor.fetchone()
     if row is None:
         return {
@@ -556,30 +556,24 @@ def _ensure_page_views_table():
     if _page_views_table_initialized:
         return
 
-    execute_with_retry(
-        """
+    execute_with_retry("""
         CREATE TABLE IF NOT EXISTS page_views (
             page_name VARCHAR(50) PRIMARY KEY,
             view_count BIGINT DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """
-    )
+        """)
 
-    execute_with_retry(
-        """
+    execute_with_retry("""
         INSERT INTO page_views (page_name, view_count) VALUES ('main', 100)
         ON CONFLICT (page_name) DO NOTHING
-        """
-    )
+        """)
 
-    execute_with_retry(
-        """
+    execute_with_retry("""
         INSERT INTO page_views (page_name, view_count) VALUES ('paper_detail', 50)
         ON CONFLICT (page_name) DO NOTHING
-        """
-    )
+        """)
 
     _page_views_table_initialized = True
 

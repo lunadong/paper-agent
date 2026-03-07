@@ -8,6 +8,7 @@ Tests paper_collection/config.py functionality including:
 - Singleton pattern
 """
 
+import importlib
 import sys
 from pathlib import Path
 from typing import Any, Dict
@@ -20,8 +21,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection"))
 
-import config as config_module
-from config import (
+from core.config import (
     config,
     create_config_from_dict,
     DatabaseConfig,
@@ -178,7 +178,7 @@ class TestFindConfigFile:
         config_file.write_text("notification_email: test@example.com")
 
         # Execute: Patch CONFIG_LOCATIONS to use our temp file
-        with patch("config.CONFIG_LOCATIONS", [str(config_file)]):
+        with patch("core.config.CONFIG_LOCATIONS", [str(config_file)]):
             result = find_config_file()
 
         # Assert: The config file path is returned
@@ -193,7 +193,7 @@ class TestFindConfigFile:
         ]
 
         # Execute: Patch CONFIG_LOCATIONS with nonexistent paths
-        with patch("config.CONFIG_LOCATIONS", nonexistent_paths):
+        with patch("core.config.CONFIG_LOCATIONS", nonexistent_paths):
             result = find_config_file()
 
         # Assert: None is returned when no config exists
@@ -295,11 +295,11 @@ class TestGmailConfig:
         # Execute: Check default values (no action needed, values set on creation)
 
         # Assert: Default values are correct
-        assert gmail_config.credentials_file == "credentials.json", (
-            "credentials_file should default to credentials.json"
+        assert gmail_config.credentials_file == "credentials/credentials.json", (
+            "credentials_file should default to credentials/credentials.json"
         )
-        assert gmail_config.token_file == "token.json", (
-            "token_file should default to token.json"
+        assert gmail_config.token_file == "credentials/token.json", (
+            "token_file should default to credentials/token.json"
         )
         assert gmail_config.search_query == "from:scholaralerts-noreply@google.com", (
             "search_query should filter for Google Scholar alerts"
@@ -390,24 +390,38 @@ class TestConfigSingleton:
 
     def test_config_singleton(self, tmp_path: Path) -> None:
         """config() returns the same instance on multiple calls."""
+        # Import the config module using sys.modules to avoid function shadowing
+        import sys
+
+        # Get the actual module, not the function
+        if "core.config" in sys.modules:
+            config_module = sys.modules["core.config"]
+        else:
+            import core.config
+
+            config_module = sys.modules["core.config"]
+
         # Setup: Reset the singleton and create a temp config
         config_module._config_instance = None
 
         config_file = tmp_path / "config.yaml"
         config_file.write_text("notification_email: singleton@test.com")
 
-        # Execute: Call config() multiple times
-        with patch("config.CONFIG_LOCATIONS", [str(config_file)]):
-            first_call = config()
-            second_call = config()
-            third_call = config()
+        # Execute: Call config() multiple times with patched CONFIG_LOCATIONS
+        original_locations = config_module.CONFIG_LOCATIONS
+        try:
+            config_module.CONFIG_LOCATIONS = [str(config_file)]
+            first_call = config_module.config()
+            second_call = config_module.config()
+            third_call = config_module.config()
 
-        # Assert: All calls return the same instance
-        assert first_call is second_call, "Second call should return same instance"
-        assert second_call is third_call, "Third call should return same instance"
-        assert first_call.notification_email == "singleton@test.com", (
-            "Singleton should load config correctly"
-        )
-
-        # Cleanup: Reset singleton for other tests
-        config_module._config_instance = None
+            # Assert: All calls return the same instance
+            assert first_call is second_call, "Second call should return same instance"
+            assert second_call is third_call, "Third call should return same instance"
+            assert first_call.notification_email == "singleton@test.com", (
+                "Singleton should load config correctly"
+            )
+        finally:
+            # Cleanup: Reset singleton and restore original locations
+            config_module.CONFIG_LOCATIONS = original_locations
+            config_module._config_instance = None

@@ -34,7 +34,7 @@ echo "timestamp,pid,rss_mb,vsz_mb,cpu_percent,elapsed_time" > "$MEMORY_LOG"
 PYTHON="/usr/bin/python3"
 
 # Start daily_update.py in background and capture its PID
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/.."
 $PYTHON daily_update.py --days 2 "$@" > "$PROCESS_LOG" 2>&1 &
 MAIN_PID=$!
 

@@ -1,6 +1,5 @@
 # Credentials and secrets - NEVER commit these
-credentials.json
-token.json
+paper_collection/credentials/
 config.yaml
 
 # Python

@@ -53,7 +53,7 @@ def get_gmail_service(
     # Get paths from config if not provided
     if credentials_file is None or token_file is None:
         try:
-            from config import config
+            from core.config import config
 
             cfg = config()
             if credentials_file is None:
@@ -63,9 +63,9 @@ def get_gmail_service(
         except ImportError:
             # Config module not available, use defaults
             if credentials_file is None:
-                credentials_file = "credentials.json"
+                credentials_file = "credentials/credentials.json"
             if token_file is None:
-                token_file = "token.json"
+                token_file = "credentials/token.json"
 
     creds = None
 

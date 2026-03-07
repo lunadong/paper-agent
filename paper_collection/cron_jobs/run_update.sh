@@ -26,7 +26,7 @@ echo "========================================"
 echo "Paper Update - $(date)"
 echo "========================================"
 
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/.."
 $PYTHON daily_update.py --days 2 "$@"
 
 echo ""

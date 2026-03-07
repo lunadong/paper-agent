@@ -1,14 +1,21 @@
 """
-Integration tests for paper_collection/gmail_client.py
+Integration tests for paper_collection/paper_discovery/gmail_client.py
 
 Tests the Gmail client with mocked Gmail API.
 """
 
 import base64
+import sys
+from pathlib import Path
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "paper_collection"))
 
 
 # =============================================================================
@@ -117,13 +124,13 @@ class TestGmailServiceAuth:
         token_file.write_text('{"token": "test"}')
 
         with patch(
-            "gmail_client.Credentials.from_authorized_user_file"
+            "paper_discovery.gmail_client.Credentials.from_authorized_user_file"
         ) as mock_creds_load:
             mock_creds_load.return_value = mock_credentials
-            with patch("gmail_client.build") as mock_build:
+            with patch("paper_discovery.gmail_client.build") as mock_build:
                 mock_build.return_value = MagicMock()
 
-                from gmail_client import get_gmail_service
+                from paper_discovery.gmail_client import get_gmail_service
 
                 # Execute: Get Gmail service with existing token
                 service = get_gmail_service(
@@ -148,14 +155,14 @@ class TestGmailServiceAuth:
         token_file.write_text('{"token": "expired"}')
 
         with patch(
-            "gmail_client.Credentials.from_authorized_user_file"
+            "paper_discovery.gmail_client.Credentials.from_authorized_user_file"
         ) as mock_creds_load:
             mock_creds_load.return_value = mock_credentials
-            with patch("gmail_client.Request"):
-                with patch("gmail_client.build") as mock_build:
+            with patch("paper_discovery.gmail_client.Request"):
+                with patch("paper_discovery.gmail_client.build") as mock_build:
                     mock_build.return_value = MagicMock()
 
-                    from gmail_client import get_gmail_service
+                    from paper_discovery.gmail_client import get_gmail_service
 
                     # Execute: Get service with expired token
                     service = get_gmail_service(
@@ -179,7 +186,7 @@ class TestListMessages:
 
     def test_list_messages(self, mock_gmail_service):
         """Test: List messages with mock service."""
-        from gmail_client import list_messages
+        from paper_discovery.gmail_client import list_messages
 
         # Execute: List messages
         messages = list_messages(
@@ -200,7 +207,7 @@ class TestListMessages:
             "messages": []
         }
 
-        from gmail_client import list_messages
+        from paper_discovery.gmail_client import list_messages
 
         # Execute: List messages
         messages = list_messages(mock_gmail_service, max_results=10)
@@ -224,7 +231,7 @@ class TestListMessages:
             page2_response,
         ]
 
-        from gmail_client import list_messages
+        from paper_discovery.gmail_client import list_messages
 
         # Execute: List messages with max_results larger than first page
         messages = list_messages(mock_gmail_service, max_results=5)
@@ -246,7 +253,7 @@ class TestGetMessage:
 
     def test_get_message_success(self, mock_gmail_service):
         """Test: Retrieve email content successfully."""
-        from gmail_client import get_message
+        from paper_discovery.gmail_client import get_message
 
         # Execute: Get message by ID
         message = get_message(mock_gmail_service, "msg123")
@@ -267,7 +274,7 @@ class TestGetMessage:
             resp=resp, content=b"Not Found"
         )
 
-        from gmail_client import get_message
+        from paper_discovery.gmail_client import get_message
 
         # Execute: Try to get non-existent message
         message = get_message(mock_gmail_service, "nonexistent")
@@ -288,8 +295,8 @@ class TestGetMessage:
             {"id": "msg123", "payload": {}},
         ]
 
-        with patch("gmail_client.time.sleep"):  # Skip actual sleep
-            from gmail_client import get_message
+        with patch("paper_discovery.gmail_client.time.sleep"):  # Skip actual sleep
+            from paper_discovery.gmail_client import get_message
 
             # Execute: Get message with retry
             message = get_message(mock_gmail_service, "msg123")
@@ -310,7 +317,7 @@ class TestGetRawHtml:
 
     def test_get_raw_html(self, sample_multipart_message):
         """Test: Extract HTML from multipart message."""
-        from gmail_client import get_raw_html
+        from paper_discovery.gmail_client import get_raw_html
 
         # Execute: Extract HTML
         html = get_raw_html(sample_multipart_message)
@@ -332,7 +339,7 @@ class TestGetRawHtml:
             }
         }
 
-        from gmail_client import get_raw_html
+        from paper_discovery.gmail_client import get_raw_html
 
         # Execute: Extract HTML
         html = get_raw_html(message)
@@ -356,7 +363,7 @@ class TestGetRawHtml:
             }
         }
 
-        from gmail_client import get_raw_html
+        from paper_discovery.gmail_client import get_raw_html
 
         # Execute: Try to extract HTML
         html = get_raw_html(message)
@@ -376,7 +383,7 @@ class TestGetMessageHeaders:
 
     def test_get_message_headers(self, sample_multipart_message):
         """Test: Extract common headers from message."""
-        from gmail_client import get_message_headers
+        from paper_discovery.gmail_client import get_message_headers
 
         # Execute: Extract headers
         headers = get_message_headers(sample_multipart_message)
@@ -398,7 +405,7 @@ class TestGetMessageHeaders:
             }
         }
 
-        from gmail_client import get_message_headers
+        from paper_discovery.gmail_client import get_message_headers
 
         # Execute: Extract headers
         headers = get_message_headers(message)
@@ -420,7 +427,7 @@ class TestStripHtml:
 
     def test_strip_html(self):
         """Test: Convert HTML to plain text."""
-        from gmail_client import strip_html
+        from paper_discovery.gmail_client import strip_html
 
         # Setup: HTML content with various elements
         html = """
@@ -449,7 +456,7 @@ class TestStripHtml:
 
     def test_strip_html_entities(self):
         """Test: Decode HTML entities."""
-        from gmail_client import strip_html
+        from paper_discovery.gmail_client import strip_html
 
         # Setup: HTML with entities
         html = "<p>Tom &amp; Jerry &lt;3 &gt; 2</p>"
@@ -464,7 +471,7 @@ class TestStripHtml:
 
     def test_strip_html_script_tags(self):
         """Test: Remove script tag content."""
-        from gmail_client import strip_html
+        from paper_discovery.gmail_client import strip_html
 
         # Setup: HTML with script tag
         html = """
@@ -484,7 +491,7 @@ class TestStripHtml:
 
     def test_strip_html_preserves_newlines(self):
         """Test: BR and closing tags create newlines."""
-        from gmail_client import strip_html
+        from paper_discovery.gmail_client import strip_html
 
         # Setup: HTML with line breaks
         html = "<p>Line 1</p><br><p>Line 2</p>"

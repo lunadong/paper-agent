@@ -264,8 +264,7 @@ class PaperDB:
     def _create_tables(self):
         """Create the papers table if it doesn't exist."""
         cursor = self._get_cursor()
-        cursor.execute(
-            f"""
+        cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS papers (
                 id SERIAL PRIMARY KEY,
                 title TEXT NOT NULL,
@@ -287,8 +286,7 @@ class PaperDB:
                 embedding vector({EMBEDDING_DIM}),
                 UNIQUE(title, link)
             )
-        """
-        )
+        """)
         self.conn.commit()
 
         # Run migrations to add new columns to existing tables
@@ -299,12 +297,10 @@ class PaperDB:
         cursor = self._get_cursor()
 
         # Check if primary_topic column exists, add if not
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT column_name FROM information_schema.columns
             WHERE table_name = 'papers' AND column_name = 'primary_topic'
-        """
-        )
+        """)
         if cursor.fetchone() is None:
             print("Adding primary_topic column to papers table...")
             cursor.execute("ALTER TABLE papers ADD COLUMN primary_topic TEXT")
@@ -312,12 +308,10 @@ class PaperDB:
             print("Migration complete: primary_topic column added")
 
         # Check if summary_techniques column exists, add if not
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT column_name FROM information_schema.columns
             WHERE table_name = 'papers' AND column_name = 'summary_techniques'
-        """
-        )
+        """)
         if cursor.fetchone() is None:
             print("Adding summary_techniques column to papers table...")
             cursor.execute("ALTER TABLE papers ADD COLUMN summary_techniques TEXT")
@@ -325,12 +319,10 @@ class PaperDB:
             print("Migration complete: summary_techniques column added")
 
         # Check if summary_experiments column exists, add if not
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT column_name FROM information_schema.columns
             WHERE table_name = 'papers' AND column_name = 'summary_experiments'
-        """
-        )
+        """)
         if cursor.fetchone() is None:
             print("Adding summary_experiments column to papers table...")
             cursor.execute("ALTER TABLE papers ADD COLUMN summary_experiments TEXT")
@@ -338,16 +330,13 @@ class PaperDB:
             print("Migration complete: summary_experiments column added")
 
         # Create paper_images table if it doesn't exist
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT table_name FROM information_schema.tables
             WHERE table_name = 'paper_images'
-        """
-        )
+        """)
         if cursor.fetchone() is None:
             print("Creating paper_images table...")
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE paper_images (
                     id SERIAL PRIMARY KEY,
                     paper_id INTEGER REFERENCES papers(id) ON DELETE CASCADE,
@@ -357,8 +346,7 @@ class PaperDB:
                     image_data BYTEA,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
             cursor.execute(
                 "CREATE INDEX idx_paper_images_paper_id ON paper_images(paper_id)"
             )
@@ -395,18 +383,32 @@ class PaperDB:
         Add a paper to the database.
 
         Args:
-            title: Paper title
+            title: Paper title (required)
             authors: Comma-separated list of authors
             venue: Publication venue (journal, conference, arXiv, etc.)
             year: Publication year
             abstract: Paper abstract
-            link: URL to the paper
+            link: URL to the paper (required)
             recomm_date: Date the paper was recommended (from email)
             generate_embedding: If True, generate and store embedding
 
         Returns:
-            The row ID of the inserted paper, or None if it already exists
+            The row ID of the inserted paper, or None if:
+            - Missing required fields (title or link)
+            - Paper already exists (duplicate)
         """
+        # Validate required fields - both title and link must be present
+        if not title or not title.strip():
+            print(f"  Skipping paper: missing title")
+            return None
+        if not link or not link.strip():
+            print(f"  Skipping paper '{title[:50]}...': missing link")
+            return None
+
+        # Clean the values
+        title = title.strip()
+        link = link.strip()
+
         cursor = self._get_cursor()
 
         embedding = None
@@ -887,7 +889,10 @@ class PaperDB:
 
     def _backfill_from_summary_basics(self, paper_id: int, basics: dict) -> None:
         """
-        Backfill paper metadata (title, authors) from summary_basics if empty.
+        Backfill paper metadata (title only) from summary_basics if empty.
+
+        NOTE: Authors are NOT backfilled because arXiv-sourced authors
+        (populated during paper collection) are the authoritative source.
 
         This handles cases where paper collection didn't get complete metadata
         (e.g., ICLR/OpenReview papers parsed from Google Scholar alerts).
@@ -905,22 +910,14 @@ class PaperDB:
 
         updates = {}
 
+        # Only backfill title if empty
         if not paper.get("title") or len(paper.get("title", "").strip()) == 0:
             title_from_summary = basics.get("title")
             if title_from_summary and isinstance(title_from_summary, str):
                 updates["title"] = title_from_summary.strip()
 
-        if not paper.get("authors") or len(paper.get("authors", "").strip()) == 0:
-            authors_from_summary = basics.get("authors")
-            if authors_from_summary:
-                if isinstance(authors_from_summary, list):
-                    valid_authors = [
-                        a for a in authors_from_summary if a and isinstance(a, str)
-                    ]
-                    if valid_authors:
-                        updates["authors"] = ", ".join(valid_authors)
-                elif isinstance(authors_from_summary, str):
-                    updates["authors"] = authors_from_summary.strip()
+        # NOTE: Do NOT backfill authors - arXiv authors are authoritative
+        # The previous code that backfilled authors has been removed
 
         if updates:
             self.update_paper(paper_id, **updates)
@@ -970,11 +967,9 @@ class PaperDB:
                 (f"%{topic}%",),
             )
         else:
-            cursor.execute(
-                """SELECT * FROM papers
+            cursor.execute("""SELECT * FROM papers
                    WHERE summary_generated_at IS NULL
-                   ORDER BY created_at DESC"""
-            )
+                   ORDER BY created_at DESC""")
         return [dict(row) for row in cursor.fetchall()]
 
     def delete_paper(self, paper_id: int) -> bool:

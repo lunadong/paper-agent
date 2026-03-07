@@ -1,5 +1,12 @@
 You have summaries from {topic_count} topic groups covering {total_papers} papers in the "{area}" research area.
 
+## Pre-computed Statistics
+
+The following values are computed deterministically from the full paper dataset. Use them as-is in your output — do NOT re-estimate these:
+- **avg_breakthrough_score**: {avg_breakthrough_score}
+- **year_range**: {year_range}
+- **total_papers**: {total_papers}
+
 ## Topic Summaries
 {topic_summaries}
 
@@ -11,8 +18,8 @@ Produce a JSON cross-topic analysis with these fields:
 {
   "statistics": {
     "total_papers": {total_papers},
-    "year_range": "YYYY-YYYY",
-    "avg_breakthrough_score": X.X,
+    "year_range": "{year_range}",
+    "avg_breakthrough_score": {avg_breakthrough_score},
     "papers_by_topic": {"topic_name": count, ...},
     "coverage_assessment": "1-2 sentences on how well the papers cover the field"
   },
@@ -24,6 +31,13 @@ Produce a JSON cross-topic analysis with these fields:
       {
         "paradigm_name": "Name matching a category from the taxonomy",
         "description": "1-2 sentence description of this paradigm"
+      }
+    ],
+    "related_fields": [
+      {
+        "name": "Related Field Display Name",
+        "href": "/area/{other_area}",
+        "label": "comprehensive summary"
       }
     ]
   },
@@ -139,6 +153,7 @@ All paper references should use this format:
 |-------|-------|-------------|
 | `area_overview.definition` | Max 200 characters | A single concise sentence. Do NOT write a full paragraph. |
 | `area_overview.key_paradigms` | Use taxonomy categories only | Each paradigm must correspond to a category from the taxonomy. Do NOT invent new paradigms beyond what the taxonomy defines. |
+| `area_overview.related_fields` | Optional, 0-2 | Links to related area summaries displayed below paradigm cards. Format: `{"name": "Display Name", "href": "/area/{area}", "label": "comprehensive summary"}` |
 | `cross_topic_connections` | One per adjacent topic pair | You MUST produce a transition for EVERY consecutive pair of topics in the order they appear. If there are N topics, produce exactly N-1 connection entries covering every adjacent pair. |
 | `field_timeline.periods[].key_developments` | 2-4 per period | Each development MUST embed a markdown paper link: `[ShortName](https://papers.lunadong.com/paper/{paper_id})`. Keep each development to 1-2 sentences. |
 | `practical_recommendations` | 6-8 | Actionable recommendations with priority levels. Include 1-2 example papers per recommendation. |
@@ -159,4 +174,13 @@ All paper references should use this format:
 - Cross-cutting patterns that span multiple topics
 - Practical implications for real-world systems
 - Gaps and opportunities for future research
-- Connections between different topic areas
+
+### Area Cross-References (Temporary)
+
+When generating the area_overview, add `related_fields` entries to link to related area summaries:
+
+**For RAG area:**
+- Add to `related_fields`: `{"name": "Factuality & Hallucination Detection", "href": "/area/factuality", "label": "comprehensive summary"}`
+
+**For Factuality area:**
+- Add to `related_fields`: `{"name": "Retrieval-Augmented Generation (RAG)", "href": "/area/rag", "label": "comprehensive summary"}`

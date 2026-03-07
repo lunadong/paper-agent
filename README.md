@@ -29,6 +29,8 @@ interface with AI-powered summarization.
     - Expert and beginner perspective analysis
     - Devmate skills for automated prompt revision
 - **Web Interface**: Browse, search, and view paper summaries with collapsible sections
+  - Author truncation: Long author lists (>20) are truncated with "et al."
+  - HTML entity handling: Proper rendering of special characters in titles and text
 - **Area Summary Preview**: Interactive preview of research area summaries when filtering by topic
 - **Daily Updates**: Automated collection with parallel processing and email notifications
 - **Scheduled Tasks**: macOS launchd integration for daily automated updates
@@ -164,19 +166,42 @@ paper-agent/
 |-- README.md                # This file
 |
 |-- paper_collection/        # Email parsing and data collection
-|   |-- config.py            # Configuration management (includes GeminiConfig)
-|   |-- gmail_client.py      # Gmail API client
-|   |-- paper_collector_wo_LLM.py  # Paper collection (keyword tagging)
-|   |-- paper_db.py          # PostgreSQL database with connection pooling
 |   |-- daily_update.py      # Automated daily update with parallel processing
-|   |-- run_update.sh        # Shell script for cron jobs
+|   |-- weekly_update.py     # Weekly paper fetch from arXiv + Semantic Scholar
+|   |-- topic_search.py      # Topic-based batch paper ingestion
+|   |-- paper_collector_wo_LLM.py  # Paper collection (keyword tagging)
+|   |
+|   |-- cron_jobs/           # Scheduled job scripts
+|   |   |-- com.paper-agent.daily-update.plist  # macOS LaunchAgent config
+|   |   |-- monitor_memory.sh     # Memory monitoring wrapper
+|   |   +-- run_update.sh         # Simple update runner script
+|   |
+|   |-- core/                # Shared utilities
+|   |   |-- __init__.py           # Package exports
+|   |   |-- config.py             # Configuration management (includes GeminiConfig)
+|   |   |-- paper_db.py           # PostgreSQL database with connection pooling
+|   |   +-- profile_memory.py     # Memory profiling utilities
+|   |
+|   |-- paper_discovery/     # Paper search and discovery backends
+|   |   |-- __init__.py           # Package exports with deduplication
+|   |   |-- arxiv_backend.py      # arXiv API client
+|   |   |-- semantic_scholar_backend.py  # Semantic Scholar API client
+|   |   |-- gmail_client.py       # Gmail API client
+|   |   |-- paper_parser_from_emails.py  # Parse Google Scholar alert emails
+|   |   +-- paper_parser_from_google_scholar.py  # Parse Google Scholar pages
+|   |
+|   |-- paper_metadata/      # Paper metadata utilities
+|   |   |-- topic_tagger.py       # Topic classification (exact + semantic)
+|   |   |-- arxiv_fetcher.py      # ArXiv HTML metadata fetcher
+|   |   |-- acm_fetcher.py        # ACM Digital Library fetcher
+|   |   +-- openreview_fetcher.py # OpenReview/ICLR fetcher
 |   |
 |   |-- paper_summary/       # AI-powered paper summarization
 |   |   |-- __init__.py           # Package exports
 |   |   |-- summary_generation.py # Three-stage summary generation
 |   |   |-- prompt_manager.py     # Prompt template loading and topics
 |   |   |
-|   |   |-- util/                 # Utility modules
+|   |   |-- util/                 # Summary utility modules
 |   |   |   |-- __init__.py       # Utility package exports
 |   |   |   |-- checkpoint.py     # Rate limiting & checkpoint management
 |   |   |   |-- pdf_download.py   # PDF download with retry logic
@@ -201,19 +226,13 @@ paper-agent/
 |   |   |   |-- revise_prompts.md    # Revise prompts based on analysis
 |   |   |   +-- user_instructions.md # User constraints for revision
 |   |   |
-|   |   |-- extract_figures.py       # PDF figure extraction
-|   |   |
 |   |   +-- prompt_optimization/  # Prompt improvement workflow
 |   |       |-- analyzer_base.py     # Base analyzer class
 |   |       |-- paper_summaries/     # Example paper outputs
 |   |       |-- analysis_critics/    # Expert/beginner analysis
 |   |       +-- revised_prompts/     # Iteratively improved prompts
 |   |
-|   |-- paper_parser_from_emails.py  # Parse Google Scholar alert emails
-|   |
-|   +-- paper_metadata/      # Paper metadata utilities
-|       |-- topic_tagger.py  # Topic classification (exact + semantic)
-|       +-- arxiv_fetcher.py # ArXiv metadata fetcher
+|   +-- migrations/          # Database migration scripts
 |
 +-- web_interface/           # Web application
     |-- db.py                # Shared database utilities
@@ -224,6 +243,7 @@ paper-agent/
     |-- VERCEL_DEPLOY.md     # Vercel deployment guide
     |-- htmls/               # Area summary HTML files
     |   |-- *_summary.html   # Generated area summaries (e.g., rag_summary.html)
+    |   |-- *_summary_gold.html  # Gold-standard reference summaries
     |   +-- style.css        # Shared styles for summary pages
     |-- templates/
     |   |-- papers.html      # Main papers list page

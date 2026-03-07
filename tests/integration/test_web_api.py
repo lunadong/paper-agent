@@ -9,6 +9,9 @@ from unittest.mock import patch
 
 import pytest
 
+# Skip all tests in this module if Flask is not available
+flask = pytest.importorskip("flask", reason="Flask is required for web API tests")
+
 
 # =============================================================================
 # Fixtures
@@ -75,31 +78,21 @@ def sample_stats() -> Dict[str, Any]:
 @pytest.fixture
 def mock_db_functions(sample_paper_list, sample_stats):
     """Mock all db.py functions used by web_server."""
-    with patch("web_interface.web_server.get_all_papers") as mock_get_all:
-        with patch("web_interface.web_server.search_papers_semantic") as mock_semantic:
-            with patch(
-                "web_interface.web_server.search_papers_keyword"
-            ) as mock_keyword:
-                with patch(
-                    "web_interface.web_server.filter_papers_by_topics"
-                ) as mock_filter_topics:
-                    with patch(
-                        "web_interface.web_server.filter_papers_by_date"
-                    ) as mock_filter_date:
-                        with patch(
-                            "web_interface.web_server.get_similar_papers"
-                        ) as mock_similar:
-                            with patch(
-                                "web_interface.web_server.get_stats"
-                            ) as mock_stats:
+    with patch("web_server.get_all_papers") as mock_get_all:
+        with patch("web_server.search_papers_semantic") as mock_semantic:
+            with patch("web_server.search_papers_keyword") as mock_keyword:
+                with patch("web_server.filter_papers_by_topics") as mock_filter_topics:
+                    with patch("web_server.filter_papers_by_date") as mock_filter_date:
+                        with patch("web_server.get_similar_papers") as mock_similar:
+                            with patch("web_server.get_stats") as mock_stats:
                                 with patch(
-                                    "web_interface.web_server.calculate_monthly_stats"
+                                    "web_server.calculate_monthly_stats"
                                 ) as mock_monthly:
                                     with patch(
-                                        "web_interface.web_server.calculate_topic_stats"
+                                        "web_server.calculate_topic_stats"
                                     ) as mock_topic:
                                         with patch(
-                                            "web_interface.web_server.load_config"
+                                            "web_server.load_config"
                                         ) as mock_config:
                                             # Configure mocks
                                             mock_get_all.return_value = (
@@ -149,7 +142,7 @@ def mock_db_functions(sample_paper_list, sample_stats):
 def test_client(mock_db_functions):
     """Create Flask test client with mocked dependencies."""
     # Import app after mocks are set up
-    from web_interface.web_server import app
+    from web_server import app
 
     app.config["TESTING"] = True
     with app.test_client() as client:

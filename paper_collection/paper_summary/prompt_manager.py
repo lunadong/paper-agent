@@ -9,7 +9,6 @@ Extracted from summary_generation.py for modularity.
 from pathlib import Path
 from typing import Optional
 
-
 # Map topic tags to background file names
 TOPIC_BACKGROUND_FILES = {
     "RAG": "background_rag.txt",

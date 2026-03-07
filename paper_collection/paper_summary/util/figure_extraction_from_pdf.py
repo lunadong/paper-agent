@@ -934,9 +934,9 @@ def extract_from_paper_id(
     paper_id: int, output_dir: Optional[Path] = None
 ) -> list[dict]:
     """Extract figures from a paper in the database."""
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
     try:
-        from paper_db import get_connection
+        from core.paper_db import get_connection
     except ImportError:
         print("Error: Cannot import paper_db. Run from project root.")
         return []
@@ -963,9 +963,9 @@ def extract_from_paper_id(
 
 def extract_batch(limit: int = 10, output_dir: Optional[Path] = None) -> None:
     """Extract figures from multiple papers in the database."""
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
     try:
-        from paper_db import get_connection
+        from core.paper_db import get_connection
     except ImportError:
         print("Error: Cannot import paper_db. Run from project root.")
         return

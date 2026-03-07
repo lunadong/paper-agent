@@ -229,8 +229,8 @@ class CheckpointManager:
         """
         Get IDs that still need processing.
 
-        Excludes completed IDs and abstract_only IDs (already processed with
-        abstract fallback).
+        Excludes completed IDs, abstract_only IDs (already processed with
+        abstract fallback), and skip_papers IDs (permanent PDF/link issues).
 
         Args:
             all_ids: List of all paper IDs to process.
@@ -243,7 +243,9 @@ class CheckpointManager:
         abstract_only = set(
             int(pid) for pid in self.data.get("abstract_only", {}).keys()
         )
-        exclude = completed | abstract_only
+        # Also exclude skip_papers (permanent PDF/link issues)
+        skip_papers = set(int(pid) for pid in self.data.get("skip_papers", {}).keys())
+        exclude = completed | abstract_only | skip_papers
         return [pid for pid in all_ids if pid not in exclude]
 
     def mark_abstract_only(self, paper_id: int, reason: Optional[str] = None):
@@ -278,13 +280,15 @@ class CheckpointManager:
         completed = len(self.data.get("completed_ids", []))
         failed = len(self.data.get("failed_ids", []))
         abstract_only = len(self.data.get("abstract_only", {}))
+        skip_papers = len(self.data.get("skip_papers", {}))
         total = self.data.get("total_papers", 0)
         return {
             "total": total,
             "completed": completed,
             "failed": failed,
             "abstract_only": abstract_only,
-            "remaining": total - completed - abstract_only,
+            "skip_papers": skip_papers,
+            "remaining": total - completed - abstract_only - skip_papers,
         }
 
     def _categorize_errors(
@@ -419,6 +423,10 @@ class CheckpointManager:
         print(
             f"{'abstract_only':<30} {error_stats['abstract_only_total']:>8}   "
             f"Processed with abstract (PDF failed)"
+        )
+        print(
+            f"{'skip_papers':<30} {summary['skip_papers']:>8}   "
+            f"Skipped (permanent issues, no link)"
         )
         print(
             f"{'errors (retryable)':<30} {error_stats['retryable_total']:>8}   "

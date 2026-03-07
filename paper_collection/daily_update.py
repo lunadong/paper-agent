@@ -36,16 +36,16 @@ sys.path.insert(0, SCRIPT_DIR)
 sys.path.insert(0, PAPER_METADATA_DIR)
 sys.path.insert(0, PAPER_SUMMARY_DIR)
 
-from config import add_config_args, init_config, parse_email_date
-from gmail_client import (
+from core.config import add_config_args, init_config, parse_email_date
+from core.paper_db import close_connection_pool, PaperDB
+from paper_discovery.gmail_client import (
     get_gmail_service,
     get_message,
     get_message_headers,
     get_raw_html,
     list_messages,
 )
-from paper_db import close_connection_pool, PaperDB
-from paper_parser_from_emails import parse_scholar_papers
+from paper_discovery.paper_parser_from_emails import parse_scholar_papers
 from summary_generation import generate_summary_for_paper
 
 # Timeout for individual paper processing (5 minutes)
@@ -138,6 +138,16 @@ def _parse_emails_step(service, messages, args):
         # Save to database
         if db and email_papers:
             for paper in email_papers:
+                # Priority: email date (normal recommendation date) > arXiv date (fallback)
+                email_date = parse_email_date(paper.get("email_date", ""))
+                if email_date:
+                    final_recomm_date = email_date
+                elif paper.get("arxiv_date"):
+                    # Use arXiv submission date only if no email date
+                    final_recomm_date = paper["arxiv_date"]
+                else:
+                    final_recomm_date = ""
+
                 paper_id = db.add_paper(
                     title=paper["title"],
                     authors=paper.get("authors", ""),
@@ -145,7 +155,7 @@ def _parse_emails_step(service, messages, args):
                     year=paper.get("year", ""),
                     abstract=paper.get("snippet", ""),
                     link=paper.get("link", ""),
-                    recomm_date=parse_email_date(paper.get("email_date", "")),
+                    recomm_date=final_recomm_date,
                 )
                 if paper_id:
                     total_saved += 1
@@ -408,6 +418,27 @@ def main():
     total_saved, total_skipped = _parse_emails_step(service, messages, args)
 
     # =========================================================================
+    # STEP 2.5: Embedding Generation - Generate embeddings for new papers
+    # =========================================================================
+    embedding_count = 0
+    if args.dry_run:
+        log("STEP 2.5: Skipped embedding generation (dry run)")
+    elif total_saved == 0:
+        log("STEP 2.5: Skipped embedding generation (no new papers)")
+    else:
+        log("STEP 2.5: Generating embeddings for new papers...")
+        db = PaperDB()
+        try:
+            result = db.update_all_embeddings()
+            embedding_count = result.get("updated", 0)
+            log(f"Generated {embedding_count} embeddings")
+        except Exception as e:
+            log(f"Warning: Embedding generation failed: {e}")
+        finally:
+            db.close()
+    print()
+
+    # =========================================================================
     # STEP 3: Summary Generation - Generate tags and summaries for new papers
     # =========================================================================
     summary_success_count = 0
@@ -445,7 +476,7 @@ def main():
         log("Skipping notification email (no email configured)")
     else:
         log("Sending notification email...")
-        from gmail_client import send_email
+        from paper_discovery.gmail_client import send_email
 
         subject, body = _build_notification_email(
             args,

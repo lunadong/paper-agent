@@ -125,11 +125,48 @@ def search_arxiv_by_title(title: str):
     clean_title = re.sub(r"[^\w\s]", " ", title)  # Remove punctuation
     clean_title = re.sub(r"\s+", " ", clean_title).strip()  # Normalize whitespace
 
-    # URL encode the title
-    encoded_title = urllib.parse.quote(clean_title)
+    # Extract key words from title (skip common short words)
+    stop_words = {
+        "a",
+        "an",
+        "the",
+        "of",
+        "in",
+        "on",
+        "for",
+        "to",
+        "and",
+        "or",
+        "is",
+        "are",
+        "with",
+        "by",
+        "from",
+        "as",
+        "at",
+    }
+    words = [
+        w for w in clean_title.lower().split() if w not in stop_words and len(w) > 2
+    ]
 
-    # Build arXiv API URL
-    api_url = f"http://export.arxiv.org/api/query?search_query=ti:{encoded_title}&max_results=5"
+    # Use top 5-6 distinctive words to avoid URL length issues
+    # Prioritize longer words as they're more distinctive
+    words.sort(key=len, reverse=True)
+    search_words = words[:6]
+
+    if not search_words:
+        return None
+
+    # Build search query using AND logic: (ti:word1 AND ti:word2 AND ...)
+    # This finds papers where all words appear in the title
+    term_queries = [f"ti:{word}" for word in search_words]
+    search_query = "(" + " AND ".join(term_queries) + ")"
+
+    # URL encode the query
+    encoded_query = urllib.parse.quote(search_query)
+    api_url = (
+        f"http://export.arxiv.org/api/query?search_query={encoded_query}&max_results=5"
+    )
 
     # Rate limiting
     elapsed = time.time() - _last_request_time
@@ -208,6 +245,71 @@ def extract_date(html_content):
     return None
 
 
+def extract_full_date(html_content):
+    """
+    Extract the full submission date from arXiv HTML.
+
+    Looks for text like: [Submitted on 4 Mar 2024 (v1), last revised 4 Jun 2024 (this version, v4)]
+    Returns the date in YYYY-MM-DD format (e.g., "2024-03-04").
+
+    Args:
+        html_content: HTML content from arXiv page
+
+    Returns:
+        Date string in YYYY-MM-DD format, or None if not found
+    """
+    # Pattern to match "Submitted on DD Mon YYYY"
+    pattern = r"\[Submitted on\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})"
+    match = re.search(pattern, html_content)
+
+    if match:
+        day = int(match.group(1))
+        month_name = match.group(2).lower()
+        year = match.group(3)
+
+        month_num = MONTH_MAP.get(month_name)
+        if month_num:
+            return f"{year}-{month_num:02d}-{day:02d}"
+
+    return None
+
+
+def extract_authors(html_content):
+    """
+    Extract the authors from arXiv HTML.
+
+    Args:
+        html_content: HTML content from arXiv page
+
+    Returns:
+        Comma-separated author string, or None if not found
+    """
+    # arXiv authors are in <div class="authors"> or <meta name="citation_author">
+    # Try meta tags first (more reliable)
+    meta_pattern = r'<meta\s+name="citation_author"\s+content="([^"]+)"'
+    authors = re.findall(meta_pattern, html_content)
+
+    if authors:
+        return ", ".join(authors)
+
+    # Fallback: try <div class="authors">
+    div_pattern = re.compile(
+        r'<div[^>]*class="authors"[^>]*>(.*?)</div>',
+        re.IGNORECASE | re.DOTALL,
+    )
+    match = div_pattern.search(html_content)
+
+    if match:
+        authors_html = match.group(1)
+        # Extract names from <a> tags
+        name_pattern = r"<a[^>]*>([^<]+)</a>"
+        names = re.findall(name_pattern, authors_html)
+        if names:
+            return ", ".join(names)
+
+    return None
+
+
 def extract_abstract(html_content):
     """
     Extract the abstract from arXiv HTML.
@@ -256,11 +358,13 @@ def extract_paper_info(html_content):
         html_content: HTML content from arXiv page
 
     Returns:
-        Dictionary with 'date' and 'abstract' fields
+        Dictionary with 'date', 'full_date', 'abstract', and 'authors' fields
     """
     return {
         "date": extract_date(html_content),
+        "full_date": extract_full_date(html_content),
         "abstract": extract_abstract(html_content),
+        "authors": extract_authors(html_content),
     }
 
 

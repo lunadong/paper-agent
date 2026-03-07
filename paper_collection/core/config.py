@@ -21,8 +21,11 @@ from typing import Dict, Optional
 
 import yaml
 
-# Project root directory (parent of paper_collection)
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Project root directory (parent of paper_collection, which is parent of core)
+# core/config.py -> core/ -> paper_collection/ -> paper-agent/ (project root)
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Config file locations (in order of preference)
@@ -101,8 +104,8 @@ def parse_email_date(date_str: str) -> str:
 class GmailConfig:
     """Gmail API configuration."""
 
-    credentials_file: str = "credentials.json"
-    token_file: str = "token.json"
+    credentials_file: str = "credentials/credentials.json"
+    token_file: str = "credentials/token.json"
     search_query: str = "from:scholaralerts-noreply@google.com"
 
 

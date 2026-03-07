@@ -20,6 +20,10 @@ import json
 import sys
 from pathlib import Path
 
+# When a group exceeds this size, filter out low-score papers to keep prompts manageable
+BIG_GROUP_THRESHOLD = 50
+MIN_BREAKTHROUGH_SCORE = 7
+
 
 def matches_keywords(all_text: str, keywords: list) -> bool:
     """Check if any keyword appears as substring in text (case-insensitive)."""
@@ -272,9 +276,45 @@ def group_papers_by_topic(papers: list, taxonomy: dict) -> dict:
     }
 
 
+def get_breakthrough_score(paper: dict) -> int:
+    """Extract breakthrough score from paper, defaulting to 5 if missing."""
+    core = paper.get("core") or {}
+    if not isinstance(core, dict):
+        return 5
+    ba = core.get("breakthrough_assessment", {})
+    if not isinstance(ba, dict):
+        return 5
+    score = ba.get("score_1_to_10")
+    if score is None:
+        return 5
+    return int(score)
+
+
 def format_papers_for_prompt(papers: list) -> str:
-    """Format papers for the topic summary prompt."""
+    """Format papers for the topic summary prompt.
+
+    For groups larger than BIG_GROUP_THRESHOLD, papers with breakthrough
+    score below MIN_BREAKTHROUGH_SCORE are filtered out to keep prompt
+    sizes manageable. The LLM sub-agent is expected to focus on the most
+    impactful papers among those provided.
+    """
+    total_count = len(papers)
+    if total_count > BIG_GROUP_THRESHOLD:
+        filtered = [
+            p for p in papers if get_breakthrough_score(p) >= MIN_BREAKTHROUGH_SCORE
+        ]
+        removed = total_count - len(filtered)
+        papers = filtered
+    else:
+        removed = 0
+
     formatted = []
+    if removed > 0:
+        formatted.append(
+            f"Note: Showing {len(papers)} of {total_count} papers "
+            f"(filtered {removed} papers with breakthrough score "
+            f"< {MIN_BREAKTHROUGH_SCORE}).\n"
+        )
     for paper in papers:
         basics = paper.get("basics") or {}
         core = paper.get("core") or {}
@@ -542,6 +582,12 @@ Examples:
         result_json = {
             "area": area,
             "total_papers": len(papers),
+            "avg_breakthrough_score": papers_data.get("avg_breakthrough_score"),
+            "year_range": (
+                f"{papers_data['years'][0]}-{papers_data['years'][-1]}"
+                if papers_data.get("years")
+                else None
+            ),
             "categories": {
                 cat_id: len(papers) for cat_id, papers in result["groups"].items()
             },
