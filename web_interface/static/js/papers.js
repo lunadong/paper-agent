@@ -359,6 +359,18 @@ function renderTopicBarChart(topicStats) {
     });
 }
 
+// Truncate authors to max N and add "et al." if needed
+function truncateAuthors(authorsStr, maxAuthors = 20) {
+    if (!authorsStr) return authorsStr;
+
+    const authors = authorsStr.split(',').map(a => a.trim());
+    if (authors.length <= maxAuthors) {
+        return authorsStr;
+    }
+
+    return authors.slice(0, maxAuthors).join(', ') + ', et al.';
+}
+
 // Format date from YYYY-MM-DD to "Jan 29, 2026" for display
 function formatDate(dateStr) {
     if (!dateStr || dateStr === 'N/A') {
@@ -393,7 +405,7 @@ function renderPapers(papers, searchMode = null) {
         const abstract = paper.abstract || '';
 
         const meta = [
-            paper.authors,
+            truncateAuthors(paper.authors, 20),
             paper.venue
         ].filter(Boolean).join(' - ') + (paper.year ? ` (${paper.year})` : '');
 

@@ -687,9 +687,9 @@
         </h1>
         <div class="paper-meta">
             {% if paper.summary and paper.summary.basics and paper.summary.basics.authors %}
-            {{ paper.summary.basics.authors | join(', ') }}
+            {{ paper.summary.basics.authors | truncate_authors }}
             {% else %}
-            {{ paper.authors or 'Unknown authors' }}
+            {{ (paper.authors or 'Unknown authors') | truncate_authors }}
             {% endif %}
         </div>
         {% if paper.summary and paper.summary.basics and paper.summary.basics.institutions %}

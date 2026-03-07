@@ -57,6 +57,28 @@ app = Flask(__name__)
 app.register_blueprint(paper_detail_bp)
 
 
+# Jinja2 filter to truncate author lists
+def truncate_authors(authors, max_authors=20):
+    """Truncate author list to max_authors and add 'et al.' if needed."""
+    if not authors:
+        return authors
+    # Handle list of authors
+    if isinstance(authors, list):
+        if len(authors) <= max_authors:
+            return ", ".join(authors)
+        return ", ".join(authors[:max_authors]) + ", et al."
+    # Handle string of authors
+    if isinstance(authors, str):
+        author_list = [a.strip() for a in authors.split(",")]
+        if len(author_list) <= max_authors:
+            return authors
+        return ", ".join(author_list[:max_authors]) + ", et al."
+    return authors
+
+
+app.jinja_env.filters["truncate_authors"] = truncate_authors
+
+
 def get_papers_per_page():
     """Get papers per page from config or default."""
     cfg = load_config()
