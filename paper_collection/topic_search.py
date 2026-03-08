@@ -161,7 +161,7 @@ def add_papers_to_db(
         "errors": 0,
     }
 
-    for i, paper in enumerate(papers):
+    for paper in papers:
         try:
             title = paper.get("title", "")
             if not title:
@@ -175,7 +175,7 @@ def add_papers_to_db(
                     year = paper.get("year", "?")
                     print(f"  [{arxiv_id or 'S2'}] ({year}) {title[:55]}...")
                 elif stats["added"] == 11:
-                    print(f"  ... and more papers")
+                    print("  ... and more papers")
             else:
                 # Use add_paper method with individual arguments
                 result = db.add_paper(
@@ -200,6 +200,73 @@ def add_papers_to_db(
             stats["errors"] += 1
 
     return stats
+
+
+def _handle_resume_or_new_search(args, parser):
+    """Handle resume logic or validate new search. Returns (query, year_start)."""
+    if args.resume:
+        progress = load_progress()
+        if not progress:
+            print("No saved progress found. Start a new search instead.")
+            return None, None
+
+        print("Resuming previous search...")
+        return progress.get("query"), progress.get("year_start")
+
+    if not args.query:
+        parser.error("Query is required (unless using --resume)")
+        return None, None
+
+    return args.query, args.year
+
+
+def _search_papers(args, query, year_start):
+    """Search for papers from configured sources. Returns (arxiv_papers, s2_papers)."""
+    arxiv_papers = []
+    s2_papers = []
+
+    if not args.s2_only:
+        arxiv_papers = search_arxiv_papers(
+            query=query,
+            year_start=year_start,
+            max_results=args.max,
+        )
+
+    if not args.arxiv_only:
+        s2_papers = search_s2_papers(
+            query=query,
+            year_start=year_start,
+            max_results=args.max,
+            api_key=args.s2_api_key,
+        )
+
+    return arxiv_papers, s2_papers
+
+
+def _generate_embeddings_if_needed(args, db, stats):
+    """Generate embeddings for new papers if configured."""
+    if args.dry_run or args.skip_embeddings or stats["added"] == 0:
+        return
+
+    print()
+    print("=" * 70)
+    print("GENERATING EMBEDDINGS")
+    print("=" * 70)
+    try:
+        result = db.update_all_embeddings()
+        print(f"Generated {result.get('updated', 0)} embeddings")
+    except Exception as e:
+        print(f"Warning: Embedding generation failed: {e}")
+        print("You can run embeddings later with: python tmp/generate_embeddings.py")
+
+
+def _get_sources_description(args):
+    """Get human-readable description of search sources."""
+    if args.arxiv_only:
+        return "arXiv only"
+    if args.s2_only:
+        return "S2 only"
+    return "arXiv + Semantic Scholar"
 
 
 def main():
@@ -260,25 +327,10 @@ def main():
     )
     args = parser.parse_args()
 
-    # Handle resume
-    if args.resume:
-        progress = load_progress()
-        if not progress:
-            print("No saved progress found. Start a new search instead.")
-            return
-
-        print("Resuming previous search...")
-        query = progress.get("query")
-        year_start = progress.get("year_start")
-        # Continue with saved parameters
-        args.query = query
-        args.year = year_start
-    elif not args.query:
-        parser.error("Query is required (unless using --resume)")
+    # Handle resume or validate new search
+    query, year_start = _handle_resume_or_new_search(args, parser)
+    if query is None:
         return
-
-    query = args.query
-    year_start = args.year
 
     # Print header
     print()
@@ -290,9 +342,7 @@ def main():
     print(f"Year filter: {year_start or 'All years'}")
     print(f"Max results per source: {args.max}")
     print(f"Dry run: {args.dry_run}")
-    print(
-        f"Sources: {'arXiv only' if args.arxiv_only else 'S2 only' if args.s2_only else 'arXiv + Semantic Scholar'}"
-    )
+    print(f"Sources: {_get_sources_description(args)}")
     print()
 
     # Save progress
@@ -304,26 +354,10 @@ def main():
     }
     save_progress(progress)
 
-    # Search arXiv
-    arxiv_papers = []
-    if not args.s2_only:
-        arxiv_papers = search_arxiv_papers(
-            query=query,
-            year_start=year_start,
-            max_results=args.max,
-        )
+    # Search papers
+    arxiv_papers, s2_papers = _search_papers(args, query, year_start)
 
-    # Search Semantic Scholar
-    s2_papers = []
-    if not args.arxiv_only:
-        s2_papers = search_s2_papers(
-            query=query,
-            year_start=year_start,
-            max_results=args.max,
-            api_key=args.s2_api_key,
-        )
-
-    # Deduplicate papers (prefer arXiv version)
+    # Deduplicate papers
     print()
     print("=" * 70)
     print("DEDUPLICATING PAPERS")
@@ -369,20 +403,7 @@ def main():
         print(f"Papers skipped (duplicates): {stats['skipped']}")
         print(f"Errors: {stats['errors']}")
 
-        # Generate embeddings for new papers
-        if not args.dry_run and not args.skip_embeddings and stats["added"] > 0:
-            print()
-            print("=" * 70)
-            print("GENERATING EMBEDDINGS")
-            print("=" * 70)
-            try:
-                result = db.update_all_embeddings()
-                print(f"Generated {result.get('updated', 0)} embeddings")
-            except Exception as e:
-                print(f"Warning: Embedding generation failed: {e}")
-                print(
-                    "You can run embeddings later with: python tmp/generate_embeddings.py"
-                )
+        _generate_embeddings_if_needed(args, db, stats)
 
     finally:
         db.close()
@@ -405,7 +426,7 @@ def main():
 
     # Clear progress on success
     clear_progress()
-    print(f"\nDone! Search complete.")
+    print("\nDone! Search complete.")
 
 
 if __name__ == "__main__":

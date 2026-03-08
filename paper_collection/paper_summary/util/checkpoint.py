@@ -240,11 +240,9 @@ class CheckpointManager:
         """
         completed = set(self.data.get("completed_ids", []))
         # Also exclude abstract_only (already processed with fallback)
-        abstract_only = set(
-            int(pid) for pid in self.data.get("abstract_only", {}).keys()
-        )
+        abstract_only = {int(pid) for pid in self.data.get("abstract_only", {}).keys()}
         # Also exclude skip_papers (permanent PDF/link issues)
-        skip_papers = set(int(pid) for pid in self.data.get("skip_papers", {}).keys())
+        skip_papers = {int(pid) for pid in self.data.get("skip_papers", {}).keys()}
         exclude = completed | abstract_only | skip_papers
         return [pid for pid in all_ids if pid not in exclude]
 

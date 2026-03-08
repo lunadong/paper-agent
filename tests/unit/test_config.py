@@ -8,7 +8,6 @@ Tests paper_collection/config.py functionality including:
 - Singleton pattern
 """
 
-import importlib
 import sys
 from pathlib import Path
 from typing import Any, Dict
@@ -22,7 +21,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "paper_collection"))
 
 from core.config import (
-    config,
     create_config_from_dict,
     DatabaseConfig,
     find_config_file,
@@ -178,8 +176,17 @@ class TestFindConfigFile:
         config_file.write_text("notification_email: test@example.com")
 
         # Execute: Patch CONFIG_LOCATIONS to use our temp file
-        with patch("core.config.CONFIG_LOCATIONS", [str(config_file)]):
+        # Access the actual module through sys.modules to avoid ambiguity
+        # with the config() function that shadows the module name
+        import sys
+
+        config_module = sys.modules["core.config"]
+        original_locations = config_module.CONFIG_LOCATIONS
+        try:
+            config_module.CONFIG_LOCATIONS = [str(config_file)]
             result = find_config_file()
+        finally:
+            config_module.CONFIG_LOCATIONS = original_locations
 
         # Assert: The config file path is returned
         assert result == str(config_file), "Should return the path to the config file"
@@ -193,8 +200,17 @@ class TestFindConfigFile:
         ]
 
         # Execute: Patch CONFIG_LOCATIONS with nonexistent paths
-        with patch("core.config.CONFIG_LOCATIONS", nonexistent_paths):
+        # Access the actual module through sys.modules to avoid ambiguity
+        # with the config() function that shadows the module name
+        import sys
+
+        config_module = sys.modules["core.config"]
+        original_locations = config_module.CONFIG_LOCATIONS
+        try:
+            config_module.CONFIG_LOCATIONS = nonexistent_paths
             result = find_config_file()
+        finally:
+            config_module.CONFIG_LOCATIONS = original_locations
 
         # Assert: None is returned when no config exists
         assert result is None, "Should return None when no config file exists"
@@ -397,8 +413,7 @@ class TestConfigSingleton:
         if "core.config" in sys.modules:
             config_module = sys.modules["core.config"]
         else:
-            import core.config
-
+            config_module = __import__("core.config", fromlist=["config"])
             config_module = sys.modules["core.config"]
 
         # Setup: Reset the singleton and create a temp config

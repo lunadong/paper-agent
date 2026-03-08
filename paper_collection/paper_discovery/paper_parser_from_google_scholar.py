@@ -546,21 +546,12 @@ def parse_papers(html: str) -> list:
     return papers
 
 
-def parse_single_paper(result) -> Optional[dict]:
-    """Parse a single paper result from Google Scholar.
-
-    Args:
-        result: BeautifulSoup element for a single result
-
-    Returns:
-        Paper dictionary or None if parsing failed
-    """
-    # Title and main link
+def _extract_title_and_link(result):
+    """Extract title and link from a Google Scholar result."""
     title_elem = result.select_one("h3.gs_rt")
     if not title_elem:
-        return None
+        return None, None
 
-    # Get title text and link
     title_link = title_elem.select_one("a")
     if title_link:
         title = title_link.get_text(strip=True)
@@ -575,42 +566,96 @@ def parse_single_paper(result) -> Optional[dict]:
     )
     title = title.strip()
 
-    if not title:
-        return None
+    return title, link
 
-    # Authors, venue, and year from meta line
-    # Format: "Authors - Venue, Year - Publisher" or variations
-    meta_elem = result.select_one("div.gs_a")
+
+def _parse_meta_line(meta_elem):
+    """Parse authors, venue, and year from meta line."""
     authors = ""
     venue = ""
     year = ""
 
-    if meta_elem:
-        meta_text = meta_elem.get_text()
-        # Remove HTML entities and normalize
-        meta_text = meta_text.replace("\xa0", " ").strip()
+    if not meta_elem:
+        return authors, venue, year
 
-        # Split by " - "
-        parts = [p.strip() for p in meta_text.split(" - ")]
+    meta_text = meta_elem.get_text()
+    # Remove HTML entities and normalize
+    meta_text = meta_text.replace("\xa0", " ").strip()
 
-        if len(parts) >= 1:
-            # First part is usually authors
-            authors = parts[0]
-            # Clean up author names (remove "..." at end)
-            authors = re.sub(r"\.{3,}$", "", authors).strip()
+    # Split by " - "
+    parts = [p.strip() for p in meta_text.split(" - ")]
 
-        if len(parts) >= 2:
-            # Second part is usually venue and year
-            venue_year = parts[1]
-            # Extract year (4-digit number between 1900-2030)
-            year_match = re.search(r"\b(19\d{2}|20[0-3]\d)\b", venue_year)
-            if year_match:
-                year = year_match.group(1)
-                # Remove year from venue string
-                venue = re.sub(r",?\s*" + year + r"\s*,?", "", venue_year).strip()
-                venue = venue.rstrip(",").strip()
-            else:
-                venue = venue_year
+    if len(parts) >= 1:
+        # First part is usually authors
+        authors = parts[0]
+        # Clean up author names (remove "..." at end)
+        authors = re.sub(r"\.{3,}$", "", authors).strip()
+
+    if len(parts) >= 2:
+        # Second part is usually venue and year
+        venue_year = parts[1]
+        # Extract year (4-digit number between 1900-2030)
+        year_match = re.search(r"\b(19\d{2}|20[0-3]\d)\b", venue_year)
+        if year_match:
+            year = year_match.group(1)
+            # Remove year from venue string
+            venue = re.sub(r",?\s*" + year + r"\s*,?", "", venue_year).strip()
+            venue = venue.rstrip(",").strip()
+        else:
+            venue = venue_year
+
+    return authors, venue, year
+
+
+def _extract_citations(result):
+    """Extract citation count from result."""
+    cite_elem = result.select_one("div.gs_fl a")
+    if not cite_elem:
+        return 0
+
+    for link_elem in result.select("div.gs_fl a"):
+        link_text = link_elem.get_text(strip=True)
+        cite_match = re.search(r"Cited by (\d+)", link_text)
+        if cite_match:
+            return int(cite_match.group(1))
+    return 0
+
+
+def _normalize_arxiv_link(link, pdf_link):
+    """Normalize arXiv link if available."""
+    if not link:
+        return link
+
+    # Check if there's an arXiv link in the result
+    arxiv_match = re.search(r"arxiv\.org/abs/(\d+\.\d+)", link)
+    if arxiv_match:
+        return f"https://arxiv.org/abs/{arxiv_match.group(1)}"
+
+    if pdf_link and "arxiv.org" in pdf_link:
+        arxiv_match = re.search(r"arxiv\.org/pdf/(\d+\.\d+)", pdf_link)
+        if arxiv_match:
+            return f"https://arxiv.org/abs/{arxiv_match.group(1)}"
+
+    return link
+
+
+def parse_single_paper(result) -> Optional[dict]:
+    """Parse a single paper result from Google Scholar.
+
+    Args:
+        result: BeautifulSoup element for a single result
+
+    Returns:
+        Paper dictionary or None if parsing failed
+    """
+    # Title and main link
+    title, link = _extract_title_and_link(result)
+    if not title:
+        return None
+
+    # Authors, venue, and year from meta line
+    meta_elem = result.select_one("div.gs_a")
+    authors, venue, year = _parse_meta_line(meta_elem)
 
     # Abstract snippet
     abstract_elem = result.select_one("div.gs_rs")
@@ -626,29 +671,11 @@ def parse_single_paper(result) -> Optional[dict]:
     if pdf_elem:
         pdf_link = pdf_elem.get("href")
 
-    # Citation count from "Cited by X" link
-    citations = 0
-    cite_elem = result.select_one("div.gs_fl a")
-    if cite_elem:
-        # Look for "Cited by X" pattern
-        for link_elem in result.select("div.gs_fl a"):
-            link_text = link_elem.get_text(strip=True)
-            cite_match = re.search(r"Cited by (\d+)", link_text)
-            if cite_match:
-                citations = int(cite_match.group(1))
-                break
+    # Citation count
+    citations = _extract_citations(result)
 
-    # Prefer arXiv link if available
-    final_link = link
-    if link:
-        # Check if there's an arXiv link in the result
-        arxiv_match = re.search(r"arxiv\.org/abs/(\d+\.\d+)", link)
-        if arxiv_match:
-            final_link = f"https://arxiv.org/abs/{arxiv_match.group(1)}"
-        elif pdf_link and "arxiv.org" in pdf_link:
-            arxiv_match = re.search(r"arxiv\.org/pdf/(\d+\.\d+)", pdf_link)
-            if arxiv_match:
-                final_link = f"https://arxiv.org/abs/{arxiv_match.group(1)}"
+    # Normalize arXiv link if available
+    final_link = _normalize_arxiv_link(link, pdf_link)
 
     return {
         "title": title,
@@ -705,6 +732,223 @@ def save_progress(progress: dict, progress_file: Path):
         json.dump(progress, f, indent=2)
 
 
+def _init_progress(args, progress_file):
+    """Initialize or resume progress state."""
+    if args.resume:
+        progress = load_progress(progress_file)
+        if progress["query"]:
+            print(f"Resuming search for: {progress['query']}")
+            print(f"  Year: {progress['year_start']}-{progress.get('year_end', 'now')}")
+            print(f"  Pages processed: {len(progress['processed_pages'])}")
+            print(f"  Papers added so far: {progress['added']}")
+        else:
+            print("No previous progress found, starting fresh")
+            progress["query"] = args.query
+            progress["year_start"] = args.year_start
+            progress["year_end"] = args.year_end
+    else:
+        progress = load_progress(progress_file)
+        # Reset if query changed
+        if progress["query"] != args.query or progress["year_start"] != args.year_start:
+            progress = {
+                "query": args.query,
+                "year_start": args.year_start,
+                "year_end": args.year_end,
+                "processed_pages": [],
+                "added": 0,
+                "skipped": 0,
+                "failed_pages": 0,
+                "last_updated": None,
+            }
+    return progress
+
+
+def _init_database(args):
+    """Initialize database and load existing papers for duplicate detection."""
+    if args.dry_run:
+        return None, {}, {}
+
+    db = PaperDB()
+    print("Loading existing papers for duplicate detection...")
+    cursor = db._get_cursor()
+    cursor.execute("SELECT id, title, link FROM papers")
+    existing_papers = cursor.fetchall()
+
+    # Build two indexes: by normalized title and by arXiv ID
+    existing_titles = {}
+    existing_arxiv_ids = {}
+    for p in existing_papers:
+        norm_title = normalize_title(p["title"])
+        if norm_title:
+            existing_titles[norm_title] = p["id"]
+        arxiv_id = normalize_arxiv_link(p["link"])
+        if arxiv_id:
+            existing_arxiv_ids[arxiv_id] = p["id"]
+
+    print(f"Loaded {len(existing_titles)} titles, {len(existing_arxiv_ids)} arXiv IDs")
+    return db, existing_titles, existing_arxiv_ids
+
+
+def _should_skip_paper(paper, existing_titles, existing_arxiv_ids, progress):
+    """Check if paper should be skipped. Returns (skip, reason) tuple."""
+    paper_title = paper["title"]
+
+    # Check for non-English title
+    if is_non_english_title(paper_title):
+        return True, f"non-English: {paper_title[:40]}..."
+
+    norm_title = normalize_title(paper_title)
+    paper_link = paper.get("link", "")
+    paper_arxiv_id = normalize_arxiv_link(paper_link)
+
+    # Check title-based duplicate
+    if norm_title in existing_titles:
+        existing_id = existing_titles[norm_title]
+        return True, f"title dup of [{existing_id}]: {paper_title[:40]}..."
+
+    # Check arXiv-based duplicate
+    if paper_arxiv_id and paper_arxiv_id in existing_arxiv_ids:
+        existing_id = existing_arxiv_ids[paper_arxiv_id]
+        return True, f"arXiv dup of [{existing_id}]: {paper_title[:40]}..."
+
+    # Check citation filter for older papers
+    paper_year = paper.get("year", "")
+    paper_citations = paper.get("citations", 0)
+    try:
+        year_int = int(paper_year) if paper_year else 0
+    except ValueError:
+        year_int = 0
+
+    if year_int > 0 and year_int < 2026 and paper_citations < 10:
+        return (
+            True,
+            f"year={year_int}, citations={paper_citations}: {paper_title[:40]}...",
+        )
+
+    return False, None
+
+
+def _enrich_paper_from_arxiv(paper, paper_arxiv_id):
+    """Enrich paper data from arXiv if available."""
+    final_title = paper["title"]
+    final_abstract = paper.get("abstract")
+    final_authors = paper.get("authors")
+    final_year = paper.get("year")
+    arxiv_submission_date = None
+
+    if not paper_arxiv_id:
+        return final_title, final_abstract, final_authors, final_year, None
+
+    arxiv_data = fetch_arxiv_metadata(paper_arxiv_id)
+    if not arxiv_data:
+        time.sleep(0.3)
+        return final_title, final_abstract, final_authors, final_year, None
+
+    # Use arXiv title (more accurate than Google Scholar)
+    if arxiv_data.get("title"):
+        final_title = arxiv_data["title"]
+    # Use arXiv abstract if longer
+    if arxiv_data.get("abstract"):
+        if not final_abstract or len(arxiv_data["abstract"]) > len(final_abstract):
+            final_abstract = arxiv_data["abstract"]
+    # Always use arXiv authors (more accurate)
+    if arxiv_data.get("authors"):
+        final_authors = arxiv_data["authors"]
+    # Use arXiv year if missing
+    if not final_year and arxiv_data.get("year"):
+        final_year = arxiv_data["year"]
+    arxiv_submission_date = arxiv_data.get("submission_date")
+
+    time.sleep(0.3)  # Rate limiting for arXiv API
+    return final_title, final_abstract, final_authors, final_year, arxiv_submission_date
+
+
+def _add_paper_to_db(db, paper, existing_titles, existing_arxiv_ids, progress):
+    """Add a single paper to database. Returns paper_id or None."""
+    norm_title = normalize_title(paper["title"])
+    paper_link = paper.get("link", "")
+    paper_arxiv_id = normalize_arxiv_link(paper_link)
+
+    # Enrich from arXiv
+    final_title, final_abstract, final_authors, final_year, arxiv_submission_date = (
+        _enrich_paper_from_arxiv(paper, paper_arxiv_id)
+    )
+
+    # Determine recommendation date
+    recomm_date = get_smart_recomm_date(
+        arxiv_id=paper_arxiv_id,
+        arxiv_submission_date=arxiv_submission_date,
+        venue=paper.get("venue"),
+        year=final_year,
+    )
+
+    paper_id = db.add_paper(
+        title=final_title,
+        authors=final_authors,
+        venue=paper.get("venue"),
+        year=final_year,
+        abstract=final_abstract,
+        link=paper.get("link"),
+        recomm_date=recomm_date,
+    )
+
+    if paper_id:
+        # Add to existing indexes to catch duplicates within same run
+        existing_titles[norm_title] = paper_id
+        if paper_arxiv_id:
+            existing_arxiv_ids[paper_arxiv_id] = paper_id
+
+    return paper_id
+
+
+def _process_page_papers(
+    papers, args, db, existing_titles, existing_arxiv_ids, progress
+):
+    """Process all papers from a single page."""
+    for paper in papers:
+        if not paper.get("title"):
+            continue
+
+        # Check if should skip
+        skip, reason = _should_skip_paper(
+            paper, existing_titles, existing_arxiv_ids, progress
+        )
+        if skip:
+            print(f"    Skipped ({reason})")
+            progress["skipped"] += 1
+            continue
+
+        if args.dry_run:
+            print(f"    [DRY RUN] Would add: {paper['title'][:50]}...")
+            print(f"              Link: {paper.get('link', 'No link')}")
+            progress["added"] += 1
+        elif db:
+            paper_id = _add_paper_to_db(
+                db, paper, existing_titles, existing_arxiv_ids, progress
+            )
+            if paper_id:
+                print(f"    [{paper_id}] Added: {paper['title'][:50]}...")
+                progress["added"] += 1
+            else:
+                print(f"    Skipped (DB conflict): {paper['title'][:40]}...")
+                progress["skipped"] += 1
+
+
+def _print_summary(progress, progress_file):
+    """Print final summary."""
+    print()
+    print("=" * 70)
+    print("SUMMARY")
+    print("=" * 70)
+    print(f"Query: {progress['query']}")
+    print(f"Pages processed: {len(progress['processed_pages'])}")
+    print(f"Papers added: {progress['added']}")
+    print(f"Papers skipped (duplicates): {progress['skipped']}")
+    print(f"Progress saved to: {progress_file}")
+    print()
+    print("To resume: python paper_parser_from_google_scholar.py --resume")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Parse papers from Google Scholar search results"
@@ -757,34 +1001,7 @@ def main():
     args = parser.parse_args()
 
     progress_file = Path(args.progress_file)
-
-    # Load or initialize progress
-    if args.resume:
-        progress = load_progress(progress_file)
-        if progress["query"]:
-            print(f"Resuming search for: {progress['query']}")
-            print(f"  Year: {progress['year_start']}-{progress.get('year_end', 'now')}")
-            print(f"  Pages processed: {len(progress['processed_pages'])}")
-            print(f"  Papers added so far: {progress['added']}")
-        else:
-            print("No previous progress found, starting fresh")
-            progress["query"] = args.query
-            progress["year_start"] = args.year_start
-            progress["year_end"] = args.year_end
-    else:
-        progress = load_progress(progress_file)
-        # Reset if query changed
-        if progress["query"] != args.query or progress["year_start"] != args.year_start:
-            progress = {
-                "query": args.query,
-                "year_start": args.year_start,
-                "year_end": args.year_end,
-                "processed_pages": [],
-                "added": 0,
-                "skipped": 0,
-                "failed_pages": 0,
-                "last_updated": None,
-            }
+    progress = _init_progress(args, progress_file)
 
     print()
     print("=" * 70)
@@ -797,35 +1014,8 @@ def main():
     print(f"Dry run: {args.dry_run}")
     print()
 
-    # Connect to database
-    if not args.dry_run:
-        db = PaperDB()
-        # Pre-load existing titles and arXiv IDs for duplicate checking
-        print("Loading existing papers for duplicate detection...")
-        cursor = db._get_cursor()
-        cursor.execute("SELECT id, title, link FROM papers")
-        existing_papers = cursor.fetchall()
-
-        # Build two indexes: by normalized title and by arXiv ID
-        existing_titles = {}
-        existing_arxiv_ids = {}
-        for p in existing_papers:
-            # Index by normalized title
-            norm_title = normalize_title(p["title"])
-            if norm_title:
-                existing_titles[norm_title] = p["id"]
-            # Index by arXiv ID (ignores abs/pdf/html and version)
-            arxiv_id = normalize_arxiv_link(p["link"])
-            if arxiv_id:
-                existing_arxiv_ids[arxiv_id] = p["id"]
-
-        print(
-            f"Loaded {len(existing_titles)} titles, {len(existing_arxiv_ids)} arXiv IDs"
-        )
-    else:
-        db = None
-        existing_titles = {}
-        existing_arxiv_ids = {}
+    # Initialize database
+    db, existing_titles, existing_arxiv_ids = _init_database(args)
 
     # Create session for cookies
     session = requests.Session()
@@ -851,7 +1041,6 @@ def main():
             if not html:
                 print("  Failed to fetch page, stopping")
                 progress["failed_pages"] += 1
-                # Save progress and stop on persistent failure
                 save_progress(progress, progress_file)
                 if progress["failed_pages"] >= 3:
                     print(
@@ -871,130 +1060,13 @@ def main():
                 print("  No more results, stopping")
                 break
 
-            # Add papers to database
-            for paper in papers:
-                if not paper.get("title"):
-                    continue
-
-                # Check for non-English title
-                paper_title = paper["title"]
-                if is_non_english_title(paper_title):
-                    print(f"    Skipped (non-English): {paper_title[:40]}...")
-                    progress["skipped"] += 1
-                    continue
-
-                # Check for duplicate by normalized title
-                norm_title = normalize_title(paper_title)
-                paper_link = paper.get("link", "")
-                paper_arxiv_id = normalize_arxiv_link(paper_link)
-
-                # Check title-based duplicate
-                if norm_title in existing_titles:
-                    existing_id = existing_titles[norm_title]
-                    print(
-                        f"    Skipped (title dup of [{existing_id}]): {paper_title[:40]}..."
-                    )
-                    progress["skipped"] += 1
-                    continue
-
-                # Check arXiv-based duplicate
-                if paper_arxiv_id and paper_arxiv_id in existing_arxiv_ids:
-                    existing_id = existing_arxiv_ids[paper_arxiv_id]
-                    print(
-                        f"    Skipped (arXiv dup of [{existing_id}]): {paper_title[:40]}..."
-                    )
-                    progress["skipped"] += 1
-                    continue
-
-                # Skip papers before 2026 with fewer than 10 citations
-                paper_year = paper.get("year", "")
-                paper_citations = paper.get("citations", 0)
-                try:
-                    year_int = int(paper_year) if paper_year else 0
-                except ValueError:
-                    year_int = 0
-
-                if year_int > 0 and year_int < 2026 and paper_citations < 10:
-                    print(
-                        f"    Skipped (year={year_int}, citations={paper_citations}): "
-                        f"{paper_title[:40]}..."
-                    )
-                    progress["skipped"] += 1
-                    continue
-
-                if args.dry_run:
-                    print(f"    [DRY RUN] Would add: {paper['title'][:50]}...")
-                    print(f"              Link: {paper.get('link', 'No link')}")
-                    progress["added"] += 1
-                elif db:
-                    # Enrich paper data from arXiv if available
-                    final_title = paper["title"]
-                    final_abstract = paper.get("abstract")
-                    final_authors = paper.get("authors")
-                    final_year = paper.get("year")
-                    recomm_date = (
-                        None  # Will be set from arXiv or fallback to year-based
-                    )
-
-                    if paper_arxiv_id:
-                        arxiv_data = fetch_arxiv_metadata(paper_arxiv_id)
-                        if arxiv_data:
-                            # Use arXiv title (more accurate than Google Scholar)
-                            if arxiv_data.get("title"):
-                                final_title = arxiv_data["title"]
-                            # Use arXiv abstract if longer than Google Scholar snippet
-                            if arxiv_data.get("abstract"):
-                                if not final_abstract or len(
-                                    arxiv_data["abstract"]
-                                ) > len(final_abstract):
-                                    final_abstract = arxiv_data["abstract"]
-                            # Always use arXiv authors (more accurate)
-                            if arxiv_data.get("authors"):
-                                final_authors = arxiv_data["authors"]
-                            # Use arXiv year if missing
-                            if not final_year and arxiv_data.get("year"):
-                                final_year = arxiv_data["year"]
-                            # Store submission date for smart recomm_date
-                            arxiv_submission_date = arxiv_data.get("submission_date")
-                        else:
-                            arxiv_submission_date = None
-                        time.sleep(0.3)  # Rate limiting for arXiv API
-                    else:
-                        arxiv_submission_date = None
-
-                    # Use smart recomm_date with multiple fallback sources
-                    recomm_date = get_smart_recomm_date(
-                        arxiv_id=paper_arxiv_id,
-                        arxiv_submission_date=arxiv_submission_date,
-                        venue=paper.get("venue"),
-                        year=final_year,
-                    )
-
-                    paper_id = db.add_paper(
-                        title=final_title,
-                        authors=final_authors,
-                        venue=paper.get("venue"),
-                        year=final_year,
-                        abstract=final_abstract,
-                        link=paper.get("link"),
-                        recomm_date=recomm_date,
-                    )
-
-                    if paper_id:
-                        print(f"    [{paper_id}] Added: {paper['title'][:50]}...")
-                        progress["added"] += 1
-                        # Add to existing indexes to catch duplicates within same run
-                        existing_titles[norm_title] = paper_id
-                        if paper_arxiv_id:
-                            existing_arxiv_ids[paper_arxiv_id] = paper_id
-                    else:
-                        print(f"    Skipped (DB conflict): {paper['title'][:40]}...")
-                        progress["skipped"] += 1
+            # Process papers from this page
+            _process_page_papers(
+                papers, args, db, existing_titles, existing_arxiv_ids, progress
+            )
 
             # Mark page as processed
             progress["processed_pages"].append(start)
-
-            # Save progress after each page
             save_progress(progress, progress_file)
 
             # Delay between pages (except for last page)
@@ -1022,18 +1094,7 @@ def main():
         if db:
             db.close()
 
-    # Print summary
-    print()
-    print("=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
-    print(f"Query: {progress['query']}")
-    print(f"Pages processed: {len(progress['processed_pages'])}")
-    print(f"Papers added: {progress['added']}")
-    print(f"Papers skipped (duplicates): {progress['skipped']}")
-    print(f"Progress saved to: {progress_file}")
-    print()
-    print("To resume: python paper_parser_from_google_scholar.py --resume")
+    _print_summary(progress, progress_file)
 
 
 if __name__ == "__main__":

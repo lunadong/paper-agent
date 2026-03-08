@@ -171,32 +171,33 @@ def show_topic_stats():
     print("Connecting to PostgreSQL database...")
     db = PaperDB()
 
-    papers = db.get_all_papers()
-    total = len(papers)
+    try:
+        papers = db.get_all_papers()
+        total = len(papers)
 
-    # Count topics
-    topic_counts = {}
-    no_topic_count = 0
+        # Count topics
+        topic_counts = {}
+        no_topic_count = 0
 
-    for paper in papers:
-        topics = paper.get("topics")
-        if topics:
-            topic_counts[topics] = topic_counts.get(topics, 0) + 1
-        else:
-            no_topic_count += 1
+        for paper in papers:
+            topics = paper.get("topics")
+            if topics:
+                topic_counts[topics] = topic_counts.get(topics, 0) + 1
+            else:
+                no_topic_count += 1
 
-    print(f"\nTotal papers: {total}")
-    print(f"Papers with topic: {total - no_topic_count}")
-    print(f"Papers without topic: {no_topic_count}")
+        print(f"\nTotal papers: {total}")
+        print(f"Papers with topic: {total - no_topic_count}")
+        print(f"Papers without topic: {no_topic_count}")
 
-    print("\nTopic distribution:")
-    for topic, count in sorted(topic_counts.items(), key=lambda x: -x[1]):
-        print(f"  {topic}: {count}")
+        print("\nTopic distribution:")
+        for topic, count in sorted(topic_counts.items(), key=lambda x: -x[1]):
+            print(f"  {topic}: {count}")
 
-    if no_topic_count > 0:
-        print(f"  (no topic): {no_topic_count}")
-
-    db.close()
+        if no_topic_count > 0:
+            print(f"  (no topic): {no_topic_count}")
+    finally:
+        db.close()
 
 
 def auto_tag_papers():
@@ -204,51 +205,53 @@ def auto_tag_papers():
     print("Connecting to PostgreSQL database...")
     db = PaperDB()
 
-    papers = db.get_all_papers()
-    print(f"Total papers: {len(papers)}")
+    try:
+        papers = db.get_all_papers()
+        print(f"Total papers: {len(papers)}")
 
-    # Dictionary to track topics for each paper: paper_id -> set of topics
-    paper_topics = {p["id"]: set() for p in papers}
+        # Dictionary to track topics for each paper: paper_id -> set of topics
+        paper_topics = {p["id"]: set() for p in papers}
 
-    # For each topic, run search
-    print("\nTagging papers...")
-    for tag, (exact_queries, semantic_queries) in TOPIC_QUERIES.items():
-        full_name = TOPICS.get(tag, tag)
-        print(f"\n  {tag} ({full_name}):")
-        tag_paper_ids = set()
+        # For each topic, run search
+        print("\nTagging papers...")
+        for tag, (exact_queries, semantic_queries) in TOPIC_QUERIES.items():
+            full_name = TOPICS.get(tag, tag)
+            print(f"\n  {tag} ({full_name}):")
+            tag_paper_ids = set()
 
-        # Exact match search
-        if exact_queries:
-            exact_matches = exact_match_search(papers, exact_queries)
-            tag_paper_ids.update(exact_matches)
-            print(f"    Exact match: {len(exact_matches)} papers")
+            # Exact match search
+            if exact_queries:
+                exact_matches = exact_match_search(papers, exact_queries)
+                tag_paper_ids.update(exact_matches)
+                print(f"    Exact match: {len(exact_matches)} papers")
 
-        # Semantic search
-        if semantic_queries:
-            semantic_matches = semantic_search(db, semantic_queries)
-            new_semantic = semantic_matches - tag_paper_ids
-            tag_paper_ids.update(semantic_matches)
-            print(
-                f"    Semantic search: {len(semantic_matches)} papers ({len(new_semantic)} new)"
-            )
+            # Semantic search
+            if semantic_queries:
+                semantic_matches = semantic_search(db, semantic_queries)
+                new_semantic = semantic_matches - tag_paper_ids
+                tag_paper_ids.update(semantic_matches)
+                print(
+                    f"    Semantic search: {len(semantic_matches)} papers ({len(new_semantic)} new)"
+                )
 
-        # Add tag to matched papers
-        for paper_id in tag_paper_ids:
-            if paper_id in paper_topics:
-                paper_topics[paper_id].add(tag)
+            # Add tag to matched papers
+            for paper_id in tag_paper_ids:
+                if paper_id in paper_topics:
+                    paper_topics[paper_id].add(tag)
 
-        print(f"    Total unique papers for {tag}: {len(tag_paper_ids)}")
+            print(f"    Total unique papers for {tag}: {len(tag_paper_ids)}")
 
-    # Update database
-    print("\nUpdating database...")
-    updated = 0
-    for paper_id, topics in paper_topics.items():
-        topic_str = ", ".join(sorted(topics)) if topics else None
-        if db.update_paper(paper_id, topics=topic_str):
-            updated += 1
+        # Update database
+        print("\nUpdating database...")
+        updated = 0
+        for paper_id, topics in paper_topics.items():
+            topic_str = ", ".join(sorted(topics)) if topics else None
+            if db.update_paper(paper_id, topics=topic_str):
+                updated += 1
 
-    db.close()
-    print(f"Updated {updated} papers with topics")
+        print(f"Updated {updated} papers with topics")
+    finally:
+        db.close()
 
     # Show stats
     show_topic_stats()
@@ -267,57 +270,60 @@ def retag_single_topic(tag_to_retag):
     exact_queries, semantic_queries = TOPIC_QUERIES[tag_to_retag]
     full_name = TOPICS.get(tag_to_retag, tag_to_retag)
     db = PaperDB()
-    papers = db.get_all_papers()
 
-    print(f"\n  {tag_to_retag} ({full_name}):")
-    matching_paper_ids = set()
+    try:
+        papers = db.get_all_papers()
 
-    # Exact match search
-    if exact_queries:
-        exact_matches = exact_match_search(papers, exact_queries)
-        matching_paper_ids.update(exact_matches)
-        print(f"    Exact match: {len(exact_matches)} papers")
+        print(f"\n  {tag_to_retag} ({full_name}):")
+        matching_paper_ids = set()
 
-    # Semantic search
-    if semantic_queries:
-        semantic_matches = semantic_search(db, semantic_queries)
-        new_semantic = semantic_matches - matching_paper_ids
-        matching_paper_ids.update(semantic_matches)
-        print(
-            f"    Semantic search: {len(semantic_matches)} papers ({len(new_semantic)} new)"
-        )
+        # Exact match search
+        if exact_queries:
+            exact_matches = exact_match_search(papers, exact_queries)
+            matching_paper_ids.update(exact_matches)
+            print(f"    Exact match: {len(exact_matches)} papers")
 
-    print(f"    Total unique papers for {tag_to_retag}: {len(matching_paper_ids)}")
+        # Semantic search
+        if semantic_queries:
+            semantic_matches = semantic_search(db, semantic_queries)
+            new_semantic = semantic_matches - matching_paper_ids
+            matching_paper_ids.update(semantic_matches)
+            print(
+                f"    Semantic search: {len(semantic_matches)} papers ({len(new_semantic)} new)"
+            )
 
-    # Update database - remove old tag, add new tag where appropriate
-    print("\nUpdating database...")
+        print(f"    Total unique papers for {tag_to_retag}: {len(matching_paper_ids)}")
 
-    updated = 0
-    for paper in papers:
-        paper_id = paper["id"]
-        current_topic = paper.get("topics") or ""
+        # Update database - remove old tag, add new tag where appropriate
+        print("\nUpdating database...")
 
-        # Parse current topics
-        if current_topic:
-            topics = set(t.strip() for t in current_topic.split(","))
-        else:
-            topics = set()
+        updated = 0
+        for paper in papers:
+            paper_id = paper["id"]
+            current_topic = paper.get("topics") or ""
 
-        # Remove old tag
-        topics.discard(tag_to_retag)
+            # Parse current topics
+            if current_topic:
+                topics = set(t.strip() for t in current_topic.split(","))
+            else:
+                topics = set()
 
-        # Add new tag if paper matches
-        if paper_id in matching_paper_ids:
-            topics.add(tag_to_retag)
+            # Remove old tag
+            topics.discard(tag_to_retag)
 
-        # Update database
-        new_topic = ", ".join(sorted(topics)) if topics else None
-        if new_topic != current_topic:
-            db.update_paper(paper_id, topics=new_topic)
-            updated += 1
+            # Add new tag if paper matches
+            if paper_id in matching_paper_ids:
+                topics.add(tag_to_retag)
 
-    db.close()
-    print(f"Updated {updated} papers")
+            # Update database
+            new_topic = ", ".join(sorted(topics)) if topics else None
+            if new_topic != current_topic:
+                db.update_paper(paper_id, topics=new_topic)
+                updated += 1
+
+        print(f"Updated {updated} papers")
+    finally:
+        db.close()
 
     # Show stats
     show_topic_stats()
@@ -341,48 +347,48 @@ def set_primary_topic(paper_id: int, topic: Optional[str]):
     print("Connecting to PostgreSQL database...")
     db = PaperDB()
 
-    # Get the paper to verify it exists
-    paper = db.get_paper_by_id(paper_id)
-    if not paper:
-        print(f"Error: Paper with ID {paper_id} not found")
-        db.close()
-        return False
+    try:
+        # Get the paper to verify it exists
+        paper = db.get_paper_by_id(paper_id)
+        if not paper:
+            print(f"Error: Paper with ID {paper_id} not found")
+            return False
 
-    # Show paper info
-    title = paper.get("title", "N/A")[:60]
-    current_primary = paper.get("primary_topic") or "(none)"
-    current_topics_str = paper.get("topics") or ""
+        # Show paper info
+        title = paper.get("title", "N/A")[:60]
+        current_primary = paper.get("primary_topic") or "(none)"
+        current_topics_str = paper.get("topics") or ""
 
-    print(f"\nPaper ID: {paper_id}")
-    print(f"Title: {title}...")
-    print(f"Current topics: {current_topics_str or '(none)'}")
-    print(f"Current primary_topic: {current_primary}")
+        print(f"\nPaper ID: {paper_id}")
+        print(f"Title: {title}...")
+        print(f"Current topics: {current_topics_str or '(none)'}")
+        print(f"Current primary_topic: {current_primary}")
 
-    # Parse current topics list
-    topics_list = [t.strip() for t in current_topics_str.split(",") if t.strip()]
+        # Parse current topics list
+        topics_list = [t.strip() for t in current_topics_str.split(",") if t.strip()]
 
-    # Update primary_topic
-    new_primary = topic if topic else None
-    update_kwargs = {"primary_topic": new_primary}
+        # Update primary_topic
+        new_primary = topic if topic else None
+        update_kwargs = {"primary_topic": new_primary}
 
-    # If setting a topic, ensure it's in the topics list
-    if new_primary and new_primary not in topics_list:
-        topics_list.insert(0, new_primary)  # Add at beginning
-        new_topics_str = ", ".join(topics_list)
-        update_kwargs["topics"] = new_topics_str
-        print(f"Adding '{new_primary}' to topics list -> {new_topics_str}")
+        # If setting a topic, ensure it's in the topics list
+        if new_primary and new_primary not in topics_list:
+            topics_list.insert(0, new_primary)  # Add at beginning
+            new_topics_str = ", ".join(topics_list)
+            update_kwargs["topics"] = new_topics_str
+            print(f"Adding '{new_primary}' to topics list -> {new_topics_str}")
 
-    if db.update_paper(paper_id, **update_kwargs):
-        if new_primary:
-            print(f"\n[OK] Set primary_topic to '{new_primary}'")
+        if db.update_paper(paper_id, **update_kwargs):
+            if new_primary:
+                print(f"\n[OK] Set primary_topic to '{new_primary}'")
+            else:
+                print("\n[OK] Cleared primary_topic")
+            return True
         else:
-            print("\n[OK] Cleared primary_topic")
+            print("\n[X] Failed to update primary_topic")
+            return False
+    finally:
         db.close()
-        return True
-    else:
-        print("\n[X] Failed to update primary_topic")
-        db.close()
-        return False
 
 
 def tag_new_papers():
@@ -391,57 +397,59 @@ def tag_new_papers():
     print("Mode: Tagging only NEW papers (without topics)")
 
     db = PaperDB()
-    papers = db.get_all_papers()
 
-    # Filter to papers WITHOUT topics
-    new_papers = [p for p in papers if not p.get("topics")]
+    try:
+        papers = db.get_all_papers()
 
-    if not new_papers:
-        print("\nNo new papers to tag.")
+        # Filter to papers WITHOUT topics
+        new_papers = [p for p in papers if not p.get("topics")]
+
+        if not new_papers:
+            print("\nNo new papers to tag.")
+            return
+
+        print(f"\nFound {len(new_papers)} papers without topics")
+
+        # Dictionary to track topics for each new paper: paper_id -> set of topics
+        paper_topics = {p["id"]: set() for p in new_papers}
+
+        # For each topic, run search
+        print("\nTagging new papers...")
+        for tag, (exact_queries, semantic_queries) in TOPIC_QUERIES.items():
+            tag_paper_ids = set()
+
+            # Exact match search (only for new papers)
+            if exact_queries:
+                exact_matches = exact_match_search(new_papers, exact_queries)
+                tag_paper_ids.update(exact_matches)
+
+            # Semantic search
+            if semantic_queries:
+                semantic_matches = semantic_search(db, semantic_queries)
+                # Filter to only new papers
+                semantic_matches = semantic_matches & set(paper_topics.keys())
+                tag_paper_ids.update(semantic_matches)
+
+            # Add tag to matched papers
+            for paper_id in tag_paper_ids:
+                if paper_id in paper_topics:
+                    paper_topics[paper_id].add(tag)
+
+            if tag_paper_ids:
+                print(f"  {tag}: {len(tag_paper_ids)} new papers")
+
+        # Update database
+        print("\nUpdating database...")
+        updated = 0
+        for paper_id, topics in paper_topics.items():
+            if topics:
+                topic_str = ", ".join(sorted(topics))
+                if db.update_paper(paper_id, topic=topic_str):
+                    updated += 1
+
+        print(f"Tagged {updated} new papers with topics")
+    finally:
         db.close()
-        return
-
-    print(f"\nFound {len(new_papers)} papers without topics")
-
-    # Dictionary to track topics for each new paper: paper_id -> set of topics
-    paper_topics = {p["id"]: set() for p in new_papers}
-
-    # For each topic, run search
-    print("\nTagging new papers...")
-    for tag, (exact_queries, semantic_queries) in TOPIC_QUERIES.items():
-        tag_paper_ids = set()
-
-        # Exact match search (only for new papers)
-        if exact_queries:
-            exact_matches = exact_match_search(new_papers, exact_queries)
-            tag_paper_ids.update(exact_matches)
-
-        # Semantic search
-        if semantic_queries:
-            semantic_matches = semantic_search(db, semantic_queries)
-            # Filter to only new papers
-            semantic_matches = semantic_matches & set(paper_topics.keys())
-            tag_paper_ids.update(semantic_matches)
-
-        # Add tag to matched papers
-        for paper_id in tag_paper_ids:
-            if paper_id in paper_topics:
-                paper_topics[paper_id].add(tag)
-
-        if tag_paper_ids:
-            print(f"  {tag}: {len(tag_paper_ids)} new papers")
-
-    # Update database
-    print("\nUpdating database...")
-    updated = 0
-    for paper_id, topics in paper_topics.items():
-        if topics:
-            topic_str = ", ".join(sorted(topics))
-            if db.update_paper(paper_id, topic=topic_str):
-                updated += 1
-
-    db.close()
-    print(f"Tagged {updated} new papers with topics")
 
 
 def parse_args():

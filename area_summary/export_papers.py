@@ -55,7 +55,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "paper_collection"))
 
-from util.paper_db import PaperDB
+from core.paper_db import PaperDB
 
 
 def get_all_topics() -> list:

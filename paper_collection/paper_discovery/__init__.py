@@ -9,7 +9,6 @@ This package provides unified interfaces for:
 """
 
 import re
-from typing import Optional
 
 from .arxiv_backend import (
     fetch_paper_by_id as fetch_paper_by_arxiv_id,

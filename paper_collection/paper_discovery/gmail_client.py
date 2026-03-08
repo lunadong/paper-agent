@@ -40,6 +40,67 @@ MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds
 
 
+def _get_credential_paths(credentials_file, token_file):
+    """Get credential file paths from config or use defaults."""
+    if credentials_file is not None and token_file is not None:
+        return credentials_file, token_file
+
+    try:
+        from core.config import config
+
+        cfg = config()
+        if credentials_file is None:
+            credentials_file = cfg.get_credentials_path()
+        if token_file is None:
+            token_file = cfg.get_token_path()
+    except ImportError:
+        # Config module not available, use defaults
+        if credentials_file is None:
+            credentials_file = "credentials/credentials.json"
+        if token_file is None:
+            token_file = "credentials/token.json"
+
+    return credentials_file, token_file
+
+
+def _load_or_refresh_credentials(credentials_file, token_file):
+    """Load credentials from token file or create new ones."""
+    creds = None
+
+    # The file token.json stores the user's access and refresh tokens
+    if os.path.exists(token_file):
+        creds = Credentials.from_authorized_user_file(token_file, SCOPES)
+
+    # If there are no (valid) credentials available, let the user log in
+    if creds and creds.valid:
+        return creds
+
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+    else:
+        if not os.path.exists(credentials_file):
+            raise FileNotFoundError(
+                f"Credentials file not found at '{credentials_file}'. "
+                "Please download OAuth credentials from Google Cloud Console. "
+                "See README.md for setup instructions."
+            )
+        flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
+        creds = flow.run_local_server(port=0)
+
+    # Save the credentials for the next run
+    _save_credentials(creds, token_file)
+    return creds
+
+
+def _save_credentials(creds, token_file):
+    """Save credentials to token file."""
+    token_dir = os.path.dirname(token_file)
+    if token_dir and not os.path.exists(token_dir):
+        os.makedirs(token_dir)
+    with open(token_file, "w") as token:
+        token.write(creds.to_json())
+
+
 def get_gmail_service(
     credentials_file: Optional[str] = None, token_file: Optional[str] = None
 ):
@@ -50,51 +111,8 @@ def get_gmail_service(
         credentials_file: Path to OAuth credentials file (default: from config or 'credentials.json')
         token_file: Path to token file (default: from config or 'token.json')
     """
-    # Get paths from config if not provided
-    if credentials_file is None or token_file is None:
-        try:
-            from core.config import config
-
-            cfg = config()
-            if credentials_file is None:
-                credentials_file = cfg.get_credentials_path()
-            if token_file is None:
-                token_file = cfg.get_token_path()
-        except ImportError:
-            # Config module not available, use defaults
-            if credentials_file is None:
-                credentials_file = "credentials/credentials.json"
-            if token_file is None:
-                token_file = "credentials/token.json"
-
-    creds = None
-
-    # The file token.json stores the user's access and refresh tokens
-    if os.path.exists(token_file):
-        creds = Credentials.from_authorized_user_file(token_file, SCOPES)
-
-    # If there are no (valid) credentials available, let the user log in
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            if not os.path.exists(credentials_file):
-                raise FileNotFoundError(
-                    f"Credentials file not found at '{credentials_file}'. "
-                    "Please download OAuth credentials from Google Cloud Console. "
-                    "See README.md for setup instructions."
-                )
-            flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
-            creds = flow.run_local_server(port=0)
-
-        # Save the credentials for the next run
-        # Ensure directory exists
-        token_dir = os.path.dirname(token_file)
-        if token_dir and not os.path.exists(token_dir):
-            os.makedirs(token_dir)
-        with open(token_file, "w") as token:
-            token.write(creds.to_json())
-
+    credentials_file, token_file = _get_credential_paths(credentials_file, token_file)
+    creds = _load_or_refresh_credentials(credentials_file, token_file)
     return build("gmail", "v1", credentials=creds)
 
 

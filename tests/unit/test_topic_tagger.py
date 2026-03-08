@@ -52,9 +52,9 @@ class TestTopicsDict:
 
         # Assert: TOPICS has correct structure and count
         assert isinstance(TOPICS, dict), "TOPICS should be a dictionary"
-        assert (
-            len(TOPICS) == expected_count
-        ), f"TOPICS should have {expected_count} entries, got {len(TOPICS)}"
+        assert len(TOPICS) == expected_count, (
+            f"TOPICS should have {expected_count} entries, got {len(TOPICS)}"
+        )
 
         # Verify all expected topic keys exist
         for topic in expected_topics:
@@ -62,9 +62,9 @@ class TestTopicsDict:
 
         # Verify each topic has a non-empty full name
         for tag, full_name in TOPICS.items():
-            assert isinstance(
-                full_name, str
-            ), f"Full name for '{tag}' should be a string"
+            assert isinstance(full_name, str), (
+                f"Full name for '{tag}' should be a string"
+            )
             assert len(full_name) > 0, f"Full name for '{tag}' should not be empty"
 
 
@@ -88,16 +88,16 @@ class TestTopicQueries:
 
         # Verify structure of each query definition
         for tag, (exact_queries, semantic_queries) in TOPIC_QUERIES.items():
-            assert isinstance(
-                exact_queries, list
-            ), f"Exact queries for '{tag}' should be a list"
-            assert isinstance(
-                semantic_queries, list
-            ), f"Semantic queries for '{tag}' should be a list"
+            assert isinstance(exact_queries, list), (
+                f"Exact queries for '{tag}' should be a list"
+            )
+            assert isinstance(semantic_queries, list), (
+                f"Semantic queries for '{tag}' should be a list"
+            )
             # At least one type of query should be defined
-            assert (
-                len(exact_queries) > 0 or len(semantic_queries) > 0
-            ), f"Topic '{tag}' should have at least one exact or semantic query"
+            assert len(exact_queries) > 0 or len(semantic_queries) > 0, (
+                f"Topic '{tag}' should have at least one exact or semantic query"
+            )
 
 
 class TestExactMatchSearch:
@@ -237,9 +237,9 @@ class TestShortAcronyms:
         # Execute: Check SHORT_ACRONYMS (implicit)
 
         # Assert: All expected acronyms are present
-        assert (
-            SHORT_ACRONYMS == expected_acronyms
-        ), f"SHORT_ACRONYMS should contain {expected_acronyms}, got {SHORT_ACRONYMS}"
+        assert SHORT_ACRONYMS == expected_acronyms, (
+            f"SHORT_ACRONYMS should contain {expected_acronyms}, got {SHORT_ACRONYMS}"
+        )
 
 
 class TestExactMatchEdgeCases:

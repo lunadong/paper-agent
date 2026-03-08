@@ -67,7 +67,7 @@ Get the paper PDF URL either:
 # If paper_id is provided, fetch from database first:
 import sys
 sys.path.insert(0, 'paper_collection')
-from paper_db import PaperDB
+from core.paper_db import PaperDB
 
 db = PaperDB()
 paper = db.get_paper_by_id(paper_id)
@@ -157,7 +157,7 @@ Use the `paper_db` module to update the summary in the database:
 import sys
 import json
 sys.path.insert(0, 'paper_collection')
-from paper_db import PaperDB
+from core.paper_db import PaperDB
 
 # Load the generated summary
 with open(f'prompt_optimization/paper_summaries/paper_{paper_id}.json', 'r') as f:

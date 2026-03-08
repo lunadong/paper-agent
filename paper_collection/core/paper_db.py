@@ -399,7 +399,7 @@ class PaperDB:
         """
         # Validate required fields - both title and link must be present
         if not title or not title.strip():
-            print(f"  Skipping paper: missing title")
+            print("  Skipping paper: missing title")
             return None
         if not link or not link.strip():
             print(f"  Skipping paper '{title[:50]}...': missing link")

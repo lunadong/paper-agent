@@ -34,6 +34,7 @@ Hard Requirements
       - Don't use "Benchmark" as primary_topic unless the paper's sole contribution is a benchmark/dataset with no other relevant topic
       - Don't use "ResponsiveAI" as primary_topic unless the paper's sole focus is privacy/safety/fairness with no other relevant topic
       - Don't use "QA" as primary_topic if a more specific topic (RAG, Agent, Factuality, MM, Recommendation) applies
+      - Don't use "RL" or "Reasoning" as primary_topic if a more specific topic (RAG, Agent, Factuality, MM, Recommendation) applies
 
 5) Output ONLY valid JSON with the exact structure shown below
 

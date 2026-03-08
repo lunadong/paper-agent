@@ -239,6 +239,50 @@ def _parse_s2_paper(paper: dict) -> Optional[dict]:
         return None
 
 
+def _build_year_filter(days, year_start, year_end):
+    """Build year filter string for Semantic Scholar API."""
+    if days:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        return f"{start_date.year}-{end_date.year}"
+    if year_start or year_end:
+        start = year_start or 1900
+        end = year_end or datetime.now().year
+        return f"{start}-{end}"
+    return None
+
+
+def _should_include_paper_by_date(paper, days):
+    """Check if paper should be included based on date filter."""
+    if not days or not paper.get("recomm_date"):
+        return True
+
+    try:
+        pub_date = datetime.strptime(paper["recomm_date"], "%Y-%m-%d")
+        cutoff_date = datetime.now() - timedelta(days=days)
+        return pub_date >= cutoff_date
+    except ValueError:
+        return True  # Invalid date format, include anyway
+
+
+def _fetch_s2_page(query, offset, limit, fields_of_study, year_filter, api_key):
+    """Fetch a single page of results from Semantic Scholar."""
+    params = {
+        "query": query,
+        "offset": offset,
+        "limit": limit,
+        "fields": ",".join(S2_PAPER_FIELDS),
+    }
+
+    if fields_of_study:
+        params["fieldsOfStudy"] = ",".join(fields_of_study)
+
+    if year_filter:
+        params["year"] = year_filter
+
+    return _make_request(S2_SEARCH_ENDPOINT, params=params, api_key=api_key)
+
+
 def search_semantic_scholar(
     query: str,
     fields_of_study: Optional[list[str]] = None,
@@ -271,45 +315,21 @@ def search_semantic_scholar(
 
     print(f"Semantic Scholar search: {query[:50]}...")
 
-    # Build year filter
-    year_filter = None
-    if days:
-        # Calculate date range
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        year_filter = f"{start_date.year}-{end_date.year}"
-    elif year_start or year_end:
-        start = year_start or 1900
-        end = year_end or datetime.now().year
-        year_filter = f"{start}-{end}"
+    year_filter = _build_year_filter(days, year_start, year_end)
 
     # Fetch results with pagination
     all_papers = []
     offset = 0
 
     while len(all_papers) < max_results:
-        # Calculate how many to fetch this page
         remaining = max_results - len(all_papers)
         limit = min(remaining, S2_MAX_RESULTS_PER_PAGE)
 
-        # Build params
-        params = {
-            "query": query,
-            "offset": offset,
-            "limit": limit,
-            "fields": ",".join(S2_PAPER_FIELDS),
-        }
-
-        if fields_of_study:
-            params["fieldsOfStudy"] = ",".join(fields_of_study)
-
-        if year_filter:
-            params["year"] = year_filter
-
         print(f"  Fetching results {offset + 1}-{offset + limit}...")
 
-        # Make request
-        response = _make_request(S2_SEARCH_ENDPOINT, params=params, api_key=api_key)
+        response = _fetch_s2_page(
+            query, offset, limit, fields_of_study, year_filter, api_key
+        )
 
         if not response:
             print("  Failed to fetch results, stopping")
@@ -320,20 +340,10 @@ def search_semantic_scholar(
             print("  No more results")
             break
 
-        # Parse papers
+        # Parse and filter papers
         for paper_data in papers_data:
             paper = _parse_s2_paper(paper_data)
-            if paper:
-                # Filter by days if specified (more precise filtering)
-                if days and paper.get("recomm_date"):
-                    try:
-                        pub_date = datetime.strptime(paper["recomm_date"], "%Y-%m-%d")
-                        cutoff_date = datetime.now() - timedelta(days=days)
-                        if pub_date < cutoff_date:
-                            continue
-                    except ValueError:
-                        pass  # Invalid date format, include anyway
-
+            if paper and _should_include_paper_by_date(paper, days):
                 all_papers.append(paper)
 
         print(f"  Found {len(papers_data)} papers (total: {len(all_papers)})")
@@ -378,10 +388,6 @@ def fetch_recent_papers(
 
     print(f"Fetching papers from last {days} days")
     print(f"Fields of study: {', '.join(fields_of_study)}")
-
-    # Use a broad query to get recent papers
-    # We'll filter by date after fetching
-    current_year = datetime.now().year
 
     # Search for recent papers using a wildcard-like approach
     # S2 doesn't have a "get recent" endpoint, so we search with common terms

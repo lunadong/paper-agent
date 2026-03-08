@@ -269,9 +269,9 @@ class TestTopicBackgroundFiles:
         # Assert: All values should be .txt files
         for topic, filename in TOPIC_BACKGROUND_FILES.items():
             assert filename.endswith(".txt"), f"File for {topic} should be .txt"
-            assert filename.startswith(
-                "background_"
-            ), f"File for {topic} should start with background_"
+            assert filename.startswith("background_"), (
+                f"File for {topic} should start with background_"
+            )
 
 
 class TestGetPromptsDir:

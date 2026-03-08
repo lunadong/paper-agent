@@ -246,7 +246,7 @@ BLACK formatting errors are a common source of persistent lint issues. Here's wh
    cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/paper_collection/
 
    # Clean specific files
-   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/paper_collection/paper_db.py
+   cd /Users/lunadong/fbsource && arc lint -a fbcode/assistant/research/paper-agent/paper_collection/core/paper_db.py
    ```
 
 3. **[!] RE-RUN `arc lint -a` UNTIL NO BLACK ERRORS REMAIN**:

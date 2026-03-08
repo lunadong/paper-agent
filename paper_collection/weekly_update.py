@@ -170,7 +170,7 @@ def add_papers_to_db(
                 if stats["added"] <= 5:  # Show first 5
                     print(f"  [DRY RUN] Would add: {title[:60]}...")
                 elif stats["added"] == 6:
-                    print(f"  ... and more papers")
+                    print("  ... and more papers")
             else:
                 # Use add_paper method with individual arguments
                 result = db.add_paper(

@@ -929,9 +929,7 @@ def render_benchmark_leaderboard(benchmarks):
 </div>"""
 
 
-def render_distribution(
-    paper_groups, taxonomy
-):  # noqa: unused taxonomy kept for future use
+def render_distribution(paper_groups, taxonomy):  # noqa: unused taxonomy kept for future use
     files = paper_groups.get("files", [])
     if not files:
         return ""

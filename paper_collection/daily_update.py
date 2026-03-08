@@ -27,6 +27,7 @@ from concurrent.futures import (
     TimeoutError as FuturesTimeoutError,
 )
 from datetime import datetime, timedelta
+from pathlib import Path
 
 # Script directories
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -125,42 +126,14 @@ def _parse_emails_step(service, messages, args):
         papers = parse_scholar_papers(html_content)
 
         # Deduplicate and collect papers
-        email_papers = []
-        for paper in papers:
-            title_lower = paper["title"].lower()
-            if title_lower in seen_titles:
-                continue
-            seen_titles.add(title_lower)
-            paper["email_date"] = headers.get("date", "N/A")
-            email_papers.append(paper)
-            all_papers.append(paper)
+        email_papers = _deduplicate_papers(papers, seen_titles, headers)
+        all_papers.extend(email_papers)
 
         # Save to database
         if db and email_papers:
-            for paper in email_papers:
-                # Priority: email date (normal recommendation date) > arXiv date (fallback)
-                email_date = parse_email_date(paper.get("email_date", ""))
-                if email_date:
-                    final_recomm_date = email_date
-                elif paper.get("arxiv_date"):
-                    # Use arXiv submission date only if no email date
-                    final_recomm_date = paper["arxiv_date"]
-                else:
-                    final_recomm_date = ""
-
-                paper_id = db.add_paper(
-                    title=paper["title"],
-                    authors=paper.get("authors", ""),
-                    venue=paper.get("venue", ""),
-                    year=paper.get("year", ""),
-                    abstract=paper.get("snippet", ""),
-                    link=paper.get("link", ""),
-                    recomm_date=final_recomm_date,
-                )
-                if paper_id:
-                    total_saved += 1
-                else:
-                    total_skipped += 1
+            saved, skipped = _save_papers_to_db(db, email_papers)
+            total_saved += saved
+            total_skipped += skipped
 
         log(f"  [{idx}/{len(messages)}] {len(email_papers)} papers")
 
@@ -173,6 +146,50 @@ def _parse_emails_step(service, messages, args):
     print()
 
     return total_saved, total_skipped
+
+
+def _deduplicate_papers(papers, seen_titles, headers):
+    """Deduplicate papers by title and add email date."""
+    email_papers = []
+    for paper in papers:
+        title_lower = paper["title"].lower()
+        if title_lower in seen_titles:
+            continue
+        seen_titles.add(title_lower)
+        paper["email_date"] = headers.get("date", "N/A")
+        email_papers.append(paper)
+    return email_papers
+
+
+def _get_paper_recomm_date(paper):
+    """Determine the recommendation date for a paper."""
+    email_date = parse_email_date(paper.get("email_date", ""))
+    if email_date:
+        return email_date
+    if paper.get("arxiv_date"):
+        return paper["arxiv_date"]
+    return ""
+
+
+def _save_papers_to_db(db, papers):
+    """Save papers to database. Returns (saved_count, skipped_count)."""
+    saved = 0
+    skipped = 0
+    for paper in papers:
+        paper_id = db.add_paper(
+            title=paper["title"],
+            authors=paper.get("authors", ""),
+            venue=paper.get("venue", ""),
+            year=paper.get("year", ""),
+            abstract=paper.get("snippet", ""),
+            link=paper.get("link", ""),
+            recomm_date=_get_paper_recomm_date(paper),
+        )
+        if paper_id:
+            saved += 1
+        else:
+            skipped += 1
+    return saved, skipped
 
 
 def _process_single_paper(paper):
@@ -373,6 +390,107 @@ This is an automated message from daily_update.py
     return subject, body
 
 
+def _fetch_emails_step(args, query):
+    """Step 1: Fetch emails from Gmail. Returns (service, messages) or None."""
+    log("STEP 1: Fetching emails from Gmail...")
+
+    try:
+        service = get_gmail_service()
+    except FileNotFoundError as e:
+        log(f"ERROR: {e}")
+        log("Please set up Gmail API credentials (see README)")
+        return None, None
+
+    messages = list_messages(service, max_results=args.max_emails, query=query)
+
+    if not messages:
+        log("No emails found. Nothing to do.")
+        return service, None
+
+    log(f"Found {len(messages)} email(s)")
+    print()
+    return service, messages
+
+
+def _generate_embeddings_step(args, total_saved):
+    """Step 2.5: Generate embeddings for new papers."""
+    embedding_count = 0
+    if args.dry_run:
+        log("STEP 2.5: Skipped embedding generation (dry run)")
+    elif total_saved == 0:
+        log("STEP 2.5: Skipped embedding generation (no new papers)")
+    else:
+        log("STEP 2.5: Generating embeddings for new papers...")
+        db = PaperDB()
+        try:
+            result = db.update_all_embeddings()
+            embedding_count = result.get("updated", 0)
+            log(f"Generated {embedding_count} embeddings")
+        except Exception as e:
+            log(f"Warning: Embedding generation failed: {e}")
+        finally:
+            db.close()
+    print()
+    return embedding_count
+
+
+def _summary_generation_step(args, total_saved, date_cutoff):
+    """Step 3: Generate tags and summaries for new papers."""
+    if args.dry_run:
+        log("STEP 3: Skipped (dry run)")
+        return 0, 0, [], "dry run"
+    if args.skip_topics:
+        log("STEP 3: Skipped (--skip-topics)")
+        return 0, 0, [], "--skip-topics flag"
+    if total_saved == 0:
+        log("STEP 3: Skipped (no new papers)")
+        return 0, 0, [], "no new papers"
+
+    return _generate_summaries_step(args, date_cutoff)
+
+
+def _send_notification_step(
+    args,
+    service,
+    config,
+    total_saved,
+    total_skipped,
+    summary_success_count,
+    summary_failed_count,
+    summary_errors,
+    summary_skipped_reason,
+):
+    """Send notification email if configured."""
+    if args.dry_run:
+        log("Skipping notification email (dry run)")
+        return
+    if args.no_email:
+        log("Skipping notification email (--no-email flag)")
+        return
+    if not config.notification_email:
+        log("Skipping notification email (no email configured)")
+        return
+
+    log("Sending notification email...")
+    from paper_discovery.gmail_client import send_email
+
+    subject, body = _build_notification_email(
+        args,
+        total_saved,
+        total_skipped,
+        summary_success_count,
+        summary_failed_count,
+        summary_errors,
+        summary_skipped_reason,
+        config,
+    )
+
+    if send_email(service, config.notification_email, subject, body):
+        log(f"Notification sent to {config.notification_email}")
+    else:
+        log("Failed to send notification email")
+
+
 def main():
     """Main function for daily update."""
     args = parse_args()
@@ -391,108 +509,40 @@ def main():
         log("DRY RUN - no changes will be saved")
     print()
 
-    # =========================================================================
     # STEP 1: Email Parsing - Fetch emails from Gmail
-    # =========================================================================
-    log("STEP 1: Fetching emails from Gmail...")
+    service, messages = _fetch_emails_step(args, query)
+    if messages is None:
+        if service is None:
+            return  # Error occurred
+        return  # No emails found
 
-    try:
-        service = get_gmail_service()
-    except FileNotFoundError as e:
-        log(f"ERROR: {e}")
-        log("Please set up Gmail API credentials (see README)")
-        return
-
-    messages = list_messages(service, max_results=args.max_emails, query=query)
-
-    if not messages:
-        log("No emails found. Nothing to do.")
-        return
-
-    log(f"Found {len(messages)} email(s)")
-    print()
-
-    # =========================================================================
     # STEP 2: Paper Parsing - Extract paper metadata, save to database
-    # =========================================================================
     total_saved, total_skipped = _parse_emails_step(service, messages, args)
 
-    # =========================================================================
-    # STEP 2.5: Embedding Generation - Generate embeddings for new papers
-    # =========================================================================
-    embedding_count = 0
-    if args.dry_run:
-        log("STEP 2.5: Skipped embedding generation (dry run)")
-    elif total_saved == 0:
-        log("STEP 2.5: Skipped embedding generation (no new papers)")
-    else:
-        log("STEP 2.5: Generating embeddings for new papers...")
-        db = PaperDB()
-        try:
-            result = db.update_all_embeddings()
-            embedding_count = result.get("updated", 0)
-            log(f"Generated {embedding_count} embeddings")
-        except Exception as e:
-            log(f"Warning: Embedding generation failed: {e}")
-        finally:
-            db.close()
+    # STEP 2.5: Embedding Generation
+    _generate_embeddings_step(args, total_saved)
+
+    # STEP 3: Summary Generation
+    (
+        summary_success_count,
+        summary_failed_count,
+        summary_errors,
+        summary_skipped_reason,
+    ) = _summary_generation_step(args, total_saved, date_cutoff)
     print()
 
-    # =========================================================================
-    # STEP 3: Summary Generation - Generate tags and summaries for new papers
-    # =========================================================================
-    summary_success_count = 0
-    summary_failed_count = 0
-    summary_errors = []
-    summary_skipped_reason = None
-
-    if args.dry_run:
-        log("STEP 3: Skipped (dry run)")
-        summary_skipped_reason = "dry run"
-    elif args.skip_topics:
-        log("STEP 3: Skipped (--skip-topics)")
-        summary_skipped_reason = "--skip-topics flag"
-    elif total_saved == 0:
-        log("STEP 3: Skipped (no new papers)")
-        summary_skipped_reason = "no new papers"
-    else:
-        (
-            summary_success_count,
-            summary_failed_count,
-            summary_errors,
-            summary_skipped_reason,
-        ) = _generate_summaries_step(args, date_cutoff)
-
-    print()
-
-    # =========================================================================
-    # Send notification email (always send status, even when no new papers)
-    # =========================================================================
-    if args.dry_run:
-        log("Skipping notification email (dry run)")
-    elif args.no_email:
-        log("Skipping notification email (--no-email flag)")
-    elif not config.notification_email:
-        log("Skipping notification email (no email configured)")
-    else:
-        log("Sending notification email...")
-        from paper_discovery.gmail_client import send_email
-
-        subject, body = _build_notification_email(
-            args,
-            total_saved,
-            total_skipped,
-            summary_success_count,
-            summary_failed_count,
-            summary_errors,
-            summary_skipped_reason,
-            config,
-        )
-
-        if send_email(service, config.notification_email, subject, body):
-            log(f"Notification sent to {config.notification_email}")
-        else:
-            log("Failed to send notification email")
+    # Send notification email
+    _send_notification_step(
+        args,
+        service,
+        config,
+        total_saved,
+        total_skipped,
+        summary_success_count,
+        summary_failed_count,
+        summary_errors,
+        summary_skipped_reason,
+    )
 
     log("=" * 60)
     log("DAILY UPDATE COMPLETE")

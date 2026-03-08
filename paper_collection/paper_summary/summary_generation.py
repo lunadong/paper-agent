@@ -1119,123 +1119,141 @@ def main():
                 print("No checkpoint found, starting fresh")
 
         db = PaperDB()
-        papers = db.get_all_papers(order_by="created_at", order_dir="DESC")
 
-        # Limit papers if --latest is specified, otherwise process all
-        if args.latest:
-            papers = papers[: args.latest]
-            print(
-                f"\nProcessing latest {len(papers)} papers (workers={args.workers})..."
-            )
-        else:
-            print(f"\nProcessing ALL {len(papers)} papers (workers={args.workers})...")
+        try:
+            papers = db.get_all_papers(order_by="created_at", order_dir="DESC")
 
-        if not papers:
-            print("No papers found in database")
-            db.close()
-            return
-
-        # Get paper IDs
-        all_paper_ids = [p["id"] for p in papers]
-        paper_map = {p["id"]: p for p in papers}
-
-        # Filter out already completed papers if resuming
-        if args.resume and checkpoint.enabled:
-            remaining_ids = checkpoint.get_remaining_ids(all_paper_ids)
-            papers_to_process = [paper_map[pid] for pid in remaining_ids]
-            skipped = len(papers) - len(papers_to_process)
-            if skipped > 0:
-                summary = checkpoint.get_summary()
+            # Limit papers if --latest is specified, otherwise process all
+            if args.latest:
+                papers = papers[: args.latest]
                 print(
-                    f"Skipping {skipped} papers: "
-                    f"{summary.get('completed', 0)} completed, "
-                    f"{summary.get('abstract_only', 0)} abstract-only, "
-                    f"{summary.get('skip_papers', 0)} skipped (permanent issues)"
+                    f"\nProcessing latest {len(papers)} papers (workers={args.workers})..."
                 )
-        else:
-            papers_to_process = papers
+            else:
+                print(
+                    f"\nProcessing ALL {len(papers)} papers (workers={args.workers})..."
+                )
 
-        # Initialize checkpoint for this batch
-        checkpoint.start_batch(len(papers), all_paper_ids)
+            if not papers:
+                print("No papers found in database")
+                return
 
-        if args.checkpoint:
-            print(f"Checkpoint file: {args.checkpoint}")
-        print()
+            # Get paper IDs
+            all_paper_ids = [p["id"] for p in papers]
+            paper_map = {p["id"]: p for p in papers}
 
-        all_results = []
-        success_count = 0
-        failed_count = 0
-
-        def process_paper(paper, use_log_buffer=False):
-            """Process a single paper (for parallel execution)."""
-            paper_id = paper["id"]
-
-            # Check for shutdown request
-            if is_shutdown_requested():
-                return {
-                    "success": False,
-                    "summary": None,
-                    "error": "Shutdown requested",
-                    "_paper_id": paper_id,
-                    "_title": paper.get("title", ""),
-                    "_skipped": True,
-                }
-
-            # Mark as in progress
-            checkpoint.mark_in_progress(paper_id)
-
-            try:
-                # Use LogBuffer to collect and print logs atomically in parallel mode
-                with LogBuffer(enabled=use_log_buffer):
-                    result = generate_summary_for_paper(
-                        paper_id=paper_id,
-                        model_name=args.model,
-                        api_key=args.api_key,
-                        prompt_file=args.prompt_file,
-                        save_db=args.save_db,
-                        overwrite=args.overwrite,
+            # Filter out already completed papers if resuming
+            if args.resume and checkpoint.enabled:
+                remaining_ids = checkpoint.get_remaining_ids(all_paper_ids)
+                papers_to_process = [paper_map[pid] for pid in remaining_ids]
+                skipped = len(papers) - len(papers_to_process)
+                if skipped > 0:
+                    summary = checkpoint.get_summary()
+                    print(
+                        f"Skipping {skipped} papers: "
+                        f"{summary.get('completed', 0)} completed, "
+                        f"{summary.get('abstract_only', 0)} abstract-only, "
+                        f"{summary.get('skip_papers', 0)} skipped (permanent issues)"
                     )
-                # Add paper info for internal tracking
-                result["_paper_id"] = paper_id
-                result["_title"] = paper.get("title", "")
+            else:
+                papers_to_process = papers
 
-                # Update checkpoint
-                if result["success"]:
-                    if result.get("abstract_only"):
-                        checkpoint.mark_abstract_only(
-                            paper_id,
-                            result.get("pdf_error"),
+            # Initialize checkpoint for this batch
+            checkpoint.start_batch(len(papers), all_paper_ids)
+
+            if args.checkpoint:
+                print(f"Checkpoint file: {args.checkpoint}")
+            print()
+
+            all_results = []
+            success_count = 0
+            failed_count = 0
+
+            def process_paper(paper, use_log_buffer=False):
+                """Process a single paper (for parallel execution)."""
+                paper_id = paper["id"]
+
+                # Check for shutdown request
+                if is_shutdown_requested():
+                    return {
+                        "success": False,
+                        "summary": None,
+                        "error": "Shutdown requested",
+                        "_paper_id": paper_id,
+                        "_title": paper.get("title", ""),
+                        "_skipped": True,
+                    }
+
+                # Mark as in progress
+                checkpoint.mark_in_progress(paper_id)
+
+                try:
+                    # Use LogBuffer to collect and print logs atomically in parallel mode
+                    with LogBuffer(enabled=use_log_buffer):
+                        result = generate_summary_for_paper(
+                            paper_id=paper_id,
+                            model_name=args.model,
+                            api_key=args.api_key,
+                            prompt_file=args.prompt_file,
+                            save_db=args.save_db,
+                            overwrite=args.overwrite,
                         )
+                    # Add paper info for internal tracking
+                    result["_paper_id"] = paper_id
+                    result["_title"] = paper.get("title", "")
+
+                    # Update checkpoint
+                    if result["success"]:
+                        if result.get("abstract_only"):
+                            checkpoint.mark_abstract_only(
+                                paper_id,
+                                result.get("pdf_error"),
+                            )
+                        else:
+                            checkpoint.mark_completed(paper_id)
                     else:
-                        checkpoint.mark_completed(paper_id)
-                else:
-                    checkpoint.mark_failed(paper_id, result.get("error"))
+                        checkpoint.mark_failed(paper_id, result.get("error"))
 
-                return result
+                    return result
 
-            except Exception as e:
-                checkpoint.mark_failed(paper_id, str(e))
-                return {
-                    "success": False,
-                    "summary": None,
-                    "error": str(e),
-                    "_paper_id": paper_id,
-                    "_title": paper.get("title", ""),
-                }
+                except Exception as e:
+                    checkpoint.mark_failed(paper_id, str(e))
+                    return {
+                        "success": False,
+                        "summary": None,
+                        "error": str(e),
+                        "_paper_id": paper_id,
+                        "_title": paper.get("title", ""),
+                    }
 
-        if args.workers > 1:
-            # Parallel processing with checkpointing
-            with ThreadPoolExecutor(max_workers=args.workers) as executor:
-                futures = {
-                    executor.submit(process_paper, p, True): p
-                    for p in papers_to_process
-                }
-                for future in as_completed(futures):
+            if args.workers > 1:
+                # Parallel processing with checkpointing
+                with ThreadPoolExecutor(max_workers=args.workers) as executor:
+                    futures = {
+                        executor.submit(process_paper, p, True): p
+                        for p in papers_to_process
+                    }
+                    for future in as_completed(futures):
+                        if is_shutdown_requested():
+                            print("\n[!] Cancelling remaining tasks...")
+                            executor.shutdown(wait=False, cancel_futures=True)
+                            break
+                        result = future.result()
+                        if not result.get("_skipped"):
+                            all_results.append(result)
+                            if result["success"]:
+                                success_count += 1
+                            else:
+                                failed_count += 1
+                        print("")
+            else:
+                # Sequential processing with checkpointing
+                for i, paper in enumerate(papers_to_process, 1):
                     if is_shutdown_requested():
-                        print("\n[!] Cancelling remaining tasks...")
-                        executor.shutdown(wait=False, cancel_futures=True)
+                        print(f"\n[!] Stopped after {i - 1} papers")
                         break
-                    result = future.result()
+
+                    result = process_paper(paper)
                     if not result.get("_skipped"):
                         all_results.append(result)
                         if result["success"]:
@@ -1243,23 +1261,8 @@ def main():
                         else:
                             failed_count += 1
                     print("")
-        else:
-            # Sequential processing with checkpointing
-            for i, paper in enumerate(papers_to_process, 1):
-                if is_shutdown_requested():
-                    print(f"\n[!] Stopped after {i - 1} papers")
-                    break
-
-                result = process_paper(paper)
-                if not result.get("_skipped"):
-                    all_results.append(result)
-                    if result["success"]:
-                        success_count += 1
-                    else:
-                        failed_count += 1
-                print("")
-
-        db.close()
+        finally:
+            db.close()
 
         # Output results
         print("\n" + "=" * 60)
